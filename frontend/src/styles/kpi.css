@@ -1,0 +1,298 @@
+/* =====================================================
+   KPI 경험치 시스템 — kpi- prefix
+   ===================================================== */
+
+/* ── 루트: 토스트만 담당 (fixed) ── */
+.kpi-root {
+  position: fixed;
+  bottom: 16px;
+  right: 60px;
+  z-index: 950;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+/* ── 인라인 바 (CRM 드로어 하단) ── */
+.kpi-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #0c1218 0%, #12222e 100%);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+/* SVG 링 래퍼 */
+.kpi-ring-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kpi-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+/* 오른쪽 텍스트 영역 */
+.kpi-inline-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kpi-inline-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+}
+.kpi-inline-bottom {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.kpi-inline-sub {
+  font-size: 10px;
+  color: rgba(255,255,255,0.42);
+}
+.kpi-inline-remain {
+  font-size: 11px;
+  font-weight: 700;
+  color: #00e5c8;
+  font-family: monospace;
+}
+
+/* 레벨명 */
+.kpi-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e8e8e8;
+  white-space: nowrap;
+}
+
+/* 점수 표시 */
+.kpi-pts {
+  font-size: 13px;
+  font-weight: 800;
+  color: #00e5c8;
+  white-space: nowrap;
+  font-family: monospace;
+}
+.kpi-pts-unit {
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.45);
+  margin-left: 1px;
+}
+
+/* 배지 */
+.kpi-badge-emoji { line-height: 1; }
+.kpi-badge-lv {
+  font-weight: 700;
+  font-family: monospace;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.55);
+}
+
+/* 프로그레스 트랙 */
+.kpi-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+  overflow: hidden;
+  position: relative;
+}
+.kpi-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00c7a9 0%, #00f0d0 100%);
+  border-radius: 99px;
+  box-shadow: 0 0 8px rgba(0, 199, 169, 0.7);
+}
+
+/* ── 토스트 알림 ── */
+.kpi-toasts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.kpi-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #00c7a9 0%, #00a882 100%);
+  color: #fff;
+  padding: 8px 18px 8px 14px;
+  border-radius: 10px 0 0 10px;
+  font-weight: 700;
+  box-shadow: -4px 4px 20px rgba(0, 199, 169, 0.5),
+              inset 0 1px 0 rgba(255,255,255,0.15);
+  animation: kpi-fade 0.4s ease 1.9s forwards;
+}
+
+.kpi-toast-pts {
+  font-size: 16px;
+  font-family: monospace;
+}
+.kpi-toast-lbl {
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.88;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes kpi-fade {
+  to { opacity: 0; transform: translateY(-12px); }
+}
+
+/* ── CRM 보유상품 태그 ── */
+.prod-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 4px;
+}
+.prod-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  border: 1.5px solid var(--im-mint);
+  color: var(--im-mint);
+  background: #edfaf7;
+  font-weight: 600;
+}
+
+/* ── 영업기회 카드 ── */
+.opp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.opp-header-title {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--im-mint);
+  border-bottom: 2px solid var(--im-mint);
+  padding-bottom: 2px;
+}
+.opp-count { font-size: 11px; color: #999; }
+
+.opp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.opp-card {
+  background: #f8fffe;
+  border: 1.5px solid #c8f0e8;
+  border-radius: 12px;
+  padding: 11px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.opp-card:hover {
+  border-color: var(--im-mint);
+  box-shadow: 0 2px 12px rgba(0,199,169,0.12);
+}
+.opp-card--done {
+  opacity: 0.42;
+  background: #f6f6f6;
+  border-color: #e0e0e0;
+}
+
+.opp-card-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+/* lucide 아이콘 래퍼 */
+.opp-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(0, 199, 169, 0.12);
+  border-radius: 8px;
+  color: var(--im-mint);
+  flex-shrink: 0;
+}
+.opp-card--done .opp-icon-wrap {
+  background: #eee;
+  color: #bbb;
+}
+
+.opp-product { font-weight: 700; font-size: 13px; color: #111; flex: 1; }
+.opp-kpi-badge {
+  background: var(--im-mint);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.opp-done-badge {
+  display: flex;
+  align-items: center;
+  background: #e8f5e9;
+  color: #388e3c;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+
+.opp-desc { font-size: 11px; color: #666; line-height: 1.45; }
+
+.opp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+.opp-category { font-size: 10px; color: #bbb; font-weight: 600; letter-spacing: 0.05em; }
+
+.opp-btn {
+  background: var(--im-mint);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: 0.02em;
+}
+.opp-btn:hover  { background: #009e86; transform: scale(1.04); }
+.opp-btn:active { transform: scale(0.97); }
+.opp-btn:disabled { background: #ccc; cursor: default; transform: none; }

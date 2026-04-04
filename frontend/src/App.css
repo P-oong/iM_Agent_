@@ -1,0 +1,90 @@
+.app {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-page);
+}
+
+/* ── 헤더 ── */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 1.5rem;
+  height: 54px;
+  background: var(--im-mint);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+}
+
+/* 브랜드 로고 */
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #fff;
+}
+.app-brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255,255,255,0.18);
+  border-radius: 9px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.app-brand:hover .app-brand-icon { background: rgba(255,255,255,0.28); }
+.app-brand-text {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+/* 네비 */
+.app-nav {
+  display: flex;
+  gap: 2px;
+}
+.app-header .nav-link {
+  padding: 6px 14px;
+  border-radius: 99px;
+  color: rgba(255,255,255,0.85);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.app-header .nav-link:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.15);
+}
+.app-header .nav-link--active {
+  color: #fff;
+  background: rgba(255,255,255,0.22);
+  font-weight: 700;
+}
+
+/* ── 메인 영역 ── */
+.app-main {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── 푸터 ── */
+.app-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: #aaa;
+  text-align: center;
+  background: var(--bg);
+}

@@ -1,0 +1,128 @@
+/* ── 전산화면 위 메인 이동 바 ── */
+.bk-topnav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 38px;
+  background: #1a2332;
+  border-bottom: 1px solid #0d1520;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.18);
+}
+
+.bk-topnav--flash {
+  background: #009e86;
+}
+
+.bk-topnav-home {
+  color: rgba(255,255,255,0.72);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 4px 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  white-space: nowrap;
+  transition: background 0.12s, color 0.12s;
+}
+.bk-topnav-home:hover {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+}
+
+.bk-topnav-brand {
+  color: var(--im-mint, #00c7a9);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ── 화면번호 네비게이션 박스 ── */
+.bk-nav-cmd {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: auto;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  padding: 3px 8px;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  cursor: text;
+}
+.bk-nav-cmd--active {
+  border-color: var(--im-mint, #00c7a9);
+  background: rgba(0,199,169,0.08);
+  box-shadow: 0 0 0 2.5px rgba(0,199,169,0.18);
+}
+
+/* ✱ 별표 아이콘 */
+.bk-nav-star {
+  color: rgba(255,255,255,0.4);
+  font-size: 14px;
+  font-weight: 900;
+  margin-right: 6px;
+  line-height: 1;
+  user-select: none;
+}
+.bk-nav-cmd--active .bk-nav-star {
+  color: var(--im-mint, #00c7a9);
+}
+
+/* 숫자 입력칸 */
+.bk-nav-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  width: 44px;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+.bk-nav-input::placeholder {
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.14em;
+  font-weight: 400;
+}
+
+.bk-nav-sep {
+  color: rgba(255,255,255,0.2);
+  font-size: 12px;
+  margin: 0 5px;
+  user-select: none;
+}
+
+/* 이동 버튼 */
+.bk-nav-go {
+  background: rgba(0,199,169,0.15);
+  border: 1px solid rgba(0,199,169,0.35);
+  border-radius: 5px;
+  color: var(--im-mint, #00c7a9);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  cursor: pointer;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+.bk-nav-go:hover:not(:disabled) {
+  background: rgba(0,199,169,0.28);
+}
+.bk-nav-go:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* 도움말 텍스트 */
+.bk-nav-help {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  white-space: nowrap;
+}

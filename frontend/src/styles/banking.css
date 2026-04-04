@@ -1,0 +1,477 @@
+/* =========================================================
+   iM Bank 전산화면 — 리뉴얼 스타일 · .bk- prefix
+   ========================================================= */
+
+/* ── 앱 래퍼 ── */
+.bk-app {
+  font-family: 'Pretendard Variable', Pretendard, 'Malgun Gothic', system-ui, sans-serif;
+  font-size: 13px;
+  color: #1a2332;
+  background: #eef1f5;
+  min-height: 100svh;
+}
+
+/* ── 화면 전체 박스 ── */
+.bk-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100svh - 38px);
+  background: #fff;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.07);
+  border-top: none;
+}
+
+/* ────────── 타이틀바 ────────── */
+.bk-titlebar {
+  background: linear-gradient(135deg, #009e86 0%, var(--im-mint, #00c7a9) 100%);
+  color: #fff;
+  padding: 7px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0,158,134,0.25);
+}
+
+.bk-titlebar-code {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.bk-titlebar-right,
+.bk-titlebar-btns,
+.bk-titlebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.bk-titlebar-info {
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  margin-right: 4px;
+}
+
+/* 타이틀바 위 버튼 — 흰 반투명 */
+.bk-titlebar .bk-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.35);
+  color: #fff;
+  font-weight: 600;
+}
+.bk-titlebar .bk-btn:hover {
+  background: rgba(255,255,255,0.28);
+}
+.bk-titlebar .bk-btn--primary,
+.bk-titlebar .bk-btn--send {
+  background: rgba(255,255,255,0.95);
+  color: #009e86;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+.bk-titlebar .bk-btn--primary:hover,
+.bk-titlebar .bk-btn--send:hover {
+  background: #fff;
+}
+
+/* ────────── 버튼 ────────── */
+.bk-btn {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 11px;
+  border: 1px solid #d0d5dd;
+  background: #fff;
+  cursor: pointer;
+  color: #333;
+  line-height: 1.4;
+  white-space: nowrap;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+.bk-btn:hover {
+  background: #f4f6f8;
+  border-color: #bbb;
+}
+.bk-btn:active {
+  background: #e8ecef;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.bk-btn--primary {
+  background: var(--im-mint, #00c7a9);
+  color: #fff;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0,199,169,0.3);
+}
+.bk-btn--primary:hover {
+  background: #009e86;
+  border-color: transparent;
+}
+
+.bk-btn--send {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(245,158,11,0.3);
+}
+.bk-btn--send:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+}
+
+.bk-btn--danger {
+  color: #dc2626;
+  border-color: #fca5a5;
+  background: #fff5f5;
+}
+.bk-btn--danger:hover {
+  background: #fee2e2;
+  border-color: #f87171;
+}
+
+.bk-btn--sm {
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+/* 버튼 행 (액션 툴바) */
+.bk-btn-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #f8fafb;
+  border-bottom: 1px solid #e8ecef;
+  border-top: 1px solid #e8ecef;
+  flex-wrap: wrap;
+}
+.bk-btn-divider {
+  color: #d0d5dd;
+  font-size: 16px;
+  padding: 0 2px;
+  user-select: none;
+}
+
+/* ────────── 섹션 헤더 ────────── */
+.bk-section-hd {
+  background: #f4f7fa;
+  border-top: 1px solid #e4e8ef;
+  border-bottom: 1px solid #e4e8ef;
+  border-left: 4px solid var(--im-mint, #00c7a9);
+  padding: 5px 12px;
+  font-weight: 700;
+  font-size: 12px;
+  color: #2d3a4a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  letter-spacing: 0.01em;
+}
+.bk-section-hd-btns {
+  display: flex;
+  gap: 4px;
+}
+
+/* ────────── 폼 행 ────────── */
+.bk-form-row {
+  display: flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-bottom: 1px solid #f0f2f5;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  min-height: 28px;
+}
+
+.bk-field {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.bk-label {
+  white-space: nowrap;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 500;
+}
+.bk-label::before {
+  content: '';
+}
+
+/* ────────── 입력 요소 ────────── */
+.bk-input {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  border: 1px solid #d0d5dd;
+  padding: 3px 8px;
+  height: 24px;
+  background: #fff;
+  box-sizing: border-box;
+  outline: none;
+  border-radius: 5px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  color: #1a2332;
+}
+.bk-input:focus {
+  border-color: var(--im-mint, #00c7a9);
+  box-shadow: 0 0 0 2.5px rgba(0,199,169,0.15);
+  background: #f9fffd;
+}
+.bk-input::placeholder {
+  color: #b0bec5;
+  font-family: inherit;
+}
+
+.bk-select {
+  font-family: inherit;
+  font-size: 12px;
+  border: 1px solid #d0d5dd;
+  padding: 0 6px;
+  height: 24px;
+  background: #fff;
+  box-sizing: border-box;
+  outline: none;
+  border-radius: 5px;
+  color: #1a2332;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.bk-select:focus {
+  border-color: var(--im-mint, #00c7a9);
+  box-shadow: 0 0 0 2px rgba(0,199,169,0.15);
+}
+
+/* ────────── 안내 텍스트 ────────── */
+.bk-notice {
+  padding: 5px 14px;
+  font-size: 11px;
+  color: #5a4e00;
+  background: #fffce8;
+  border-bottom: 1px solid #f0e68c;
+  border-left: 3px solid #f59e0b;
+}
+.bk-notice--error {
+  color: #dc2626;
+  background: #fff5f5;
+  border-left-color: #ef4444;
+  border-bottom-color: #fca5a5;
+}
+
+/* ────────── 데이터 테이블 ────────── */
+.bk-table-wrap {
+  overflow-x: auto;
+}
+
+.bk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  table-layout: auto;
+}
+
+.bk-table th {
+  background: #edf1f7;
+  border-right: 1px solid #d8dde6;
+  border-bottom: 2px solid #c8d0dc;
+  padding: 5px 7px;
+  text-align: center;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #3d4a5c;
+  font-size: 11.5px;
+  position: sticky;
+  top: 0;
+}
+
+.bk-table td {
+  border-right: 1px solid #ebebeb;
+  border-bottom: 1px solid #ebebeb;
+  padding: 3px 7px;
+  white-space: nowrap;
+  color: #2d3a4a;
+}
+
+.bk-table tbody tr:nth-child(even) td {
+  background: #fafbfd;
+}
+
+.bk-table tbody tr:hover td {
+  background: rgba(0,199,169,0.06);
+}
+
+.bk-row-checked td {
+  background: rgba(0,199,169,0.10) !important;
+  font-weight: 600;
+}
+
+.bk-row-empty td {
+  height: 22px;
+  color: #d1d5db;
+}
+
+/* ────────── 집계 테이블 ────────── */
+.bk-sum-table {
+  border-collapse: collapse;
+  font-size: 12px;
+  margin: 6px 12px;
+}
+.bk-sum-table td {
+  border: 1px solid #d8dde6;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+.bk-sum-th {
+  background: #edf1f7;
+  font-weight: 700;
+  color: #3d4a5c;
+  padding: 3px 10px;
+}
+.bk-sum-cat {
+  background: #f4f7fa;
+  text-align: center;
+  padding: 3px 8px;
+  color: #555;
+}
+.bk-sum-num {
+  text-align: right;
+  min-width: 64px;
+  padding: 3px 10px;
+  font-family: monospace;
+  font-weight: 600;
+}
+
+/* ────────── 스크롤 컨텐츠 영역 ────────── */
+.bk-content {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c8d0dc transparent;
+}
+.bk-content::-webkit-scrollbar { width: 5px; }
+.bk-content::-webkit-scrollbar-thumb { background: #c8d0dc; border-radius: 99px; }
+
+/* ────────── 상태바 ────────── */
+.bk-statusbar {
+  background: linear-gradient(135deg, #1a5c1a 0%, #006b2b 100%);
+  color: #e8f8ef;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bk-statusbar::before {
+  content: '●';
+  color: #4ade80;
+  font-size: 8px;
+}
+
+/* ────────── 조회 결과 영역 ────────── */
+.bk-result-area {
+  flex: 1;
+  min-height: 260px;
+  background: #fcfcfc;
+  border-top: 1px solid #e4e8ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.bk-result-watermark {
+  font-size: 72px;
+  font-weight: 900;
+  color: rgba(0,0,0,0.04);
+  letter-spacing: -0.02em;
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.bk-result-popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  background: rgba(255,255,255,0.97);
+  border: 2px solid var(--im-mint, #00c7a9);
+  border-radius: 14px;
+  padding: 24px 44px;
+  box-shadow: 0 8px 32px rgba(0,199,169,0.18);
+}
+.bk-result-popup-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  color: var(--im-mint, #00c7a9);
+}
+.bk-result-popup-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: #007a64;
+  margin-bottom: 6px;
+}
+.bk-result-popup-desc {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.6;
+}
+
+/* 연동 성공 배지 */
+.bk-linked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+  color: #006b55;
+  font-weight: 700;
+  font-size: 12px;
+  background: #e6fff7;
+  border: 1px solid #00c7a9;
+  border-radius: 6px;
+  padding: 3px 12px;
+}
+.bk-linked-badge::before {
+  content: '✓';
+  font-weight: 900;
+  color: var(--im-mint, #00c7a9);
+}
+
+.bk-error-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 10px;
+  color: #dc2626;
+  font-weight: 700;
+  font-size: 12px;
+  background: #fff5f5;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  padding: 3px 12px;
+}
+.bk-error-badge::before {
+  content: '✗';
+  font-weight: 900;
+}
+
+/* ────────── 반응형 ────────── */
+@media (max-width: 900px) {
+  .bk-app { font-size: 12px; }
+  .bk-form-row { gap: 2px 10px; }
+}
