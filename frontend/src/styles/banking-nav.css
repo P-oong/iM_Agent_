@@ -1,128 +1,245 @@
-/* ── 전산화면 위 메인 이동 바 ── */
-.bk-topnav {
+/* ==========================================================
+   Banking Navigation — 통합 상단바 · 멀티탭 · 카테고리
+   ========================================================== */
+
+/* ── 통합 상단 바 ── */
+.bk-topbar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 14px;
   height: 38px;
-  background: #1a2332;
-  border-bottom: 1px solid #0d1520;
+  background: #111c28;
+  border-bottom: 1px solid #0a1520;
+  padding: 0 0 0 2px;
+  gap: 0;
   flex-shrink: 0;
-  transition: background 0.15s;
-  box-shadow: 0 1px 8px rgba(0,0,0,0.18);
+  position: relative;
+  z-index: 10;
 }
 
-.bk-topnav--flash {
-  background: #009e86;
-}
-
-.bk-topnav-home {
-  color: rgba(255,255,255,0.72);
-  font-size: 12px;
-  font-weight: 600;
+/* 홈 버튼 */
+.bk-topbar-home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 100%;
+  color: rgba(255,255,255,0.45);
   text-decoration: none;
-  padding: 4px 12px;
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 6px;
-  background: rgba(255,255,255,0.06);
-  white-space: nowrap;
-  transition: background 0.12s, color 0.12s;
-}
-.bk-topnav-home:hover {
-  background: rgba(255,255,255,0.12);
-  color: #fff;
-}
-
-.bk-topnav-brand {
-  color: var(--im-mint, #00c7a9);
   font-size: 14px;
+  transition: color 0.12s, background 0.12s;
+  flex-shrink: 0;
+  border-right: 1px solid rgba(255,255,255,0.07);
+}
+.bk-topbar-home:hover { color: #fff; background: rgba(255,255,255,0.07); }
+.bk-topbar-home-icon { line-height: 1; }
+
+/* 브랜드 */
+.bk-topbar-brand {
+  color: var(--im-mint, #00c7a9);
+  font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
+  padding: 0 12px 0 10px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
-/* ── 화면번호 네비게이션 박스 ── */
+/* 세로 구분선 */
+.bk-topbar-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255,255,255,0.12);
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+/* ── 카테고리 탭 (상단바 내부) ── */
+.bk-catbar {
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  flex: 1;
+  gap: 0;
+  overflow: hidden;
+}
+
+.bk-catbar-btn {
+  display: flex;
+  align-items: center;
+  padding: 0 13px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.5);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.12s, background 0.12s, border-color 0.12s;
+  letter-spacing: 0.01em;
+}
+.bk-catbar-btn:hover {
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.06);
+}
+.bk-catbar-btn--active {
+  color: var(--im-mint, #00c7a9);
+  border-bottom-color: var(--im-mint, #00c7a9);
+  font-weight: 700;
+  background: rgba(0,199,169,0.06);
+}
+
+/* ── 화면번호 입력 ── */
 .bk-nav-cmd {
   display: flex;
   align-items: center;
-  gap: 0;
-  margin-left: auto;
+  margin-right: 10px;
   background: rgba(255,255,255,0.05);
-  border: 1.5px solid rgba(255,255,255,0.12);
-  border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
   padding: 3px 8px;
+  gap: 4px;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-  cursor: text;
+  flex-shrink: 0;
 }
 .bk-nav-cmd--active {
   border-color: var(--im-mint, #00c7a9);
   background: rgba(0,199,169,0.08);
-  box-shadow: 0 0 0 2.5px rgba(0,199,169,0.18);
+  box-shadow: 0 0 0 2px rgba(0,199,169,0.16);
 }
 
-/* ✱ 별표 아이콘 */
 .bk-nav-star {
-  color: rgba(255,255,255,0.4);
-  font-size: 14px;
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
   font-weight: 900;
-  margin-right: 6px;
-  line-height: 1;
   user-select: none;
+  transition: color 0.12s;
 }
-.bk-nav-cmd--active .bk-nav-star {
-  color: var(--im-mint, #00c7a9);
-}
+.bk-nav-cmd--active .bk-nav-star { color: var(--im-mint, #00c7a9); }
 
-/* 숫자 입력칸 */
 .bk-nav-input {
   background: transparent;
   border: none;
   outline: none;
   color: #fff;
   font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
-  width: 44px;
-  letter-spacing: 0.14em;
+  width: 40px;
+  letter-spacing: 0.12em;
   text-align: center;
 }
-.bk-nav-input::placeholder {
-  color: rgba(255,255,255,0.2);
-  letter-spacing: 0.14em;
-  font-weight: 400;
-}
+.bk-nav-input::placeholder { color: rgba(255,255,255,0.16); }
 
-.bk-nav-sep {
-  color: rgba(255,255,255,0.2);
-  font-size: 12px;
-  margin: 0 5px;
-  user-select: none;
-}
-
-/* 이동 버튼 */
 .bk-nav-go {
-  background: rgba(0,199,169,0.15);
-  border: 1px solid rgba(0,199,169,0.35);
-  border-radius: 5px;
+  background: rgba(0,199,169,0.14);
+  border: 1px solid rgba(0,199,169,0.3);
+  border-radius: 4px;
   color: var(--im-mint, #00c7a9);
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  padding: 3px 9px;
+  padding: 2px 8px;
   cursor: pointer;
   transition: background 0.12s;
   white-space: nowrap;
 }
-.bk-nav-go:hover:not(:disabled) {
-  background: rgba(0,199,169,0.28);
+.bk-nav-go:hover:not(:disabled) { background: rgba(0,199,169,0.28); }
+.bk-nav-go:disabled { opacity: 0.25; cursor: default; }
+
+/* ==========================================================
+   멀티탭 바
+   ========================================================== */
+.bk-tabbar {
+  display: flex;
+  align-items: stretch;
+  height: 30px;
+  background: #0e1d2b;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 0;
+  gap: 1px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-.bk-nav-go:disabled {
-  opacity: 0.3;
-  cursor: default;
+.bk-tabbar::-webkit-scrollbar { display: none; }
+
+.bk-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px 0 11px;
+  background: rgba(255,255,255,0.04);
+  border: none;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s, border-color 0.1s;
+  min-width: 0;
+}
+.bk-tab:hover { background: rgba(255,255,255,0.09); }
+.bk-tab--active {
+  background: #16374a !important;
+  border-bottom-color: var(--im-mint, #00c7a9) !important;
 }
 
-/* 도움말 텍스트 */
-.bk-nav-help {
-  font-size: 10px;
-  color: rgba(255,255,255,0.3);
-  white-space: nowrap;
+.bk-tab-code {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  padding: 1px 4px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
 }
+.bk-tab--active .bk-tab-code {
+  background: rgba(0,199,169,0.18);
+  color: var(--im-mint, #00c7a9);
+}
+
+.bk-tab-name {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bk-tab--active .bk-tab-name { color: #e8f4f0; font-weight: 600; }
+
+.bk-tab-close {
+  font-size: 13px;
+  line-height: 1;
+  color: rgba(255,255,255,0.25);
+  margin-left: 2px;
+  border-radius: 3px;
+  padding: 0 2px;
+  cursor: pointer;
+  transition: color 0.1s, background 0.1s;
+  flex-shrink: 0;
+}
+.bk-tab-close:hover { color: #fff; background: rgba(255,255,255,0.15); }
+.bk-tab--active .bk-tab-close { color: rgba(255,255,255,0.45); }
+
+/* ==========================================================
+   바디 · 메인
+   ========================================================== */
+.bk-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.bk-main {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+  min-width: 0;
+  background: #111c28;
+}
+
+/* ==========================================================
+   flash 효과
+   ========================================================== */
+.bk-app--flash .bk-topbar { background: #0a3030; }

@@ -131,14 +131,6 @@ export function AiPage() {
         {/* ── 왼쪽: 고객 선택 + 설정 ── */}
         <div className="ai-left">
 
-          {/* 0156 연동 배너 */}
-          {activeResidentId && selected && (
-            <div className="ai-linked-banner">
-              <span style={{ fontSize: 14 }}>🔗</span>
-              <span>[0156] 화면에서 <b>{selected.name}</b> 고객이 자동 연동되었습니다</span>
-            </div>
-          )}
-
           {/* 고객 목록 */}
           <div className="ai-card">
             <div className="ai-card-title">

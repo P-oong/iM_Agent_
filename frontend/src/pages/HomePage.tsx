@@ -79,7 +79,7 @@ export function HomePage() {
           >
             <div className="home-badge">
               <Sparkles size={12} />
-              iM뱅크 공모전 2025
+              iM뱅크 공모전 2026
             </div>
             <h1 className="home-title">
               영업 현장을<br />

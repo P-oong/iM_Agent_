@@ -60,19 +60,22 @@ export function KpiBar({ inline = false }: KpiBarProps) {
   if (inline) {
     return (
       <div className="kpi-inline">
-        {/* 원형 링 */}
+        {/* 원형 링: 레벨 숫자만 중앙 표시 */}
         <div className="kpi-ring-wrap">
           <RingProgress pct={pct} />
           <div className="kpi-ring-center">
-            <span className="kpi-badge-emoji" style={{ fontSize: 16 }}>{levelInfo.emoji}</span>
-            <span className="kpi-badge-lv" style={{ fontSize: 8 }}>Lv.{levelInfo.level}</span>
+            <span className="kpi-badge-lv-num">{levelInfo.level}</span>
+            <span className="kpi-badge-lv-label">LV</span>
           </div>
         </div>
 
         {/* 텍스트 정보 */}
         <div className="kpi-inline-info">
           <div className="kpi-inline-top">
-            <span className="kpi-name">{levelInfo.name}</span>
+            <span className="kpi-name">
+              <span className="kpi-name-emoji">{levelInfo.emoji}</span>
+              {levelInfo.name}
+            </span>
             <span className="kpi-pts">
               <AnimatedNumber value={levelInfo.totalPoints} />
               <span className="kpi-pts-unit">점</span>
@@ -80,7 +83,7 @@ export function KpiBar({ inline = false }: KpiBarProps) {
           </div>
 
           {/* 프로그레스 바 */}
-          <div className="kpi-track" style={{ margin: '5px 0' }}>
+          <div className="kpi-track" style={{ margin: '4px 0' }}>
             <motion.div
               className="kpi-fill"
               initial={{ width: 0 }}

@@ -5,40 +5,53 @@
 /* ── 앱 래퍼 ── */
 .bk-app {
   font-family: 'Pretendard Variable', Pretendard, 'Malgun Gothic', system-ui, sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   color: #1a2332;
-  background: #eef1f5;
-  min-height: 100svh;
+  background: #111c28;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* ── 화면 전체 박스 ── */
 .bk-screen {
   display: flex;
   flex-direction: column;
-  min-height: calc(100svh - 38px);
+  min-height: 100%;
   background: #fff;
-  box-shadow: 0 2px 20px rgba(0,0,0,0.07);
+  box-shadow: none;
   border-top: none;
+  max-width: 100%;
+  margin: 0;
+  border-radius: 0;
+  overflow: hidden;
 }
 
 /* ────────── 타이틀바 ────────── */
 .bk-titlebar {
-  background: linear-gradient(135deg, #009e86 0%, var(--im-mint, #00c7a9) 100%);
-  color: #fff;
+  /* 상단 다크 네이비와 자연스럽게 이어지는 다크 틸 계열 */
+  background: linear-gradient(135deg, #0e2530 0%, #16374a 100%);
+  color: #e8f4f0;
   padding: 7px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
   gap: 10px;
-  box-shadow: 0 2px 8px rgba(0,158,134,0.25);
+  border-bottom: 2px solid var(--im-mint, #00c7a9);
 }
 
 .bk-titlebar-code {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 0.02em;
   white-space: nowrap;
+  color: #fff;
+}
+/* 화면 코드 앞 ● 점 색상 */
+.bk-titlebar-code::before {
+  color: var(--im-mint, #00c7a9);
 }
 
 .bk-titlebar-right,
@@ -51,39 +64,42 @@
 }
 
 .bk-titlebar-info {
-  color: rgba(255,255,255,0.7);
+  color: rgba(255,255,255,0.5);
   font-size: 11px;
   margin-right: 4px;
 }
 
-/* 타이틀바 위 버튼 — 흰 반투명 */
+/* 타이틀바 위 버튼 — 반투명 다크 */
 .bk-titlebar .bk-btn {
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.35);
-  color: #fff;
-  font-weight: 600;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.85);
+  font-weight: 500;
 }
 .bk-titlebar .bk-btn:hover {
-  background: rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.2);
+  color: #fff;
 }
+/* 주요 버튼 (전송/조회) — 민트 강조 */
 .bk-titlebar .bk-btn--primary,
 .bk-titlebar .bk-btn--send {
-  background: rgba(255,255,255,0.95);
-  color: #009e86;
+  background: var(--im-mint, #00c7a9);
+  color: #fff;
   border-color: transparent;
   font-weight: 700;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(0,199,169,0.35);
 }
 .bk-titlebar .bk-btn--primary:hover,
 .bk-titlebar .bk-btn--send:hover {
-  background: #fff;
+  background: #00b899;
+  box-shadow: 0 3px 10px rgba(0,199,169,0.45);
 }
 
 /* ────────── 버튼 ────────── */
 .bk-btn {
   font-family: inherit;
-  font-size: 12px;
-  padding: 4px 11px;
+  font-size: 11px;
+  padding: 3px 9px;
   border: 1px solid #d0d5dd;
   background: #fff;
   cursor: pointer;
@@ -137,8 +153,8 @@
 }
 
 .bk-btn--sm {
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 10px;
+  padding: 2px 7px;
 }
 
 /* 버튼 행 (액션 툴바) */
@@ -146,7 +162,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
+  padding: 5px 10px;
   background: #f8fafb;
   border-bottom: 1px solid #e8ecef;
   border-top: 1px solid #e8ecef;
@@ -165,9 +181,9 @@
   border-top: 1px solid #e4e8ef;
   border-bottom: 1px solid #e4e8ef;
   border-left: 4px solid var(--im-mint, #00c7a9);
-  padding: 5px 12px;
+  padding: 4px 10px;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11.5px;
   color: #2d3a4a;
   display: flex;
   align-items: center;
@@ -184,11 +200,12 @@
 .bk-form-row {
   display: flex;
   align-items: center;
-  padding: 5px 14px;
+  padding: 4px 10px;
   border-bottom: 1px solid #f0f2f5;
   flex-wrap: wrap;
-  gap: 4px 18px;
-  min-height: 28px;
+  gap: 4px 14px;
+  min-height: 24px;
+  background: #fff;
 }
 
 .bk-field {
@@ -201,7 +218,7 @@
 .bk-label {
   white-space: nowrap;
   color: #4b5563;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
 }
 .bk-label::before {
@@ -210,16 +227,16 @@
 
 /* ────────── 입력 요소 ────────── */
 .bk-input {
-  font-family: 'Consolas', 'Courier New', monospace;
-  font-size: 12px;
+  font-family: 'Pretendard Variable', Pretendard, 'Malgun Gothic', system-ui, sans-serif;
+  font-size: 11px;
   border: 1px solid #d0d5dd;
   padding: 3px 8px;
-  height: 24px;
+  height: 22px;
   background: #fff;
   box-sizing: border-box;
   outline: none;
   border-radius: 5px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
   color: #1a2332;
 }
 .bk-input:focus {
@@ -229,32 +246,57 @@
 }
 .bk-input::placeholder {
   color: #b0bec5;
-  font-family: inherit;
+}
+
+/* 필수 입력 — 형광펜 하이라이트 */
+.bk-input--required {
+  background: #fffde6;
+  border-color: #e6c800;
+}
+.bk-input--required:focus {
+  border-color: var(--im-mint, #00c7a9);
+  background: #fafff0;
+  box-shadow: 0 0 0 2.5px rgba(0,199,169,0.15);
+}
+.bk-input--required::placeholder {
+  color: #b89c00;
+  opacity: 0.7;
 }
 
 .bk-select {
-  font-family: inherit;
-  font-size: 12px;
+  font-family: 'Pretendard Variable', Pretendard, 'Malgun Gothic', system-ui, sans-serif;
+  font-size: 11px;
   border: 1px solid #d0d5dd;
   padding: 0 6px;
-  height: 24px;
+  height: 22px;
   background: #fff;
   box-sizing: border-box;
   outline: none;
   border-radius: 5px;
   color: #1a2332;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background 0.15s;
 }
 .bk-select:focus {
   border-color: var(--im-mint, #00c7a9);
   box-shadow: 0 0 0 2px rgba(0,199,169,0.15);
 }
 
+/* 필수 선택 — 형광펜 하이라이트 */
+.bk-select--required {
+  background: #fffde6;
+  border-color: #e6c800;
+}
+.bk-select--required:focus {
+  border-color: var(--im-mint, #00c7a9);
+  background: #fafff0;
+  box-shadow: 0 0 0 2px rgba(0,199,169,0.15);
+}
+
 /* ────────── 안내 텍스트 ────────── */
 .bk-notice {
-  padding: 5px 14px;
-  font-size: 11px;
+  padding: 4px 10px;
+  font-size: 10.5px;
   color: #5a4e00;
   background: #fffce8;
   border-bottom: 1px solid #f0e68c;
@@ -275,7 +317,7 @@
 .bk-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 11px;
   table-layout: auto;
 }
 
@@ -283,12 +325,12 @@
   background: #edf1f7;
   border-right: 1px solid #d8dde6;
   border-bottom: 2px solid #c8d0dc;
-  padding: 5px 7px;
+  padding: 4px 6px;
   text-align: center;
   font-weight: 700;
   white-space: nowrap;
   color: #3d4a5c;
-  font-size: 11.5px;
+  font-size: 10.5px;
   position: sticky;
   top: 0;
 }
@@ -296,7 +338,7 @@
 .bk-table td {
   border-right: 1px solid #ebebeb;
   border-bottom: 1px solid #ebebeb;
-  padding: 3px 7px;
+  padding: 2px 6px;
   white-space: nowrap;
   color: #2d3a4a;
 }
@@ -315,19 +357,19 @@
 }
 
 .bk-row-empty td {
-  height: 22px;
+  height: 19px;
   color: #d1d5db;
 }
 
 /* ────────── 집계 테이블 ────────── */
 .bk-sum-table {
   border-collapse: collapse;
-  font-size: 12px;
-  margin: 6px 12px;
+  font-size: 11px;
+  margin: 4px 10px;
 }
 .bk-sum-table td {
   border: 1px solid #d8dde6;
-  padding: 3px 10px;
+  padding: 2px 8px;
   white-space: nowrap;
 }
 .bk-sum-th {
@@ -356,19 +398,21 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #c8d0dc transparent;
+  background: #f7f9fc;
 }
 .bk-content::-webkit-scrollbar { width: 5px; }
 .bk-content::-webkit-scrollbar-thumb { background: #c8d0dc; border-radius: 99px; }
 
 /* ────────── 상태바 ────────── */
 .bk-statusbar {
-  background: linear-gradient(135deg, #1a5c1a 0%, #006b2b 100%);
-  color: #e8f8ef;
-  padding: 6px 16px;
-  font-size: 12px;
-  font-weight: 600;
+  /* 기본: 회색 (대기 상태) */
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  color: #d1d5db;
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 500;
   flex-shrink: 0;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  border-top: 1px solid rgba(255,255,255,0.06);
   letter-spacing: 0.01em;
   display: flex;
   align-items: center;
@@ -376,14 +420,37 @@
 }
 .bk-statusbar::before {
   content: '●';
-  color: #4ade80;
+  color: #9ca3af;
   font-size: 8px;
+  flex-shrink: 0;
+}
+
+/* 거래 완료 — 초록 */
+.bk-statusbar--success {
+  background: linear-gradient(135deg, #1a5c1a 0%, #006b2b 100%);
+  color: #e8f8ef;
+  font-weight: 700;
+}
+.bk-statusbar--success::before {
+  color: #4ade80;
+}
+
+/* 오류 — 빨강 */
+.bk-statusbar--error {
+  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
+  color: #fee2e2;
+  font-weight: 600;
+}
+.bk-statusbar--error::before {
+  content: '▲';
+  color: #fca5a5;
+  font-size: 9px;
 }
 
 /* ────────── 조회 결과 영역 ────────── */
 .bk-result-area {
   flex: 1;
-  min-height: 260px;
+  min-height: 220px;
   background: #fcfcfc;
   border-top: 1px solid #e4e8ef;
   display: flex;
@@ -468,6 +535,72 @@
 .bk-error-badge::before {
   content: '✗';
   font-weight: 900;
+}
+
+/* ────────── 카테고리 카드 그리드 ────────── */
+.bk-cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.bk-cat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 16px;
+  background: #f7f9fc;
+  border: 1px solid #dde3ed;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s, transform 0.08s;
+}
+.bk-cat-card:hover:not(:disabled) {
+  background: #edfaf6;
+  border-color: var(--im-mint, #00c7a9);
+  box-shadow: 0 2px 10px rgba(0,199,169,0.12);
+  transform: translateY(-1px);
+}
+.bk-cat-card--dim {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.bk-cat-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bk-cat-card-code {
+  font-size: 10px;
+  font-weight: 700;
+  color: #8a96a8;
+  background: #e0e6f0;
+  border-radius: 4px;
+  padding: 2px 6px;
+  letter-spacing: 0.04em;
+}
+.bk-cat-card:hover:not(:disabled) .bk-cat-card-code {
+  background: rgba(0,199,169,0.15);
+  color: #007a64;
+}
+.bk-cat-card-badge {
+  font-size: 9.5px;
+  color: #b0bec5;
+  border: 1px solid #dde3ed;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.bk-cat-card-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a2332;
+}
+.bk-cat-card-desc {
+  font-size: 11px;
+  color: #7a8699;
+  line-height: 1.5;
 }
 
 /* ────────── 반응형 ────────── */

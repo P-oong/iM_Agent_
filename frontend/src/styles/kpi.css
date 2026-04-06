@@ -24,6 +24,7 @@
   color: #fff;
   padding: 10px 14px;
   border-radius: 10px;
+  font-family: 'Pretendard Variable', Pretendard, 'Malgun Gothic', system-ui, sans-serif;
 }
 
 /* SVG 링 래퍼 */
@@ -73,7 +74,6 @@
   font-size: 11px;
   font-weight: 700;
   color: #00e5c8;
-  font-family: monospace;
 }
 
 /* 레벨명 */
@@ -90,7 +90,6 @@
   font-weight: 800;
   color: #00e5c8;
   white-space: nowrap;
-  font-family: monospace;
 }
 .kpi-pts-unit {
   font-size: 10px;
@@ -99,13 +98,26 @@
   margin-left: 1px;
 }
 
-/* 배지 */
-.kpi-badge-emoji { line-height: 1; }
-.kpi-badge-lv {
+/* 링 중앙 레벨 표시 (이모지 제거, 숫자+LV 텍스트) */
+.kpi-badge-lv-num {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+.kpi-badge-lv-label {
+  font-size: 7px;
   font-weight: 700;
-  font-family: monospace;
-  letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.55);
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.45);
+  line-height: 1;
+}
+
+/* 레벨명 앞 이모지 */
+.kpi-name-emoji {
+  margin-right: 4px;
+  font-size: 13px;
 }
 
 /* 프로그레스 트랙 */
@@ -149,7 +161,7 @@
 
 .kpi-toast-pts {
   font-size: 16px;
-  font-family: monospace;
+  font-weight: 800;
 }
 .kpi-toast-lbl {
   font-size: 11px;
