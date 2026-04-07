@@ -18,7 +18,8 @@
 .bk-screen {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  /* 부모(.bk-main)를 정확히 꽉 채움 — 넘치면 .bk-content 내부만 스크롤 */
+  height: 100%;
   background: #fff;
   box-shadow: none;
   border-top: none;
@@ -395,6 +396,8 @@
 /* ────────── 스크롤 컨텐츠 영역 ────────── */
 .bk-content {
   flex: 1;
+  /* flex 자식이 부모를 넘치지 않도록 min-height 강제 */
+  min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #c8d0dc transparent;

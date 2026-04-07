@@ -77,44 +77,96 @@ function evaluateCard(c: DummyCustomer): EvalResult {
 
   const eligible = score >= 40 && !hasOverdue
 
-  // 추천 카드 구성
+  // 추천 카드 구성 (실제 iM뱅크 카드 상품)
   const cards: CardOption[] = []
+
   if (score >= 80) {
+    // 고소득·우수 신용 → iM 트래블 카드 (프리미엄)
     cards.push({
-      id: 'p1',
-      name: 'iM 프리미엄 플래티넘',
-      desc: '공항 라운지·해외 할인·프리미엄 혜택',
+      id: 'travel',
+      name: 'iM 트래블 카드',
+      desc: '해외 이용 수수료 면제 · 일상·여행 모두 혜택',
       limit: Math.min(5000, Math.round(c.annualIncome * 0.6 / 100) * 100),
       tier: 'premium',
-      benefits: ['공항 라운지 무제한', '해외결제 1.5% 캐시백', '호텔 할인 20%'],
+      benefits: [
+        '해외 이용 수수료 無',
+        '일상생활 영역 10% 청구할인',
+        '여행 영역 5% 청구할인',
+        '쿠팡·배민·스타벅스·넷플릭스 혜택',
+      ],
     })
   }
-  if (score >= 55) {
+
+  if (score >= 65) {
+    // 중상위 신용 → iM i 카드 (온라인·편의점·통신 특화)
     cards.push({
-      id: 's1',
-      name: 'iM 일반 신용카드',
-      desc: '국내 쇼핑·주유·통신 할인',
+      id: 'i-card',
+      name: 'iM i 카드',
+      desc: '즐겨 쓰는 5개 영역 최대 10% 할인',
+      limit: Math.min(3000, Math.round(c.annualIncome * 0.4 / 100) * 100),
+      tier: 'premium',
+      benefits: [
+        '온라인쇼핑 10% 할인 (쿠팡·G마켓·11번가 등)',
+        '편의점 10% 할인 (GS25·CU·세븐일레븐)',
+        '이동통신 10% 할인 (SKT·KT·LGU+)',
+        '연회비 10,000원',
+      ],
+    })
+  }
+
+  if (score >= 55) {
+    // 중간 신용 → iM LIVING 카드 (생활요금 특화)
+    cards.push({
+      id: 'living',
+      name: 'iM LIVING 카드',
+      desc: '생활요금·생활쇼핑 특화 카드',
       limit: Math.min(2000, Math.round(c.annualIncome * 0.3 / 100) * 100),
       tier: 'standard',
-      benefits: ['국내 쇼핑 5% 할인', '주유 리터당 60원 할인', '통신비 월 3,000원 절감'],
+      benefits: [
+        '아파트관리비·전기·가스·통신 자동이체 10% 할인',
+        '쿠팡·컬리·배달앱·대형마트·올리브영 5% 할인',
+        '생활요금 캐시백 이벤트 수시 진행',
+      ],
     })
   }
+
   if (score >= 40) {
+    // 기본 신용 → iM 생활카드 (전월실적 없는 기본형)
     cards.push({
-      id: 'b1',
-      name: 'iM 실속 신용카드',
-      desc: '생활밀착형 혜택, 연회비 0원',
-      limit: Math.min(500, Math.round(c.annualIncome * 0.1 / 100) * 100),
+      id: 'basic-life',
+      name: 'iM 생활카드',
+      desc: '전월실적 없는 생활밀착형 혜택',
+      limit: Math.min(500, Math.round(c.annualIncome * 0.12 / 100) * 100),
       tier: 'basic',
-      benefits: ['편의점·마트 3% 할인', '대중교통 10% 할인', '연회비 면제'],
+      benefits: [
+        '대중교통 5% 할인 (전월실적 무관)',
+        '이동통신 10% 할인 (월 최대 1만원)',
+        '주유 리터당 40원 할인',
+        '연회비 15,000원',
+      ],
+    })
+    // 쇼핑 빈도 높으면 쇼핑카드도 추천
+    cards.push({
+      id: 'shopping',
+      name: 'iM 첫카드',
+      desc: '전 가맹점 0.5% 할인 · 조건 없이 간편하게',
+      limit: Math.min(300, Math.round(c.annualIncome * 0.08 / 100) * 100),
+      tier: 'basic',
+      benefits: [
+        '전 가맹점 0.5% 청구할인 (전월실적 무관)',
+        '온라인·모바일 결제 시 추가 0.5% 할인',
+        '연회비 10,000원',
+        '사회초년생·세컨드카드 추천',
+      ],
     })
   }
 
   const reason = !eligible
     ? '신용점수 또는 연체 이력으로 인해 현재 신용카드 발급이 어렵습니다.'
-    : score >= 80 ? '우수한 신용 프로필로 프리미엄 카드 발급이 가능합니다.'
-    : score >= 55 ? '양호한 신용 프로필로 일반 신용카드 발급이 가능합니다.'
-    : '기본 심사를 통과하였습니다. 실속형 카드 발급이 가능합니다.'
+    : score >= 80 ? 'iM 트래블 카드 등 프리미엄 상품 발급이 가능합니다.'
+    : score >= 65 ? 'iM i 카드 · iM LIVING 카드 발급이 가능합니다.'
+    : score >= 55 ? 'iM LIVING 카드 발급이 가능합니다.'
+    : '기본 심사를 통과하였습니다. iM 생활카드 · iM 첫카드 발급이 가능합니다.'
 
   return { score, eligible, reason, factors, cards, dti }
 }

@@ -220,17 +220,17 @@
 
 .opp-card {
   background: #f8fffe;
-  border: 1.5px solid #c8f0e8;
-  border-radius: 12px;
-  padding: 11px 13px;
+  border: 1px solid #c8f0e8;
+  border-radius: 8px;
+  padding: 7px 9px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .opp-card:hover {
   border-color: var(--im-mint);
-  box-shadow: 0 2px 12px rgba(0,199,169,0.12);
+  box-shadow: 0 2px 8px rgba(0,199,169,0.10);
 }
 .opp-card--done {
   opacity: 0.42;
@@ -241,17 +241,17 @@
 .opp-card-top {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 5px;
 }
 /* lucide 아이콘 래퍼 */
 .opp-icon-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   background: rgba(0, 199, 169, 0.12);
-  border-radius: 8px;
+  border-radius: 6px;
   color: var(--im-mint);
   flex-shrink: 0;
 }
@@ -260,13 +260,13 @@
   color: #bbb;
 }
 
-.opp-product { font-weight: 700; font-size: 13px; color: #111; flex: 1; }
+.opp-product { font-weight: 700; font-size: 11px; color: #111; flex: 1; }
 .opp-kpi-badge {
   background: var(--im-mint);
   color: #fff;
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 700;
-  padding: 2px 9px;
+  padding: 1px 6px;
   border-radius: 99px;
   white-space: nowrap;
   flex-shrink: 0;
@@ -276,30 +276,30 @@
   align-items: center;
   background: #e8f5e9;
   color: #388e3c;
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 600;
-  padding: 2px 9px;
+  padding: 1px 6px;
   border-radius: 99px;
   flex-shrink: 0;
 }
 
-.opp-desc { font-size: 11px; color: #666; line-height: 1.45; }
+.opp-desc { font-size: 10px; color: #666; line-height: 1.4; }
 
 .opp-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 2px;
+  margin-top: 1px;
 }
-.opp-category { font-size: 10px; color: #bbb; font-weight: 600; letter-spacing: 0.05em; }
+.opp-category { font-size: 9.5px; color: #bbb; font-weight: 600; letter-spacing: 0.05em; }
 
 .opp-btn {
   background: var(--im-mint);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 5px 14px;
-  font-size: 12px;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 10px;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;

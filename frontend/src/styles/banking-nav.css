@@ -233,7 +233,8 @@
 
 .bk-main {
   flex: 1;
-  overflow: auto;
+  /* 외부 스크롤 금지 — 내부 .bk-content 에서만 스크롤 */
+  overflow: hidden;
   min-height: 0;
   min-width: 0;
   background: #111c28;

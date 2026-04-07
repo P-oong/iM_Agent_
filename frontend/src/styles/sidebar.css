@@ -109,7 +109,7 @@
 .rs-drawer-body {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding: 8px;
   scrollbar-width: thin;
   scrollbar-color: #d0f5ee transparent;
 }
@@ -224,69 +224,69 @@
 .crm-search-btn:active { transform: scale(0.98); }
 
 .crm-section {
-  margin-bottom: 14px;
+  margin-bottom: 8px;
 }
 .crm-section-title {
   display: flex;
   align-items: center;
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--im-mint);
-  border-bottom: 2px solid var(--im-mint);
-  padding-bottom: 4px;
-  margin-bottom: 8px;
+  border-bottom: 1.5px solid var(--im-mint);
+  padding-bottom: 3px;
+  margin-bottom: 5px;
 }
 
-.crm-badge-row { margin-bottom: 6px; }
+.crm-badge-row { margin-bottom: 4px; }
 .crm-grade {
   display: inline-block;
   background: var(--im-mint);
   color: #fff;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 2px 10px;
+  padding: 1px 7px;
   border-radius: 99px;
 }
 
-.crm-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.crm-table td { padding: 4px; vertical-align: top; line-height: 1.5; }
-.crm-td-label { color: #888; white-space: nowrap; width: 60px; }
-.crm-name { font-size: 15px; font-weight: 700; color: #111; }
+.crm-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.crm-table td { padding: 2px 3px; vertical-align: top; line-height: 1.45; }
+.crm-td-label { color: #888; white-space: nowrap; width: 58px; }
+.crm-name { font-size: 13px; font-weight: 700; color: #111; }
 
 /* 계좌 카드 */
 .crm-account {
   background: #f8fffe;
   border: 1px solid #d4f5ee;
-  border-radius: 10px;
-  padding: 9px 12px;
-  margin-bottom: 6px;
+  border-radius: 7px;
+  padding: 5px 8px;
+  margin-bottom: 4px;
   transition: border-color 0.15s;
 }
 .crm-account:hover { border-color: var(--im-mint); }
-.crm-account-num { font-size: 12px; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #333; margin-bottom: 3px; letter-spacing: 0.03em; }
-.crm-account-info { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-.crm-product { font-size: 11px; color: #555; }
+.crm-account-num { font-size: 10.5px; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #333; margin-bottom: 2px; letter-spacing: 0.02em; }
+.crm-account-info { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
+.crm-product { font-size: 10px; color: #555; }
 .crm-status {
-  font-size: 10px;
-  padding: 1px 7px;
+  font-size: 9.5px;
+  padding: 1px 5px;
   border-radius: 99px;
   background: #eee;
   color: #888;
 }
 .crm-status--ok { background: #e6fff9; color: #009e86; }
-.crm-account-balance { font-size: 14px; font-weight: 700; color: #111; text-align: right; }
+.crm-account-balance { font-size: 12px; font-weight: 700; color: #111; text-align: right; }
 
 /* 최근거래 */
-.crm-tx-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.crm-tx-table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
 .crm-tx-table th {
   background: #f5f5f5;
-  padding: 5px 6px;
+  padding: 3px 5px;
   border-bottom: 1px solid #e0e0e0;
   font-weight: 600;
   color: #555;
   text-align: left;
 }
-.crm-tx-table td { padding: 5px 6px; border-bottom: 1px solid #f0f0f0; }
+.crm-tx-table td { padding: 3px 5px; border-bottom: 1px solid #f0f0f0; }
 .crm-tx-plus  { color: #0066cc; font-weight: 600; text-align: right; }
 .crm-tx-minus { color: #cc3300; font-weight: 600; text-align: right; }
 
@@ -320,6 +320,287 @@
   color: var(--im-mint);
   font-weight: 700;
 }
+
+/* ── 고객 유형 배지 ── */
+.crm-type-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1.5px solid;
+  letter-spacing: 0.03em;
+}
+.crm-type--personal { background: #eff6ff; border-color: #3b82f6; color: #1d4ed8; }
+.crm-type--sole     { background: #fff7ed; border-color: #f97316; color: #c2410c; }
+.crm-type--corp     { background: #fdf4ff; border-color: #a855f7; color: #7e22ce; }
+
+/* ── 접이식 섹션 버튼 ── */
+.crm-collapse-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  text-align: left;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+}
+.crm-collapse-body { margin-top: 8px; }
+
+.crm-section-badge {
+  font-size: 8.5px;
+  font-weight: 700;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #dc2626;
+  border-radius: 8px;
+  padding: 0px 5px;
+  margin-left: 4px;
+}
+
+/* ── 서류 섹션 ── */
+.crm-doc-note {
+  font-size: 10px;
+  color: #9ca3af;
+  margin: 0 0 4px;
+  line-height: 1.4;
+}
+.crm-doc-alert {
+  font-size: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 5px;
+  padding: 4px 8px;
+  color: #9a3412;
+  line-height: 1.5;
+  margin-bottom: 5px;
+}
+.crm-doc-group { margin-bottom: 5px; }
+.crm-doc-category {
+  font-size: 9px;
+  font-weight: 800;
+  color: #6b7a8d;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+  padding-bottom: 1px;
+  border-bottom: 1px solid #eef1f5;
+}
+.crm-doc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 10px;
+  color: #374151;
+  padding: 1px 0;
+  line-height: 1.4;
+}
+.crm-doc-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--im-mint, #00c7a9);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* ── 추천 상품 ── */
+.crm-rec-list { display: flex; flex-direction: column; gap: 3px; }
+.crm-rec-item {
+  position: relative;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #e4e9f2;
+  background: #f7f9fc;
+}
+.crm-rec--high { border-color: #a7f3e4; background: #f0fdf9; }
+.crm-rec-name  { font-size: 10.5px; font-weight: 700; color: #1a2332; }
+.crm-rec-desc  { font-size: 9.5px; color: #6b7a8d; margin-top: 0; }
+.crm-rec-badge {
+  position: absolute;
+  top: 4px; right: 6px;
+  font-size: 8.5px;
+  font-weight: 800;
+  background: var(--im-mint, #00c7a9);
+  color: #fff;
+  border-radius: 6px;
+  padding: 0 5px;
+}
+
+/* ── 금리 우대 ── */
+.crm-rate-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  border: 1px solid #e4e9f2;
+  background: #f7f9fc;
+  margin-bottom: 3px;
+  opacity: 0.85;
+}
+.crm-rate--have { background: #f0fdf9; border-color: #a7f3e4; opacity: 1; }
+.crm-rate-left  { display: flex; align-items: flex-start; gap: 6px; flex: 1; min-width: 0; }
+.crm-rate-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #d1d5db; flex-shrink: 0; margin-top: 3px;
+}
+.crm-rate-dot--have { background: var(--im-mint, #00c7a9); }
+.crm-rate-product { font-size: 10px; font-weight: 700; color: #1a2332; }
+.crm-rate-desc    { font-size: 9px; color: #9ca3af; margin-top: 0; line-height: 1.3; }
+.crm-rate-value   { font-size: 10px; font-weight: 700; color: #94a3b8; flex-shrink: 0; white-space: nowrap; }
+.crm-rate-value--have { color: var(--im-mint, #00c7a9); }
+
+/* ── AI 인사이트 카드 ── */
+.crm-ai-card {
+  background: linear-gradient(135deg, #f0fdf9 0%, #e8f8f5 100%);
+  border: 1.5px solid #a7f3e4;
+  border-radius: 9px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+.crm-ai-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  background: rgba(0,199,169,0.12);
+  border-bottom: 1px solid #c6f0e8;
+  font-size: 10px;
+  font-weight: 700;
+  color: #007a64;
+}
+.crm-ai-body {
+  padding: 7px 9px;
+}
+.crm-ai-text {
+  font-size: 10px;
+  line-height: 1.65;
+  color: #1a2332;
+  margin: 0;
+  white-space: pre-wrap;
+}
+.crm-ai-placeholder {
+  font-size: 10px;
+  color: #9ca3af;
+  margin: 0;
+  font-style: italic;
+}
+@keyframes crm-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.crm-ai-spin {
+  animation: crm-spin 1s linear infinite;
+  color: var(--im-mint);
+  margin-left: auto;
+}
+
+/* ── AI 채팅 ── */
+.crm-chat {
+  border: 1.5px solid #e4e9f2;
+  border-radius: 9px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  max-height: 260px;
+}
+.crm-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  background: #f7f9fc;
+  border-bottom: 1px solid #e4e9f2;
+  font-size: 10px;
+  font-weight: 700;
+  color: #4b5563;
+  flex-shrink: 0;
+}
+.crm-chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  scrollbar-width: thin;
+  scrollbar-color: #d0f5ee transparent;
+  min-height: 50px;
+}
+.crm-chat-hint {
+  font-size: 9.5px;
+  color: #b0b8c4;
+  text-align: center;
+  line-height: 1.6;
+  margin: auto;
+  padding: 6px 0;
+}
+.crm-chat-msg {
+  font-size: 10px;
+  line-height: 1.6;
+  padding: 5px 8px;
+  border-radius: 8px;
+  max-width: 90%;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.crm-chat-msg--user {
+  background: var(--im-mint);
+  color: #fff;
+  align-self: flex-end;
+  border-bottom-right-radius: 3px;
+}
+.crm-chat-msg--ai {
+  background: #f0fdf9;
+  color: #1a2332;
+  border: 1px solid #c6f0e8;
+  align-self: flex-start;
+  border-bottom-left-radius: 3px;
+}
+.crm-chat-input-row {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border-top: 1px solid #e4e9f2;
+  background: #fff;
+  flex-shrink: 0;
+}
+.crm-chat-input {
+  flex: 1;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 4px 7px;
+  font-size: 10px;
+  font-family: 'Pretendard Variable', Pretendard, sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+  background: #f7f9fc;
+}
+.crm-chat-input:focus { border-color: var(--im-mint); background: #fff; }
+.crm-chat-input:disabled { opacity: 0.6; }
+.crm-chat-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: var(--im-mint);
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, opacity 0.15s;
+}
+.crm-chat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+.crm-chat-send:not(:disabled):hover { background: #00a98e; }
 
 /* 주민번호 입력 */
 .crm-id-row {
