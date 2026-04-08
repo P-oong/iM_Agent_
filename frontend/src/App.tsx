@@ -5,7 +5,6 @@ import { BankingLayout } from '@/layouts/BankingLayout'
 import { AboutPage } from '@/pages/AboutPage'
 import { AiPage } from '@/pages/AiPage'
 import { HomePage } from '@/pages/HomePage'
-import { Screen0125 } from '@/pages/banking/Screen0125'
 import { Screen0156 } from '@/pages/banking/Screen0156'
 import { ScreenTemplate } from '@/pages/banking/ScreenTemplate'
 import { BankingCategoryPage } from '@/pages/banking/BankingCategoryPage'
@@ -68,7 +67,6 @@ const router = createBrowserRouter([
         children: [
           { index: true,        element: <BankingCategoryPage /> },
           { path: '0156',       element: <Screen0156 /> },
-          { path: '0125',       element: <Screen0125 /> },
           { path: '0310',       element: <Screen0310 /> },
           { path: 'template',   element: <ScreenTemplate /> },
           { path: 'cat/:catId', element: <BankingCategoryPage /> },

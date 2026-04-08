@@ -20,13 +20,11 @@ const CAT_MAP: Record<string, CatMeta> = {
     desc: '모든 업무 화면 목록입니다.',
     screens: [
       { code: '0156', name: '고객실명조회',    desc: '실명번호로 고객 정보를 조회합니다.',       path: '/banking/0156' },
-      { code: '0125', name: '다수계좌입금',    desc: '여러 계좌에 일괄 입금 처리합니다.',         path: '/banking/0125' },
       { code: '0110', name: '계좌기본조회',    desc: '계좌의 기본 정보를 조회합니다.' },
       { code: '0210', name: '대출기본조회',    desc: '대출 계좌의 기본 정보를 조회합니다.' },
       { code: '0310', name: '카드 발급 가능 조회', desc: '실명번호 입력 → 자동 심사 → 즉시 신청.', path: '/banking/0310' },
       { code: '0410', name: '인터넷뱅킹조회', desc: '인터넷뱅킹 등록 현황을 조회합니다.' },
       { code: '0510', name: '공과금수납조회', desc: '공과금 수납 내역을 조회합니다.' },
-      { code: '0000', name: '화면 템플릿',    desc: '새 화면을 설계할 때 사용하는 기본 틀입니다.', path: '/banking/template' },
     ],
   },
   customer: {
@@ -47,7 +45,6 @@ const CAT_MAP: Record<string, CatMeta> = {
       { code: '0111', name: '잔액조회',       desc: '계좌 잔액 및 가용 금액을 조회합니다.' },
       { code: '0112', name: '거래내역조회',   desc: '기간별 거래 내역을 조회합니다.' },
       { code: '0113', name: '이자조회',       desc: '적립 이자 및 예상 이자를 조회합니다.' },
-      { code: '0125', name: '다수계좌입금',   desc: '여러 계좌에 일괄 입금 처리합니다.',           path: '/banking/0125' },
       { code: '0126', name: '자동이체등록',   desc: '정기 자동이체 계좌 등록 및 조회합니다.' },
     ],
   },
@@ -114,9 +111,8 @@ export function BankingCategoryPage() {
             <button
               key={s.code}
               className={`bk-cat-card${s.path ? '' : ' bk-cat-card--dim'}`}
-              onClick={() => s.path && navigate(s.path)}
-              disabled={!s.path}
-              title={s.path ? `[${s.code}] ${s.name}` : '준비중'}
+              onClick={() => navigate(s.path ?? `/banking/${s.code}`)}
+              title={`[${s.code}] ${s.name}`}
             >
               <div className="bk-cat-card-header">
                 <span className="bk-cat-card-code">{s.code}</span>

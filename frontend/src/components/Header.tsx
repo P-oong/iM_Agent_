@@ -20,7 +20,6 @@ export function Header() {
         <NavLink to="/" className={linkClass} end>홈</NavLink>
         <NavLink to="/ai" className={linkClass}>AI 분석</NavLink>
         <NavLink to="/banking/0156" className={linkClass}>전산화면</NavLink>
-        <NavLink to="/banking/template" className={linkClass}>빈 페이지</NavLink>
         <NavLink to="/about" className={linkClass}>소개</NavLink>
       </nav>
     </header>

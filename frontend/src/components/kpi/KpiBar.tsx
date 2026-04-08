@@ -62,7 +62,7 @@ export function KpiBar({ inline = false }: KpiBarProps) {
       <div className="kpi-inline">
         {/* 원형 링: 레벨 숫자만 중앙 표시 */}
         <div className="kpi-ring-wrap">
-          <RingProgress pct={pct} />
+          <RingProgress pct={pct} size={42} stroke={4} />
           <div className="kpi-ring-center">
             <span className="kpi-badge-lv-num">{levelInfo.level}</span>
             <span className="kpi-badge-lv-label">LV</span>
@@ -78,12 +78,12 @@ export function KpiBar({ inline = false }: KpiBarProps) {
             </span>
             <span className="kpi-pts">
               <AnimatedNumber value={levelInfo.totalPoints} />
-              <span className="kpi-pts-unit">점</span>
+              <span className="kpi-pts-unit">pt</span>
             </span>
           </div>
 
           {/* 프로그레스 바 */}
-          <div className="kpi-track" style={{ margin: '4px 0' }}>
+          <div className="kpi-track" style={{ margin: '3px 0' }}>
             <motion.div
               className="kpi-fill"
               initial={{ width: 0 }}
@@ -96,7 +96,7 @@ export function KpiBar({ inline = false }: KpiBarProps) {
             <span className="kpi-inline-sub">레벨업까지</span>
             <span className="kpi-inline-remain">
               <AnimatedNumber value={remaining} />
-              <span className="kpi-pts-unit"> 점</span>
+              <span className="kpi-pts-unit"> pt</span>
             </span>
           </div>
         </div>

@@ -6,9 +6,7 @@ import '@/styles/banking-nav.css'
 // ── 화면 코드 → 라우트 ───────────────────────────────
 const SCREEN_ROUTES: Record<string, string> = {
   '0156': '/banking/0156',
-  '0125': '/banking/0125',
   '0310': '/banking/0310',
-  '0000': '/banking/template',
 }
 function resolveRoute(code: string): string {
   return SCREEN_ROUTES[code] ?? `/banking/${code}`
@@ -16,10 +14,8 @@ function resolveRoute(code: string): string {
 
 // ── 화면 경로 → 메타 ─────────────────────────────────
 const SCREEN_META: Record<string, { code: string; name: string }> = {
-  '/banking/0156':    { code: '0156', name: '고객실명조회' },
-  '/banking/0125':    { code: '0125', name: '다수계좌입금' },
-  '/banking/0310':    { code: '0310', name: '카드 발급 조회' },
-  '/banking/template':{ code: '0000', name: '화면 템플릿' },
+  '/banking/0156': { code: '0156', name: '고객실명조회' },
+  '/banking/0310': { code: '0310', name: '카드 발급 조회' },
 }
 
 // ── 카테고리 탭 ──────────────────────────────────────

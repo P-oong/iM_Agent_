@@ -8,13 +8,15 @@ import {
 } from 'react'
 
 // ── 레벨 테이블 ──────────────────────────────────────
+// KPI 기준: 실제 iM뱅크 교차판매 포인트 기준 (0.2~10pt 단위)
+// 반기 상위 성과자 기준 최대 누적 약 100~150pt 수준
 export const KPI_LEVELS = [
-  { level: 1, name: '신입행원', emoji: '🌱', min: 0,    max: 100  },
-  { level: 2, name: '일반행원', emoji: '📋', min: 100,  max: 250  },
-  { level: 3, name: '숙련행원', emoji: '⭐', min: 250,  max: 500  },
-  { level: 4, name: '전문행원', emoji: '🏅', min: 500,  max: 800  },
-  { level: 5, name: '달인',     emoji: '💎', min: 800,  max: 1200 },
-  { level: 6, name: 'MVP',      emoji: '👑', min: 1200, max: 9999 },
+  { level: 1, name: '신입행원', emoji: '🌱', min: 0,   max: 5   },
+  { level: 2, name: '일반행원', emoji: '📋', min: 5,   max: 15  },
+  { level: 3, name: '숙련행원', emoji: '⭐', min: 15,  max: 30  },
+  { level: 4, name: '전문행원', emoji: '🏅', min: 30,  max: 60  },
+  { level: 5, name: '달인',     emoji: '💎', min: 60,  max: 100 },
+  { level: 6, name: 'MVP',      emoji: '👑', min: 100, max: 9999 },
 ] as const
 
 // ── 타입 ────────────────────────────────────────────
@@ -48,7 +50,7 @@ export function getLevelInfo(total: number): LevelInfo {
     KPI_LEVELS.find(l => total >= l.min && total < l.max) ??
     KPI_LEVELS[KPI_LEVELS.length - 1]
 
-  const range = lv.max === 9999 ? 800 : lv.max - lv.min
+  const range = lv.max === 9999 ? 100 : lv.max - lv.min
   const progress = Math.min((total - lv.min) / range, 1)
 
   return {
@@ -68,7 +70,7 @@ const KpiContext = createContext<KpiContextValue | null>(null)
 let _tid = 0
 
 export function KpiProvider({ children }: { children: ReactNode }) {
-  const [totalPoints, setTotalPoints] = useState(120) // 데모: level 2 시작
+  const [totalPoints, setTotalPoints] = useState(2) // 데모: level 1 시작
   const [toasts, setToasts] = useState<Toast[]>([])
   const [completed, setCompleted] = useState<Set<string>>(new Set())
 

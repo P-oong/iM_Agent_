@@ -49,9 +49,9 @@ const FEATURES = [
 ]
 
 const QUICK_LINKS = [
-  { label: '[0156] 고객실명조회', sub: '실명번호 → CRM/AI 자동연동', href: '/banking/0156', primary: true },
-  { label: '[0125] 수수 다수계좌', sub: '다수계좌 입금 처리 화면',     href: '/banking/0125', primary: false },
-  { label: 'AI 고객 분석',         sub: 'Solar Pro 3 실시간 분석',     href: '/ai',           primary: false },
+  { label: '[0156] 고객실명조회',      sub: '실명번호 → CRM/AI 자동연동',  href: '/banking/0156', primary: true  },
+  { label: '[0310] 카드 발급 가능 조회', sub: '자동 심사 → 즉시 신청',      href: '/banking/0310', primary: false },
+  { label: 'AI 고객 분석',             sub: 'Solar Pro 3 실시간 분석',    href: '/ai',           primary: false },
 ]
 
 const card = {
@@ -79,7 +79,7 @@ export function HomePage() {
           >
             <div className="home-badge">
               <Sparkles size={12} />
-              iM뱅크 공모전 2026
+              iM Agentic Coding Challenge 2026
             </div>
             <h1 className="home-title">
               영업 현장을<br />
@@ -90,8 +90,8 @@ export function HomePage() {
               차세대 은행원 영업지원 플랫폼
             </p>
             <div className="home-hero-ctas">
-              <Link to="/banking/0156" className="home-cta-primary">
-                전산화면 시작
+              <Link to="/banking/0310" className="home-cta-primary">
+                카드 발급 시작
                 <ArrowRight size={16} />
               </Link>
               <Link to="/ai" className="home-cta-secondary">
@@ -165,7 +165,7 @@ export function HomePage() {
       </div>
 
       {/* ── 화면 바로가기 ── */}
-      <div className="home-section">
+      {/* <div className="home-section">
         <div className="home-section-header">
           <h2 className="home-section-title">바로가기</h2>
         </div>
@@ -188,7 +188,7 @@ export function HomePage() {
             </motion.div>
           ))}
         </motion.div>
-      </div>
+      </div> */}
     </div>
   )
 }

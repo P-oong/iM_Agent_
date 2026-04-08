@@ -54,6 +54,11 @@ const GRADE_BG: Record<string, string> = {
   일반: 'linear-gradient(135deg,#6b7a8d,#8fa0b5)',
   관리: 'linear-gradient(135deg,#c44,#a22)',
 }
+const TYPE_STYLE: Record<string, { bg: string; color: string }> = {
+  '개인':       { bg: 'rgba(0,199,169,0.12)',  color: '#007a64' },
+  '개인사업자': { bg: 'rgba(59,130,246,0.12)', color: '#1d4ed8' },
+  '법인':       { bg: 'rgba(139,92,246,0.12)', color: '#6d28d9' },
+}
 
 export function AiPage() {
   useDocumentTitle('AI 고객 분석 — iM Agent')
@@ -152,7 +157,15 @@ export function AiPage() {
                     {c.grade}
                   </div>
                   <div className="ai-customer-info">
-                    <span className="ai-customer-name">{c.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span className="ai-customer-name">{c.name}</span>
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, padding: '1px 6px',
+                        borderRadius: 99, letterSpacing: 0.2,
+                        background: TYPE_STYLE[c.customerType]?.bg,
+                        color: TYPE_STYLE[c.customerType]?.color,
+                      }}>{c.customerType}</span>
+                    </div>
                     <span className="ai-customer-meta">{c.age}세 · {c.gender} · {c.job}</span>
                     <span className="ai-customer-products">
                       {c.products.slice(0, 3).join(' · ')}
@@ -244,13 +257,25 @@ export function AiPage() {
                     {selected.grade}
                   </div>
                   <div className="ai-profile-name-block">
-                    <span className="ai-profile-name">{selected.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <span className="ai-profile-name">{selected.name}</span>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, padding: '2px 8px',
+                        borderRadius: 99, letterSpacing: 0.2,
+                        background: TYPE_STYLE[selected.customerType]?.bg,
+                        color: TYPE_STYLE[selected.customerType]?.color,
+                        border: `1px solid ${TYPE_STYLE[selected.customerType]?.color}44`,
+                      }}>{selected.customerType}</span>
+                    </div>
                     <span className="ai-profile-sub">{selected.age}세 · {selected.gender} · {selected.job}</span>
                   </div>
                 </div>
                 <div className="ai-profile-grid">
                   {[
-                    { label: '연소득',   value: `${selected.annualIncome.toLocaleString()}만원` },
+                    {
+                      label: selected.customerType === '개인' ? '연소득' : '연매출',
+                      value: `${selected.annualIncome.toLocaleString()}만원`,
+                    },
                     { label: '신용점수', value: `${selected.creditScore}점` },
                     { label: '총자산',   value: `${selected.totalAssets.toLocaleString()}만원` },
                     { label: '총부채',   value: `${selected.totalDebt.toLocaleString()}만원` },

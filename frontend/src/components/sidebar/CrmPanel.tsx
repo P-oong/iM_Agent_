@@ -1,29 +1,44 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   BadgeDollarSign, BarChart3, Bot, Building2, CheckCircle2,
-  ChevronDown, ChevronUp, CreditCard, FileText, Home,
+  ChevronDown, ChevronUp, CreditCard, Home,
   Landmark, Loader2, Monitor, Send, Shield, Sparkles, TrendingDown, User, Wallet,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useCustomer } from '@/contexts/CustomerContext'
 import { useKpi } from '@/contexts/KpiContext'
 import { streamChatCompletion, DEFAULT_MODEL, DEFAULT_API_KEY } from '@/services/upstageApi'
+import { getKpiRules } from '@/data/kpiData'
 import '@/styles/kpi.css'
 
 // ── 고객 유형 ────────────────────────────────────────
 type CustomerType = '개인' | '개인사업자' | '법인'
 
-// ── 영업기회 마스터 ───────────────────────────────────
-const OPPORTUNITIES = [
-  { key: '신용카드', emoji: '💳', kpi: 20, category: '카드',   desc: '신용카드 미보유 → 신용카드 발급 추천',   Icon: CreditCard       },
-  { key: '체크카드', emoji: '💳', kpi: 12, category: '카드',   desc: '체크카드 미보유 → 체크카드 발급 추천',   Icon: Wallet           },
-  { key: '청약',     emoji: '🏠', kpi: 25, category: '청약',   desc: '주택청약 미가입 → 청약 신규 가입 추천',  Icon: Home             },
-  { key: 'ISA',      emoji: '📈', kpi: 30, category: 'ISA',    desc: 'ISA 비과세 계좌 미개설 → ISA 개설 추천', Icon: BarChart3        },
-  { key: '펀드',     emoji: '📊', kpi: 20, category: '투자',   desc: '투자상품 미보유 → 펀드 가입 추천',       Icon: BadgeDollarSign  },
-  { key: '정기예금', emoji: '🏦', kpi: 10, category: '예금',   desc: '정기예금 미가입 → 정기예금 신규 추천',   Icon: Building2        },
-  { key: '변액보험', emoji: '🛡️', kpi: 35, category: '보험',   desc: '보장성 보험 없음 → 변액보험 가입 추천',  Icon: Shield           },
-  { key: '신용대출', emoji: '💼', kpi: 25, category: '대출',   desc: '기존 대출 없음 → 신용대출 상담 추천',    Icon: Landmark         },
-] as const
+// ── 영업기회 key → 아이콘·설명 매핑 ─────────────────────
+const OPP_META: Record<string, {
+  Icon: React.ComponentType<{ size?: number }>
+  desc: (pt: number) => string
+  category: string
+}> = {
+  '요구불계좌': { Icon: Building2,       category: '수신',   desc: pt => `요구불계좌 신규 → +${pt}pt` },
+  '거치식예금': { Icon: Building2,       category: '수신',   desc: pt => `거치식 예금 신규 → +${pt}pt` },
+  '적립식예금': { Icon: Building2,       category: '수신',   desc: pt => `적립식 예금 신규 → +${pt}pt` },
+  '청약':       { Icon: Home,            category: '청약',   desc: pt => `주택청약 미가입 → 신규 가입 +${pt}pt` },
+  'ISA':        { Icon: BarChart3,       category: '투자',   desc: pt => `ISA 비과세 계좌 미개설 → 개설 +${pt}pt` },
+  '펀드':       { Icon: BadgeDollarSign, category: '투자',   desc: pt => `투자 상품 미보유 → 수익증권 가입 +${pt}pt` },
+  'IRP':        { Icon: Shield,          category: '퇴직연금', desc: pt => `개인형 IRP 미가입 → 신규 가입 +${pt}pt` },
+  '신용대출':   { Icon: Landmark,        category: '대출',   desc: pt => `서민지원대출 상담 → +${pt}pt` },
+  '기업대출':   { Icon: Landmark,        category: '대출',   desc: pt => `기업대출 신규 → +${pt}pt` },
+  '신용카드':   { Icon: CreditCard,      category: '카드',   desc: pt => `신용카드 미보유 → 발급 후 사용 +${pt}pt` },
+  '방카':       { Icon: Shield,          category: '방카',   desc: pt => `방카 미보유 → 가입 +${pt}pt` },
+  '외화통장':   { Icon: Wallet,          category: '외환',   desc: pt => `외화통장 미보유 → 신규 +${pt}pt` },
+  '소득이체':   { Icon: BadgeDollarSign, category: '서비스', desc: pt => `급여/소득 이체 미등록 → 등록 +${pt}pt` },
+  '자동납부':   { Icon: Monitor,         category: '서비스', desc: pt => `자동납부 신규 등록 → 건당 +${pt}pt` },
+  '계좌이동제': { Icon: Building2,       category: '서비스', desc: pt => `계좌이동 서비스 → 건당 +${pt}pt` },
+  '가맹점':     { Icon: BarChart3,       category: '서비스', desc: pt => `가맹점 결계계좌 신규 → +${pt}pt` },
+  '급여모계좌': { Icon: BadgeDollarSign, category: '서비스', desc: pt => `급여모계좌 최초 등록 → +${pt}pt` },
+  'CMS':        { Icon: Monitor,         category: 'CMS',   desc: pt => `금융결제원 CMS 체결 → +${pt}pt` },
+}
 
 // ── 고객 유형별 필요 서류 ────────────────────────────
 type DocGroup = { category: string; docs: string[] }
@@ -235,11 +250,89 @@ const MOCK_DB: Record<string, MockCustomer> = {
       { 일자: '01.08', 내용: '카드이용', 금액: -250_000 },
     ],
   },
+  '060606': {
+    고객번호: '100000006', 고객명: '김만덕', 유형: '법인',
+    생년월일: '1972-XX-XX', 성별: '여', 연락처: '010-0000-0006',
+    주소: '가상시 김만덕로 6', 등급: 'VIP',
+    사업정보: {
+      사업자번호: '000-81-00006', 상호: '(주)만덕정공',
+      업종: '금속 부품 제조업', 대표자: '김만덕', 설립일: '2005-09-01', 연매출: '약 128억원',
+    },
+    보유상품: ['법인당좌예금', '기업자유적금', '법인카드', '무역금융', '퇴직연금'],
+    계좌: [
+      { 번호: '013-00006-00001', 상품: '법인당좌예금', 잔액: 42_000_000, 상태: '정상' },
+      { 번호: '013-00006-00002', 상품: '기업자유적금', 잔액: 18_000_000, 상태: '정상' },
+      { 번호: '013-00006-00003', 상품: '무역금융',     잔액: 0,           상태: '정상' },
+    ],
+    최근거래: [
+      { 일자: '01.13', 내용: '원자재대금이체', 금액: -85_000_000 },
+      { 일자: '01.11', 내용: '수출대금입금',   금액:  210_000_000 },
+      { 일자: '01.08', 내용: '급여일괄이체',   금액: -48_000_000 },
+    ],
+  },
+  '070707': {
+    고객번호: '100000007', 고객명: '장보고', 유형: '법인',
+    생년월일: '1979-XX-XX', 성별: '남', 연락처: '010-0000-0007',
+    주소: '가상시 장보고로 7', 등급: 'VIP',
+    사업정보: {
+      사업자번호: '000-81-00007', 상호: '(주)보고무역',
+      업종: '글로벌 수출입 무역업', 대표자: '장보고', 설립일: '2008-03-15', 연매출: '약 320억원',
+    },
+    보유상품: ['법인당좌예금', '외화예금', '법인카드', '무역금융', 'B2B전자결제', '퇴직연금'],
+    계좌: [
+      { 번호: '013-00007-00001', 상품: '법인당좌예금',   잔액: 150_000_000, 상태: '정상' },
+      { 번호: '013-00007-00002', 상품: '외화예금 (USD)', 잔액: 95_000_000,  상태: '정상' },
+      { 번호: '013-00007-00003', 상품: '외화예금 (EUR)', 잔액: 38_000_000,  상태: '정상' },
+    ],
+    최근거래: [
+      { 일자: '01.14', 내용: '해외송금(中)',   금액: -320_000_000 },
+      { 일자: '01.12', 내용: '수입대금입금',   금액:  680_000_000 },
+      { 일자: '01.09', 내용: '급여일괄이체',   금액: -95_000_000 },
+    ],
+  },
+  '080808': {
+    고객번호: '100000008', 고객명: '박문수', 유형: '개인사업자',
+    생년월일: '1977-XX-XX', 성별: '남', 연락처: '010-0000-0008',
+    주소: '가상시 박문수로 8', 등급: '일반',
+    사업정보: {
+      사업자번호: '000-04-00008', 상호: '문수한식당',
+      업종: '한식 음식점업', 설립일: '2021-04-01', 연매출: '약 9,600만원',
+    },
+    보유상품: ['사업자통장', '수시입출금', '사업자카드'],
+    계좌: [
+      { 번호: '013-00008-00001', 상품: '사업자통장',  잔액: 4_200_000, 상태: '정상' },
+      { 번호: '013-00008-00002', 상품: '수시입출금',  잔액: 880_000,   상태: '정상' },
+    ],
+    최근거래: [
+      { 일자: '01.13', 내용: '식재료매입',    금액: -2_800_000 },
+      { 일자: '01.11', 내용: '카드매출입금',  금액:  6_400_000 },
+      { 일자: '01.08', 내용: '임대료이체',    금액: -1_500_000 },
+    ],
+  },
+  '090909': {
+    고객번호: '100000009', 고객명: '허준', 유형: '개인사업자',
+    생년월일: '1983-XX-XX', 성별: '남', 연락처: '010-0000-0009',
+    주소: '가상시 허준로 9', 등급: '우량',
+    사업정보: {
+      사업자번호: '000-04-00009', 상호: '허준한의원',
+      업종: '한방 의료업', 설립일: '2018-07-01', 연매출: '약 1.8억원',
+    },
+    보유상품: ['사업자통장', '정기예금', '사업자카드', '수시입출금'],
+    계좌: [
+      { 번호: '013-00009-00001', 상품: '사업자통장', 잔액: 11_500_000, 상태: '정상' },
+      { 번호: '013-00009-00002', 상품: '정기예금',   잔액: 30_000_000, 상태: '정상' },
+    ],
+    최근거래: [
+      { 일자: '01.13', 내용: '보험청구입금',  금액:  8_200_000 },
+      { 일자: '01.11', 내용: '의료기기리스료', 금액: -1_200_000 },
+      { 일자: '01.09', 내용: '직원급여',      금액: -4_800_000 },
+    ],
+  },
 }
 
 // ── 접이식 섹션 컴포넌트 ─────────────────────────────
 function CollapseSection({ title, icon: Icon, badge, children, defaultOpen = true }: {
-  title: string; icon: React.ComponentType<{ size?: number }>
+  title: string; icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
   badge?: string; children: React.ReactNode; defaultOpen?: boolean
 }) {
   const [open, setOpen] = useState(defaultOpen)
@@ -273,10 +366,27 @@ function buildCustomerContext(c: MockCustomer): string {
   return lines.join('\n')
 }
 
-const AI_SYSTEM = `당신은 iM뱅크 창구 행원을 돕는 AI 어시스턴트입니다.
-고객 데이터를 분석하여 행원에게 필요한 인사이트를 한국어로 3~5줄 이내의 핵심 요약으로 제공하세요.
-영업기회, 리스크, 즉각적인 추천 행동을 중심으로 간결하고 전문적으로 답변하세요.
-숫자와 구체적인 근거를 함께 언급하면 좋습니다.`
+/** 자동 인사이트 요약용 — 이모지 + 핵심 내용, 5줄 이내 */
+const AI_INSIGHT_SYSTEM = `당신은 iM뱅크 창구 행원을 돕는 AI 어시스턴트입니다.
+고객 데이터를 분석하여 핵심 인사이트를 아래 형식으로 4~5줄로 답하세요.
+각 줄은 이모지 하나로 시작하고 40자 이내의 자연스러운 한국어로 작성합니다.
+예시)
+💰 ISA·펀드 미보유 — 장기 투자 상품 추천 우선 검토
+⚠️ 부채비율 높음 — 신규 대출 권유 전 상환 여력 확인 필요
+✅ VIP 고객 — 프리미엄 우대금리·전용 혜택 적극 안내 권장
+📋 청약 만기 도래 — 갱신 또는 목돈 운용 상품으로 전환 제안
+🎯 카드 미보유 — iM i 카드 발급으로 즉시 KPI 적립 가능
+
+추가 서론·인사 없이 인사이트 줄만 출력하세요.`
+
+/** 채팅 Q&A용 — 구체적이고 실용적인 중간 수준 답변 */
+const AI_CHAT_SYSTEM = `당신은 iM뱅크 창구 행원을 돕는 AI 어시스턴트입니다.
+행원의 질문에 대해 다음 원칙으로 답변하세요.
+- 3~5문장으로 핵심 내용을 담아 구체적으로 답합니다.
+- 불필요한 서론·인사·반복 요약은 생략하고 바로 답변을 시작합니다.
+- 상품 추천 시 이유·혜택·예상 KPI를 포함합니다.
+- 법인·개인사업자 고객에게는 사업 특화 상품과 세무 혜택을 우선 언급합니다.
+- 한국 은행 실무에 맞는 전문 표현을 사용하되 과도하게 격식체로 쓰지 마세요.`
 
 type ChatMsg = { role: 'user' | 'ai'; text: string }
 
@@ -326,7 +436,7 @@ export function CrmPanel() {
 
     const ctx = buildCustomerContext(customer)
     const messages = [
-      { role: 'system' as const, content: AI_SYSTEM },
+      { role: 'system' as const, content: AI_INSIGHT_SYSTEM },
       { role: 'user'   as const, content: `다음 고객을 분석해주세요:\n${ctx}` },
     ]
 
@@ -359,7 +469,7 @@ export function CrmPanel() {
     }))
 
     const messages = [
-      { role: 'system' as const,    content: `${AI_SYSTEM}\n\n현재 상담 고객 정보:\n${ctx}` },
+      { role: 'system' as const,    content: `${AI_CHAT_SYSTEM}\n\n현재 상담 고객 정보:\n${ctx}` },
       ...history,
       { role: 'user' as const,      content: userText },
     ]
@@ -387,8 +497,19 @@ export function CrmPanel() {
     }
   }
 
+  // 고객 유형에 맞는 실제 KPI 기준표에서 영업기회 생성
   const opportunities = customer
-    ? OPPORTUNITIES.filter(o => !customer.보유상품.includes(o.key))
+    ? getKpiRules(customer.유형)
+        .filter(r => !customer.보유상품.some(p => p.includes(r.key)))
+        .map(r => ({
+          key:      r.key,
+          kpi:      r.points,
+          category: r.productGroup,
+          criteria: r.criteria,
+          limit:    r.halfYearLimit,
+          desc:     OPP_META[r.key]?.desc(r.points) ?? `${r.product} → +${r.points}pt`,
+          Icon:     OPP_META[r.key]?.Icon ?? Monitor,
+        }))
     : []
   const isDone = (key: string) =>
     customer ? completed.has(`${customer.고객번호}-${key}`) : false
@@ -444,55 +565,17 @@ export function CrmPanel() {
 
             {/* ── 기본정보 ── */}
             <CollapseSection title="기본정보" icon={User}>
-              <div className="crm-badge-row">
-                <span className={`crm-type-badge crm-type--${customer.유형 === '개인' ? 'personal' : customer.유형 === '개인사업자' ? 'sole' : 'corp'}`}>
-                  {customer.유형}
-                </span>
-                <span className="crm-grade">{customer.등급}</span>
-              </div>
               <table className="crm-table">
                 <tbody>
-                  <tr><td className="crm-td-label">고객번호</td><td style={{ fontSize: 11, color: '#555' }}>{customer.고객번호}</td></tr>
                   <tr><td className="crm-td-label">고객명</td><td className="crm-name">{customer.고객명}</td></tr>
-                  <tr><td className="crm-td-label">생년월일</td><td>{customer.생년월일} ({customer.성별})</td></tr>
                   <tr><td className="crm-td-label">연락처</td><td style={{ fontWeight: 600 }}>{customer.연락처}</td></tr>
                   {customer.사업정보 && <>
                     <tr><td className="crm-td-label">상호</td><td style={{ fontWeight: 700 }}>{customer.사업정보.상호}</td></tr>
-                    <tr><td className="crm-td-label">사업자번호</td><td>{customer.사업정보.사업자번호}</td></tr>
                     <tr><td className="crm-td-label">업종</td><td>{customer.사업정보.업종}</td></tr>
-                    {customer.사업정보.대표자 && <tr><td className="crm-td-label">대표자</td><td>{customer.사업정보.대표자}</td></tr>}
                     {customer.사업정보.연매출 && <tr><td className="crm-td-label">연매출</td><td style={{ color: '#007a64', fontWeight: 700 }}>{customer.사업정보.연매출}</td></tr>}
                   </>}
                 </tbody>
               </table>
-            </CollapseSection>
-
-            {/* ── 필요 서류 (개인사업자·법인만 강조) ── */}
-            <CollapseSection
-              title="필요 서류"
-              icon={FileText}
-              badge={customer.유형 !== '개인' ? '필독' : undefined}
-              defaultOpen={customer.유형 !== '개인'}
-            >
-              {customer.유형 === '개인' && (
-                <p className="crm-doc-note">개인 고객은 신분증 + 소득증빙으로 간단히 처리됩니다.</p>
-              )}
-              {customer.유형 !== '개인' && (
-                <div className="crm-doc-alert">
-                  ⚠ <strong>{customer.유형}</strong> 고객은 추가 서류가 필요합니다. 방문 전 사전 안내를 권장합니다.
-                </div>
-              )}
-              {getRequiredDocs(customer.유형).map(g => (
-                <div key={g.category} className="crm-doc-group">
-                  <div className="crm-doc-category">{g.category}</div>
-                  {g.docs.map(d => (
-                    <div key={d} className="crm-doc-item">
-                      <span className="crm-doc-dot" />
-                      {d}
-                    </div>
-                  ))}
-                </div>
-              ))}
             </CollapseSection>
 
             {/* ── 보유 상품 ── */}
@@ -502,20 +585,6 @@ export function CrmPanel() {
                   <span key={p} className="prod-tag">{p}</span>
                 ))}
               </div>
-            </CollapseSection>
-
-            {/* ── 보유 계좌 ── */}
-            <CollapseSection title="보유계좌" icon={Building2}>
-              {customer.계좌.map((acc, i) => (
-                <div key={i} className="crm-account">
-                  <div className="crm-account-num">{acc.번호}</div>
-                  <div className="crm-account-info">
-                    <span className="crm-product">{acc.상품}</span>
-                    <span className={`crm-status${acc.상태 === '정상' ? ' crm-status--ok' : ''}`}>{acc.상태}</span>
-                  </div>
-                  {acc.잔액 > 0 && <div className="crm-account-balance">{acc.잔액.toLocaleString()}원</div>}
-                </div>
-              ))}
             </CollapseSection>
 
             {/* ── 추천 상품 ── */}
@@ -552,7 +621,7 @@ export function CrmPanel() {
             <CollapseSection
               title="영업기회"
               icon={Sparkles}
-              badge={`+${opportunities.reduce((s, o) => s + o.kpi, 0)} KPI`}
+              badge={`+${opportunities.reduce((s, o) => s + o.kpi, 0).toFixed(1)}pt`}
             >
               {opportunities.length === 0 ? (
                 <p style={{ fontSize: 11, color: '#aaa', textAlign: 'center', padding: '6px 0' }}>추가 영업기회 없음</p>
@@ -576,11 +645,11 @@ export function CrmPanel() {
                           <span className="opp-product">{opp.key}</span>
                           {done
                             ? <span className="opp-done-badge"><CheckCircle2 size={11} style={{ marginRight: 3 }} />완료</span>
-                            : <span className="opp-kpi-badge">+{opp.kpi} KPI</span>}
+                            : <span className="opp-kpi-badge">+{opp.kpi}pt</span>}
                         </div>
                         <div className="opp-desc">{opp.desc}</div>
                         <div className="opp-footer">
-                          <span className="opp-category">{opp.category}</span>
+                          <span className="opp-category">{opp.category} · 한도 {opp.limit}pt</span>
                           <button className="opp-btn" disabled={done}
                             onClick={() => addKpi(opp.kpi, `${opp.key} 신규`, `${customer.고객번호}-${opp.key}`)}>
                             {done ? '완료됨' : '거래 완료'}
@@ -591,26 +660,6 @@ export function CrmPanel() {
                   })}
                 </motion.div>
               )}
-            </CollapseSection>
-
-            {/* ── 최근 거래 ── */}
-            <CollapseSection title="최근 거래" icon={Building2} defaultOpen={false}>
-              <table className="crm-tx-table">
-                <thead>
-                  <tr><th>일자</th><th>내용</th><th style={{ textAlign: 'right' }}>금액</th></tr>
-                </thead>
-                <tbody>
-                  {customer.최근거래.map((tx, i) => (
-                    <tr key={i}>
-                      <td>{tx.일자}</td>
-                      <td>{tx.내용}</td>
-                      <td className={tx.금액 > 0 ? 'crm-tx-plus' : 'crm-tx-minus'}>
-                        {tx.금액 > 0 ? '+' : ''}{tx.금액.toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
             </CollapseSection>
 
             {/* ── AI 채팅 Q&A ── */}

@@ -19,11 +19,11 @@
 .kpi-inline {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: linear-gradient(135deg, #0c1218 0%, #12222e 100%);
   color: #fff;
-  padding: 10px 14px;
-  border-radius: 10px;
+  padding: 7px 10px;
+  border-radius: 8px;
   font-family: 'Pretendard Variable', Pretendard, 'Malgun Gothic', system-ui, sans-serif;
 }
 
@@ -31,8 +31,8 @@
 .kpi-ring-wrap {
   position: relative;
   flex-shrink: 0;
-  width: 52px;
-  height: 52px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -78,7 +78,7 @@
 
 /* 레벨명 */
 .kpi-name {
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 700;
   color: #e8e8e8;
   white-space: nowrap;
@@ -86,13 +86,13 @@
 
 /* 점수 표시 */
 .kpi-pts {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   color: #00e5c8;
   white-space: nowrap;
 }
 .kpi-pts-unit {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 400;
   color: rgba(255,255,255,0.45);
   margin-left: 1px;
@@ -100,14 +100,14 @@
 
 /* 링 중앙 레벨 표시 (이모지 제거, 숫자+LV 텍스트) */
 .kpi-badge-lv-num {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
   line-height: 1;
   color: #fff;
   letter-spacing: -0.02em;
 }
 .kpi-badge-lv-label {
-  font-size: 7px;
+  font-size: 6px;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: rgba(255,255,255,0.45);
@@ -116,14 +116,14 @@
 
 /* 레벨명 앞 이모지 */
 .kpi-name-emoji {
-  margin-right: 4px;
-  font-size: 13px;
+  margin-right: 3px;
+  font-size: 11px;
 }
 
 /* 프로그레스 트랙 */
 .kpi-track {
   flex: 1;
-  height: 6px;
+  height: 4px;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 99px;
   overflow: hidden;
@@ -133,7 +133,7 @@
   height: 100%;
   background: linear-gradient(90deg, #00c7a9 0%, #00f0d0 100%);
   border-radius: 99px;
-  box-shadow: 0 0 8px rgba(0, 199, 169, 0.7);
+  box-shadow: 0 0 6px rgba(0, 199, 169, 0.7);
 }
 
 /* ── 토스트 알림 ── */
@@ -287,11 +287,21 @@
 
 .opp-footer {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   margin-top: 1px;
+  gap: 6px;
 }
-.opp-category { font-size: 9.5px; color: #bbb; font-weight: 600; letter-spacing: 0.05em; }
+.opp-category {
+  font-size: 9.5px;
+  color: #bbb;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  flex: 1;
+  min-width: 0;
+  word-break: keep-all;
+  line-height: 1.3;
+}
 
 .opp-btn {
   background: var(--im-mint);
@@ -304,6 +314,10 @@
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 54px;
+  text-align: center;
 }
 .opp-btn:hover  { background: #009e86; transform: scale(1.04); }
 .opp-btn:active { transform: scale(0.97); }
