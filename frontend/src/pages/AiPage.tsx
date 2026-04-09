@@ -19,7 +19,7 @@ import { useCustomer } from '@/contexts/CustomerContext'
 import { DUMMY_CUSTOMERS, type DummyCustomer, buildAnalysisPrompt } from '@/data/dummyCustomers'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import {
-  DEFAULT_API_KEY,
+  getUpstageApiKey,
   DEFAULT_MODEL,
   streamChatCompletion,
 } from '@/services/upstageApi'
@@ -66,7 +66,7 @@ export function AiPage() {
   const { activeResidentId, setActiveResidentId } = useCustomer()
 
   const [selected, setSelected]     = useState<DummyCustomer | null>(null)
-  const [apiKey, setApiKey]         = useState(DEFAULT_API_KEY)
+  const [apiKey, setApiKey]         = useState(getUpstageApiKey)
   const [modelId, setModelId]       = useState(DEFAULT_MODEL)
   const [showConfig, setShowConfig] = useState(false)
 

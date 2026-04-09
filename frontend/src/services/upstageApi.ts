@@ -9,8 +9,16 @@ const PROXY_BASE = '/api/upstage'
 /** v1 — Chat Completions (solar-pro3 스트리밍) */
 export const UPSTAGE_V1 = `${PROXY_BASE}/v1`
 
-export const DEFAULT_MODEL   = 'solar-pro3'
-export const DEFAULT_API_KEY = 'up_MndWRko5jPYRD8h2Wopvtu2GK1gqV'
+export const DEFAULT_MODEL = 'solar-pro3'
+
+/**
+ * Upstage API 키 — `frontend/.env.local`에만 설정하세요 (Git 커밋 금지).
+ * 예: VITE_UPSTAGE_API_KEY=up_xxxxxxxx
+ */
+export function getUpstageApiKey(): string {
+  const v = import.meta.env.VITE_UPSTAGE_API_KEY
+  return typeof v === 'string' ? v.trim() : ''
+}
 
 /** SSE 스트리밍으로 Chat Completion 호출
  *  - onChunk : 토큰 도착 시마다 호출

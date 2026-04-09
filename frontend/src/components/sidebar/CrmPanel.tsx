@@ -7,7 +7,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
 import { useCustomer } from '@/contexts/CustomerContext'
 import { useKpi } from '@/contexts/KpiContext'
-import { streamChatCompletion, DEFAULT_MODEL, DEFAULT_API_KEY } from '@/services/upstageApi'
+import { streamChatCompletion, DEFAULT_MODEL, getUpstageApiKey } from '@/services/upstageApi'
 import { buildCheongyakOpportunities } from '@/data/cheongyakEventData'
 import { getKpiRules } from '@/data/kpiData'
 import { buildMastercardOpportunities } from '@/data/mastercardEventData'
@@ -479,7 +479,7 @@ export function CrmPanel() {
       { role: 'user'   as const, content: `다음 고객을 분석해주세요:\n${ctx}` },
     ]
 
-    streamChatCompletion(messages, DEFAULT_MODEL, DEFAULT_API_KEY, chunk => {
+    streamChatCompletion(messages, DEFAULT_MODEL, getUpstageApiKey(), chunk => {
       setAiSummary(prev => prev + chunk)
     })
       .catch(() => {/* 취소/에러 무시 */})
@@ -517,7 +517,7 @@ export function CrmPanel() {
     setChatMsgs(prev => [...prev, { role: 'ai', text: '' }])
 
     try {
-      await streamChatCompletion(messages, DEFAULT_MODEL, DEFAULT_API_KEY, chunk => {
+      await streamChatCompletion(messages, DEFAULT_MODEL, getUpstageApiKey(), chunk => {
         aiText += chunk
         setChatMsgs(prev => {
           const next = [...prev]
