@@ -128,8 +128,8 @@ function getAgencyResult(key: string, c: DummyCustomer): string {
     case 'kcb':     return `신용${grade} · 이력 ${c.accounts.length}건`
     case 'fss':     return `금융거래 ${c.accounts.length}건 확인`
     case 'nts':     return `연소득 ${c.annualIncome.toLocaleString()}만원 확인`
-    case 'deposit': return `예·적금 ${c.accounts.filter(a => a.type === 'deposit').length}계좌 조회`
-    case 'loan':    return `대출 ${c.accounts.filter(a => a.type === 'loan').length}건 · 연체 ${c.accounts.some(a => a.status === '연체') ? '있음' : '없음'}`
+    case 'deposit': return `예·적금 ${c.accounts.filter(a => /예금|적금/.test(a.product)).length}계좌 조회`
+    case 'loan':    return `대출 ${c.accounts.filter(a => a.product.includes('대출')).length}건 · 연체 ${c.accounts.some(a => a.status === '연체') ? '있음' : '없음'}`
     default: return '조회 완료'
   }
 }
@@ -367,8 +367,16 @@ export function Screen0310() {
 
             <div className="cd-sample-ids">
               <span style={{ fontSize: 11, color: '#9ca3af' }}>테스트:</span>
-              {[['010101','홍길동'],['020202','이몽룡'],['030303','성춘향'],['040404','심청'],['050505','전우치']].map(([id, name]) => (
-                <button key={id} className="cd-sample-btn" onClick={() => setFront(id)}>{id} ({name})</button>
+              {DUMMY_CUSTOMERS.map(c => (
+                <button
+                  key={c.residentIdFront}
+                  type="button"
+                  className="cd-sample-btn"
+                  title={`${c.customerType} · ${c.job}`}
+                  onClick={() => setFront(c.residentIdFront)}
+                >
+                  {c.residentIdFront} ({c.name})
+                </button>
               ))}
             </div>
           </div>

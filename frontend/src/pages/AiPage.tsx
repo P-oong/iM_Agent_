@@ -63,7 +63,7 @@ const TYPE_STYLE: Record<string, { bg: string; color: string }> = {
 export function AiPage() {
   useDocumentTitle('AI 고객 분석 — iM Agent')
 
-  const { activeResidentId } = useCustomer()
+  const { activeResidentId, setActiveResidentId } = useCustomer()
 
   const [selected, setSelected]     = useState<DummyCustomer | null>(null)
   const [apiKey, setApiKey]         = useState(DEFAULT_API_KEY)
@@ -92,6 +92,7 @@ export function AiPage() {
 
   const handleAnalyze = async () => {
     if (!selected || isRunning) return
+    setActiveResidentId(selected.residentIdFront)
     setStage('streaming')
     setErrorMsg('')
     setResult(null)
@@ -147,7 +148,13 @@ export function AiPage() {
                 <button
                   key={c.id}
                   className={`ai-customer-card${selected?.id === c.id ? ' ai-customer-card--selected' : ''}`}
-                  onClick={() => { setSelected(c); setStage('idle'); setResult(null); setStreamText('') }}
+                  onClick={() => {
+                    setActiveResidentId(c.residentIdFront)
+                    setSelected(c)
+                    setStage('idle')
+                    setResult(null)
+                    setStreamText('')
+                  }}
                   disabled={isRunning}
                 >
                   <div

@@ -15,19 +15,223 @@
   pointer-events: none;
 }
 
+/* ── 바 안 이벤트 선택 (작은 드롭다운) ── */
+.kpi-event-pick {
+  position: relative;
+  flex-shrink: 0;
+}
+.kpi-event-pick-btn {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  max-width: 118px;
+  padding: 2px 6px 2px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.22);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 8.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.2;
+  transition: border-color 0.15s, background 0.15s;
+}
+.kpi-event-pick-btn:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.32);
+}
+.kpi-event-pick-lbl {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.kpi-event-pick-chev--open {
+  transform: rotate(180deg);
+}
+.kpi-event-pick-btn svg {
+  flex-shrink: 0;
+  opacity: 0.75;
+  transition: transform 0.2s ease;
+}
+.kpi-event-dropdown {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 5px);
+  min-width: 148px;
+  max-width: 200px;
+  max-height: 160px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border-radius: 8px;
+  background: #1a2332;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.45);
+  z-index: 50;
+}
+.kpi-event-dropdown::-webkit-scrollbar {
+  width: 5px;
+}
+.kpi-event-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 99px;
+}
+.kpi-event-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #e8e8e8;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.kpi-event-opt:hover:not(:disabled) {
+  background: rgba(0, 199, 169, 0.15);
+}
+.kpi-event-opt--on {
+  background: rgba(0, 199, 169, 0.2);
+  color: #7ff5e0;
+}
+.kpi-event-opt--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.kpi-event-opt-sub {
+  font-size: 8.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+}
+.kpi-inline-top-right {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.kpi-inline--mc .kpi-event-pick-btn {
+  border-color: rgba(251, 146, 60, 0.35);
+  background: rgba(234, 88, 12, 0.12);
+}
+.kpi-inline--mc .kpi-event-opt:hover:not(:disabled) {
+  background: rgba(234, 88, 12, 0.2);
+}
+.kpi-inline--mc .kpi-event-opt--on {
+  background: rgba(234, 88, 12, 0.25);
+  color: #fdba74;
+}
+.kpi-inline--cq .kpi-event-pick-btn {
+  border-color: rgba(96, 165, 250, 0.45);
+  background: rgba(37, 99, 235, 0.18);
+}
+.kpi-inline--cq .kpi-event-opt:hover:not(:disabled) {
+  background: rgba(37, 99, 235, 0.22);
+}
+.kpi-inline--cq .kpi-event-opt--on {
+  background: rgba(37, 99, 235, 0.28);
+  color: #93c5fd;
+}
+
 /* ── 인라인 바 (CRM 드로어 하단) ── */
 .kpi-inline {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   background: linear-gradient(135deg, #0c1218 0%, #12222e 100%);
   color: #fff;
   padding: 7px 10px;
   border-radius: 8px;
   font-family: 'Pretendard Variable', Pretendard, 'Malgun Gothic', system-ui, sans-serif;
 }
+/* 마스터카드: 레이아웃 동일, 포인트 색·링·바만 주황 */
+.kpi-inline--mc {
+  box-shadow: inset 0 0 0 1px rgba(251, 146, 60, 0.12);
+}
+.kpi-name--mc {
+  color: #fed7aa;
+}
+.kpi-pts--mc {
+  color: #fb923c;
+}
+.kpi-badge-lv-num--mc {
+  color: #fdba74;
+}
+.kpi-badge-lv-label--mc {
+  color: rgba(253, 186, 116, 0.65);
+}
+.kpi-track--mc {
+  background: rgba(255, 255, 255, 0.08);
+}
+.kpi-fill--mc {
+  background: linear-gradient(90deg, #ea580c 0%, #fb923c 100%);
+  box-shadow: 0 0 6px rgba(251, 146, 60, 0.45);
+}
+.kpi-inline-sub--mc {
+  color: rgba(255, 255, 255, 0.42);
+}
+.kpi-inline-remain--mc {
+  color: #fb923c;
+}
+/* 하단 'pt' 단위는 .kpi-pts-unit 기본색이 상속을 덮어씀 → MC일 때 이벤트 색으로 통일 */
+.kpi-inline--mc .kpi-inline-bottom .kpi-inline-remain--mc,
+.kpi-inline--mc .kpi-inline-bottom .kpi-inline-remain--mc span {
+  color: #fb923c;
+}
+.kpi-inline--mc .kpi-inline-bottom .kpi-inline-remain--mc .kpi-pts-unit {
+  color: rgba(251, 146, 60, 0.88);
+}
+
+/* 청약 전환 이벤트: 파란 포인트·링·바 */
+.kpi-inline--cq {
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.18);
+}
+.kpi-name--cq {
+  color: #bfdbfe;
+}
+.kpi-badge-lv-num--cq {
+  color: #93c5fd;
+}
+.kpi-badge-lv-label--cq {
+  color: rgba(147, 197, 253, 0.65);
+}
+.kpi-track--cq {
+  background: rgba(255, 255, 255, 0.08);
+}
+.kpi-fill--cq {
+  background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+  box-shadow: 0 0 6px rgba(96, 165, 250, 0.5);
+}
+.kpi-inline-sub--cq {
+  color: rgba(255, 255, 255, 0.42);
+}
+.kpi-inline-remain--cq {
+  color: #60a5fa;
+}
+.kpi-inline--cq .kpi-inline-bottom .kpi-inline-remain--cq,
+.kpi-inline--cq .kpi-inline-bottom .kpi-inline-remain--cq span {
+  color: #60a5fa;
+}
+.kpi-inline--cq .kpi-inline-bottom .kpi-inline-remain--cq .kpi-pts-unit {
+  color: rgba(96, 165, 250, 0.9);
+}
 
 /* SVG 링 래퍼 */
+.kpi-inline > .kpi-ring-wrap {
+  align-self: center;
+}
 .kpi-ring-wrap {
   position: relative;
   flex-shrink: 0;
@@ -57,23 +261,31 @@
 }
 .kpi-inline-top {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
+  min-width: 0;
 }
 .kpi-inline-bottom {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
 }
 .kpi-inline-sub {
   font-size: 10px;
   color: rgba(255,255,255,0.42);
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.35;
 }
 .kpi-inline-remain {
   font-size: 11px;
   font-weight: 700;
   color: #00e5c8;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* 레벨명 */
@@ -81,7 +293,12 @@
   font-size: 10.5px;
   font-weight: 700;
   color: #e8e8e8;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.35;
+  min-width: 0;
+  flex: 1 1 0;
+  overflow: visible;
 }
 
 /* 점수 표시 */
@@ -158,6 +375,16 @@
               inset 0 1px 0 rgba(255,255,255,0.15);
   animation: kpi-fade 0.4s ease 1.9s forwards;
 }
+.kpi-toast--mc {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  box-shadow: -4px 4px 20px rgba(234, 88, 12, 0.45),
+              inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.kpi-toast--cq {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  box-shadow: -4px 4px 20px rgba(37, 99, 235, 0.45),
+              inset 0 1px 0 rgba(255,255,255,0.12);
+}
 
 .kpi-toast-pts {
   font-size: 16px;
@@ -222,15 +449,23 @@
   background: #f8fffe;
   border: 1px solid #c8f0e8;
   border-radius: 8px;
-  padding: 7px 9px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .opp-card:hover {
   border-color: var(--im-mint);
   box-shadow: 0 2px 8px rgba(0,199,169,0.10);
+}
+.opp-card--mc {
+  background: linear-gradient(135deg, #fffdfb 0%, #fff7ed 100%);
+  border-color: rgba(251, 146, 60, 0.4);
+}
+.opp-card--mc:hover {
+  border-color: #fb923c;
+  box-shadow: 0 2px 10px rgba(234, 88, 12, 0.15);
 }
 .opp-card--done {
   opacity: 0.42;
@@ -240,8 +475,8 @@
 
 .opp-card-top {
   display: flex;
-  align-items: center;
-  gap: 5px;
+  align-items: flex-start;
+  gap: 6px;
 }
 /* lucide 아이콘 래퍼 */
 .opp-icon-wrap {
@@ -250,6 +485,7 @@
   justify-content: center;
   width: 22px;
   height: 22px;
+  margin-top: 1px;
   background: rgba(0, 199, 169, 0.12);
   border-radius: 6px;
   color: var(--im-mint);
@@ -260,16 +496,37 @@
   color: #bbb;
 }
 
-.opp-product { font-weight: 700; font-size: 11px; color: #111; flex: 1; }
+.opp-product-cell {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.opp-product {
+  display: block;
+  font-weight: 700;
+  font-size: 11px;
+  color: #111;
+  line-height: 1.35;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
 .opp-kpi-badge {
   background: var(--im-mint);
   color: #fff;
   font-size: 9.5px;
   font-weight: 700;
-  padding: 1px 6px;
+  padding: 2px 6px;
   border-radius: 99px;
   white-space: nowrap;
   flex-shrink: 0;
+  margin-top: 1px;
+  line-height: 1.2;
+}
+.opp-kpi-badge--mc {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+}
+.opp-icon-wrap--mc {
+  background: rgba(234, 88, 12, 0.14);
+  color: #c2410c;
 }
 .opp-done-badge {
   display: flex;
@@ -278,29 +535,39 @@
   color: #388e3c;
   font-size: 9.5px;
   font-weight: 600;
-  padding: 1px 6px;
+  padding: 2px 6px;
   border-radius: 99px;
   flex-shrink: 0;
+  margin-top: 1px;
+  line-height: 1.2;
 }
 
-.opp-desc { font-size: 10px; color: #666; line-height: 1.4; }
+.opp-desc {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.4;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
 
 .opp-footer {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  margin-top: 1px;
-  gap: 6px;
+  margin-top: 2px;
+  gap: 8px;
 }
 .opp-category {
   font-size: 9.5px;
-  color: #bbb;
+  color: #9ca3af;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.01em;
   flex: 1;
   min-width: 0;
   word-break: keep-all;
-  line-height: 1.3;
+  overflow-wrap: break-word;
+  line-height: 1.35;
+  padding-right: 2px;
 }
 
 .opp-btn {
@@ -319,6 +586,49 @@
   min-width: 54px;
   text-align: center;
 }
-.opp-btn:hover  { background: #009e86; transform: scale(1.04); }
+.opp-btn--mc {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+}
+.opp-card--cq {
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  border-color: rgba(37, 99, 235, 0.35);
+}
+.opp-card--cq:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.14);
+}
+.opp-card--cq .opp-product {
+  font-size: 10px;
+  line-height: 1.28;
+}
+.opp-card--cq .opp-desc {
+  font-size: 9.5px;
+  line-height: 1.3;
+  color: #64748b;
+}
+.opp-card--cq .opp-category {
+  font-size: 9px;
+  line-height: 1.28;
+}
+.opp-icon-wrap--cq {
+  background: rgba(37, 99, 235, 0.14);
+  color: #1d4ed8;
+}
+.opp-kpi-badge--cq {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+.opp-btn--cq {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+.opp-btn:hover:not(:disabled) {
+  background: #009e86;
+  transform: scale(1.04);
+}
+.opp-btn.opp-btn--mc:hover:not(:disabled) {
+  background: #9a3412;
+}
+.opp-btn.opp-btn--cq:hover:not(:disabled) {
+  background: #1e40af;
+}
 .opp-btn:active { transform: scale(0.97); }
 .opp-btn:disabled { background: #ccc; cursor: default; transform: none; }

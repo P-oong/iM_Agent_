@@ -133,6 +133,8 @@
   border-top: 1px solid #eef8f6;
   padding: 6px 8px;
   background: #f8fffe;
+  min-width: 0;
+  overflow: visible;
 }
 
 .rs-close {

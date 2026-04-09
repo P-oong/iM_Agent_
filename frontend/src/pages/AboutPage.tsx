@@ -4,7 +4,6 @@ import {
   Brain,
   Code2,
   CreditCard,
-  Monitor,
   Sparkles,
   Trophy,
   User,
@@ -24,7 +23,7 @@ const TECH_STACK = [
 ]
 
 const FEATURES = [
-  { Icon: Monitor,          title: '[0156] 전산화면',     desc: '실명번호 입력 한 번으로 CRM과 AI 분석이 자동 연동' },
+  // { Icon: Monitor,          title: '[0156] 전산화면',     desc: '실명번호 입력 한 번으로 CRM과 AI 분석이 자동 연동' },
   { Icon: User,             title: 'CRM 패널',            desc: '보유 상품 분석 → 맞춤 영업기회 + KPI 점수 산출' },
   { Icon: BotMessageSquare, title: 'Solar Pro 3 AI',      desc: '재무 건강 점수 · 리스크 · 추천 멘트 실시간 스트리밍' },
   { Icon: Trophy,           title: 'KPI 게이미피케이션',  desc: '거래 완료 시 경험치 적립 · 레벨업으로 목표 관리' },
@@ -54,7 +53,7 @@ export function AboutPage() {
         </div>
         <h1 className="about-title">iM Agent</h1>
         <p className="about-sub">
-          iM뱅크 공모전 2025 · AI 기반 은행원 영업지원 플랫폼
+          iM뱅크 공모전 2026 · AI 기반 은행원 영업지원 플랫폼
         </p>
         <div className="about-tags">
           <span className="about-tag">공모전 프로젝트</span>
@@ -77,7 +76,7 @@ export function AboutPage() {
           복잡한 금융 상담을 보다 스마트하게 지원합니다.
         </p>
         <p className="about-body">
-          Upstage <strong>Solar Pro 3</strong> 모델을 활용해 고객의 재무 현황을 실시간으로 분석하고,
+          고객의 재무 현황을 실시간으로 분석하고,
           맞춤형 상품 추천 스크립트를 즉시 제공합니다.
           KPI 게이미피케이션 시스템으로 목표 관리까지 한 번에 해결합니다.
         </p>
@@ -127,7 +126,7 @@ export function AboutPage() {
       </div>
 
       {/* 사용법 */}
-      <div className="about-section">
+      {/* <div className="about-section">
         <h2 className="about-section-title">빠른 사용법</h2>
         <div className="about-steps">
           {[
@@ -145,7 +144,7 @@ export function AboutPage() {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }

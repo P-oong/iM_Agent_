@@ -247,7 +247,7 @@ export const DUMMY_CUSTOMERS: DummyCustomer[] = [
     totalAssets: 28000,
     totalDebt: 18000,
     grade: '일반',
-    products: ['사업자통장', '수시입출금', '사업자카드'],
+    products: ['사업자통장', '수시입출금', '사업자카드', '가맹점(카드)', '결제계좌(당행)'],
     accounts: [
       { number: '013-00008-00001', product: '사업자통장',  balance: 4_200_000, status: '정상' },
       { number: '013-00008-00002', product: '수시입출금',  balance: 880_000,   status: '정상' },
@@ -288,6 +288,43 @@ export const DUMMY_CUSTOMERS: DummyCustomer[] = [
     ],
     notes: '개원 6년차 한의원. 의료기기 최신 업그레이드 검토. 정기예금 만기 도래(3월). ISA 계좌 개설 관심. 노후 연금 상품 문의. 세금 절감 방법 적극 요청.',
   },
+
+  /** 가맹점·개업초기 시연용 (타행 정산 → 당행, 네이버페이·보증서 등) */
+  {
+    id: 'C010',
+    residentIdFront: '101010',
+    name: '한비즈',
+    age: 36,
+    gender: '여',
+    job: '개인사업자 (브런치카페)',
+    customerType: '개인사업자',
+    annualIncome: 4200,
+    creditScore: 748,
+    totalAssets: 8500,
+    totalDebt: 3500,
+    grade: '우량',
+    products: [
+      '사업자통장',
+      '사업자카드',
+      '가맹점(VAN·카드)',
+      '결제계좌(타행)',
+      '개업초기',
+      '온라인(배민·쿠팡)',
+    ],
+    accounts: [
+      { number: '013-00010-00001', product: '사업자통장', balance: 2_100_000, status: '정상' },
+      { number: '013-00010-00002', product: '사업자카드', balance: 0, status: '정상' },
+    ],
+    recentTransactions: [
+      { date: '2026-01-14', desc: '카드매출입금(타행)', amount: 1_850_000 },
+      { date: '2026-01-12', desc: '원두·유가공 매입', amount: -620_000 },
+      { date: '2026-01-10', desc: '배민정산입금', amount: 980_000 },
+      { date: '2026-01-08', desc: '임대료 이체', amount: -1_100_000 },
+      { date: '2026-01-05', desc: '직원 급여', amount: -1_400_000 },
+    ],
+    notes:
+      '개업 4개월차 소형 카페. 카드·배민 매출은 타행 계좌로 입금 중. 노란우산·가맹점 결제계좌 당행 이전·네이버페이 커넥트(단말 무상 약 30만원)·보증서 대출 연계가 핵심 제안 포인트.',
+  },
 ]
 
 /** 고객 데이터를 AI 분석용 프롬프트 텍스트로 변환 */
@@ -316,6 +353,9 @@ export function buildAnalysisPrompt(customer: DummyCustomer): string {
 
 [최근 거래 내역]
 ${txList}
+
+[분석 시 제외]
+- BIZFAST, 태블릿, 전자서명, 서명 절차·검토 관련 문구는 분석 결과 어디에도 넣지 마세요.
 
 [분석 요청]
 위 고객 정보를 바탕으로 다음 내용을 JSON으로 분석해주세요:

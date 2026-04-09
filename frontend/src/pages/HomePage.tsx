@@ -48,12 +48,6 @@ const FEATURES = [
   },
 ]
 
-const QUICK_LINKS = [
-  { label: '[0156] 고객실명조회',      sub: '실명번호 → CRM/AI 자동연동',  href: '/banking/0156', primary: true  },
-  { label: '[0310] 카드 발급 가능 조회', sub: '자동 심사 → 즉시 신청',      href: '/banking/0310', primary: false },
-  { label: 'AI 고객 분석',             sub: 'Solar Pro 3 실시간 분석',    href: '/ai',           primary: false },
-]
-
 const card = {
   hidden:  { opacity: 0, y: 24 },
   visible: { opacity: 1, y: 0 },
@@ -164,31 +158,6 @@ export function HomePage() {
         </motion.div>
       </div>
 
-      {/* ── 화면 바로가기 ── */}
-      {/* <div className="home-section">
-        <div className="home-section-header">
-          <h2 className="home-section-title">바로가기</h2>
-        </div>
-        <motion.div
-          className="home-quick-list"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
-        >
-          {QUICK_LINKS.map(({ label, sub, href, primary }) => (
-            <motion.div key={href} variants={card}>
-              <Link to={href} className={`home-quick-item${primary ? ' home-quick-item--primary' : ''}`}>
-                <div>
-                  <div className="home-quick-label">{label}</div>
-                  <div className="home-quick-sub">{sub}</div>
-                </div>
-                <ArrowRight size={18} />
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div> */}
     </div>
   )
 }
