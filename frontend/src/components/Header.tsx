@@ -19,6 +19,7 @@ export function Header() {
       <nav className="app-nav" aria-label="주 메뉴">
         <NavLink to="/" className={linkClass} end>홈</NavLink>
         <NavLink to="/ai" className={linkClass}>AI 분석</NavLink>
+        <NavLink to="/demo" className={linkClass}>시연</NavLink>
         <NavLink to="/banking/0156" className={linkClass}>전산화면</NavLink>
         <NavLink to="/about" className={linkClass}>소개</NavLink>
       </nav>

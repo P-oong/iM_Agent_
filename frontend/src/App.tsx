@@ -4,6 +4,7 @@ import { MainLayout } from '@/layouts/MainLayout'
 import { BankingLayout } from '@/layouts/BankingLayout'
 import { AboutPage } from '@/pages/AboutPage'
 import { AiPage } from '@/pages/AiPage'
+import { DemoPage } from '@/pages/DemoPage'
 import { HomePage } from '@/pages/HomePage'
 import { Screen0156 } from '@/pages/banking/Screen0156'
 import { ScreenTemplate } from '@/pages/banking/ScreenTemplate'
@@ -57,6 +58,7 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <HomePage /> },
           { path: 'ai', element: <AiPage /> },
+          { path: 'demo', element: <DemoPage /> },
           { path: 'about', element: <AboutPage /> },
         ],
       },

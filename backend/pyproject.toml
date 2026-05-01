@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "im-agent-backend"
+version = "0.1.0"
+description = "iM Agent Backend"
+authors = ["anonymous"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+requests = ">=2.28,<2.33"
+python-dotenv = ">=0.20,<1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

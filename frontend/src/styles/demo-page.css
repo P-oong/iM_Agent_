@@ -1,0 +1,549 @@
+/* =====================================================
+   AI 영업 시연 페이지 — dm- prefix
+   ===================================================== */
+
+.dm-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 72px;
+}
+
+/* ── 히어로 ── */
+.dm-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.dm-hero-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--im-mint) 0%, #007c6a 100%);
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 18px rgba(0, 199, 169, 0.35);
+}
+.dm-hero-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0c1c18;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+.dm-hero-sub {
+  font-size: 13.5px;
+  color: #6b7a8d;
+  margin: 0;
+  line-height: 1.5;
+}
+.dm-hero-sub strong { color: #0c1c18; }
+
+/* ── 차별화 배너 ── */
+.dm-diff-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0,199,169,0.07), rgba(0,199,169,0.02));
+  border: 1.5px solid rgba(0,199,169,0.25);
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: #3a4a3e;
+  line-height: 1.6;
+}
+.dm-diff-banner svg {
+  color: var(--im-mint);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.dm-diff-banner em {
+  font-style: normal;
+  font-weight: 700;
+  color: #007a64;
+}
+
+/* ── 레이아웃 ── */
+.dm-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 800px) {
+  .dm-layout { grid-template-columns: 1fr; }
+}
+
+/* ── 왼쪽 ── */
+.dm-left {
+  position: sticky;
+  top: 20px;
+}
+.dm-section-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aabb3;
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+/* 고객 카드 */
+.dm-customer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.dm-customer-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1.5px solid #e8ecef;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+  width: 100%;
+}
+.dm-customer-card:hover {
+  border-color: #b8e8df;
+  transform: translateY(-1px);
+}
+.dm-customer-card--active {
+  background: #fafffe;
+}
+.dm-customer-type-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.dm-customer-info { flex: 1; min-width: 0; }
+.dm-customer-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a2332;
+  margin-bottom: 3px;
+}
+.dm-customer-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 99px;
+  border: 1px solid;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.dm-customer-purpose {
+  font-size: 12px;
+  color: #5a6a78;
+  margin-bottom: 4px;
+}
+.dm-customer-event {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #009e86;
+  font-weight: 600;
+}
+.dm-customer-event svg { color: var(--im-mint); }
+
+/* 핵심 요약 박스 */
+.dm-summary-box {
+  background: #f7f9fc;
+  border: 1.5px solid #e8ecef;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+.dm-summary-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a5a68;
+  margin-bottom: 10px;
+}
+.dm-summary-title svg { color: var(--im-mint); }
+.dm-summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.dm-summary-list li {
+  font-size: 12.5px;
+  color: #5a6a78;
+  padding-left: 14px;
+  position: relative;
+  line-height: 1.4;
+}
+.dm-summary-list li::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  color: var(--im-mint);
+  font-weight: 900;
+}
+.dm-summary-list li strong { color: #1a2332; font-weight: 700; }
+
+/* ── 오른쪽 패널 ── */
+.dm-panel {
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1.5px solid #e8ecef;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+}
+
+/* 패널 헤더 */
+.dm-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 22px;
+  color: #fff;
+  flex-wrap: wrap;
+}
+.dm-panel-type-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.2);
+  flex-shrink: 0;
+}
+.dm-panel-header-info { flex: 1; min-width: 0; }
+.dm-panel-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.dm-panel-type-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.25);
+  letter-spacing: 0.02em;
+}
+.dm-panel-sub {
+  font-size: 13px;
+  opacity: 0.82;
+  margin-top: 2px;
+}
+.dm-panel-visit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+}
+.dm-visit-label {
+  font-size: 10px;
+  opacity: 0.7;
+  letter-spacing: 0.04em;
+}
+.dm-visit-value {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* AI 이벤트 배너 */
+.dm-event-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: linear-gradient(90deg, rgba(0,199,169,0.1), rgba(0,199,169,0.03));
+  border-bottom: 1px solid rgba(0,199,169,0.18);
+  font-size: 13px;
+}
+.dm-event-banner svg { color: var(--im-mint); flex-shrink: 0; }
+.dm-event-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #007a64;
+  letter-spacing: 0.04em;
+}
+.dm-event-value {
+  font-weight: 600;
+  color: #009e86;
+}
+
+/* 패널 바디 */
+.dm-panel-body {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 카드 */
+.dm-card {
+  border: 1.5px solid #edf1f4;
+  border-radius: 14px;
+  padding: 16px;
+}
+.dm-card-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4a5a68;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.dm-card-title svg { color: var(--im-mint); }
+
+/* 요약 */
+.dm-summary {
+  font-size: 13.5px;
+  color: #3a4a5a;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* 핵심 데이터 그리드 */
+.dm-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+@media (max-width: 600px) {
+  .dm-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.dm-metric {
+  background: #f7f9fc;
+  border-radius: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid #edf1f4;
+}
+.dm-metric--highlight {
+  background: rgba(0,199,169,0.07);
+  border-color: rgba(0,199,169,0.25);
+}
+.dm-metric-label {
+  display: block;
+  font-size: 10.5px;
+  color: #8a9aaa;
+  font-weight: 600;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+.dm-metric-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: #1a2332;
+}
+.dm-metric--highlight .dm-metric-value { color: #007a64; }
+
+/* 영업기회 목록 */
+.dm-opp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 영업기회 카드 */
+.dm-opp-card {
+  border: 1.5px solid #edf1f4;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.dm-opp-card:hover { border-color: #c8e8e0; }
+
+.dm-opp-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  border: none;
+  transition: background 0.12s;
+}
+.dm-opp-header:hover { background: #fafffe; }
+
+.dm-opp-rank {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--im-mint);
+  background: rgba(0,199,169,0.1);
+  border: 1px solid rgba(0,199,169,0.3);
+  padding: 3px 8px;
+  border-radius: 99px;
+  flex-shrink: 0;
+}
+.dm-opp-title-wrap { flex: 1; min-width: 0; }
+.dm-opp-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a2332;
+}
+.dm-opp-chevron {
+  color: #9aabb3;
+  flex-shrink: 0;
+}
+
+/* 점수 배지 */
+.dm-score-badge {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dm-score-num {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* 영업기회 바디 */
+.dm-opp-body {
+  border-top: 1px solid #f0f4f7;
+  padding: 14px;
+  background: #fafcfe;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* 섹션 */
+.dm-section-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #6a7a88;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.dm-section-label svg { color: var(--im-mint); }
+
+/* 분석 포인트 */
+.dm-analysis-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dm-analysis-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #3a4a5a;
+  line-height: 1.5;
+}
+.dm-analysis-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--im-mint);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+/* 추천 멘트 */
+.dm-script {
+  margin: 0;
+  padding: 12px 14px;
+  background: #fff;
+  border-left: 3px solid var(--im-mint);
+  border-radius: 0 10px 10px 0;
+  font-size: 13.5px;
+  color: #2a3a4a;
+  line-height: 1.7;
+  font-style: normal;
+}
+
+/* 기대 효과 */
+.dm-effects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 540px) {
+  .dm-effects { grid-template-columns: 1fr; }
+}
+.dm-effect-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dm-effect-customer {
+  background: rgba(0,199,169,0.07);
+  border: 1px solid rgba(0,199,169,0.2);
+}
+.dm-effect-bank {
+  background: rgba(59,130,246,0.06);
+  border: 1px solid rgba(59,130,246,0.2);
+}
+.dm-effect-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #7a8a98;
+  text-transform: uppercase;
+}
+.dm-effect-customer .dm-effect-label { color: #007a64; }
+.dm-effect-bank .dm-effect-label { color: #1d4ed8; }
+.dm-effect-value {
+  font-size: 12.5px;
+  color: #2a3a4a;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+/* 핵심 메시지 */
+.dm-core-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(0,199,169,0.08), rgba(0,199,169,0.02));
+  border: 1.5px solid rgba(0,199,169,0.2);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #007a64;
+}
+.dm-core-message svg { color: var(--im-mint); flex-shrink: 0; }

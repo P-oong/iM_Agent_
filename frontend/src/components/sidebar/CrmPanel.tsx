@@ -3,6 +3,7 @@ import {
   BadgeDollarSign, BarChart3, Bot, Building2, CheckCircle2,
   ChevronDown, ChevronUp, CreditCard, Home,
   Landmark, Loader2, Monitor, Send, Shield, Sparkles, TrendingDown, User, Wallet,
+  Zap,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
 import { useCustomer } from '@/contexts/CustomerContext'
@@ -11,7 +12,76 @@ import { streamChatCompletion, DEFAULT_MODEL, DEFAULT_API_KEY } from '@/services
 import { buildCheongyakOpportunities } from '@/data/cheongyakEventData'
 import { getKpiRules } from '@/data/kpiData'
 import { buildMastercardOpportunities } from '@/data/mastercardEventData'
+import { DEMO_CUSTOMERS, type DemoCustomer } from '@/data/demoCustomers'
+import { DemoModal } from '@/components/sidebar/DemoModal'
 import '@/styles/kpi.css'
+
+// ── 데모 고객 매핑 (고객번호 → DemoCustomer) ──────────────
+const DEMO_MAP: Record<string, DemoCustomer> = {
+  '100000011': DEMO_CUSTOMERS[0], // 김민지
+  '100000012': DEMO_CUSTOMERS[1], // 박성호
+  '100000013': DEMO_CUSTOMERS[2], // 대구정밀부품
+}
+
+// ── 데모 분석 버튼 + 팝업 트리거 ────────────────────────
+function DemoAnalysisButton({ demo, customerName }: { demo: DemoCustomer; customerName: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div style={{ padding: '10px 12px 4px' }}>
+        {/* 내점 목적 / AI 이벤트 뱃지 */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+          <span style={{
+            fontSize: 10, padding: '3px 8px', borderRadius: 99,
+            background: 'rgba(0,199,169,0.1)', color: '#007a64',
+            fontWeight: 700, border: '1px solid rgba(0,199,169,0.25)',
+          }}>
+            내점: {demo.visitPurpose}
+          </span>
+          <span style={{
+            fontSize: 10, padding: '3px 8px', borderRadius: 99,
+            background: 'rgba(251,191,36,0.12)', color: '#92400e',
+            fontWeight: 700, border: '1px solid rgba(251,191,36,0.3)',
+          }}>
+            {demo.aiEvent}
+          </span>
+        </div>
+        {/* 분석 버튼 */}
+        <button
+          onClick={() => setOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            width: '100%', padding: '10px 0',
+            background: 'linear-gradient(135deg, var(--im-mint), #007c6a)',
+            color: '#fff', border: 'none', borderRadius: 12,
+            fontSize: 13, fontWeight: 800, cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(0,199,169,0.35)',
+            letterSpacing: '0.01em',
+            transition: 'transform 0.12s, box-shadow 0.12s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.transform = 'translateY(-1px)'
+            e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,199,169,0.45)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.transform = ''
+            e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,199,169,0.35)'
+          }}
+        >
+          <Zap size={15} />
+          AI 영업기회 분석
+        </button>
+      </div>
+      {open && (
+        <DemoModal
+          demo={demo}
+          customerName={customerName}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
+  )
+}
 
 // ── 고객 유형 ────────────────────────────────────────
 type CustomerType = '개인' | '개인사업자' | '법인'
@@ -364,6 +434,62 @@ const MOCK_DB: Record<string, MockCustomer> = {
       { 일자: '01.10', 내용: '배민정산입금',       금액:    980_000 },
     ],
   },
+
+  // ── 시연 전용 고객 ─────────────────────────────────────
+  '940301': {
+    고객번호: '100000011', 고객명: '김민지', 유형: '개인',
+    생년월일: '1994-03-01', 성별: '여', 연락처: '010-1234-5678',
+    주소: '대구시 수성구 전세로 32', 등급: '일반',
+    보유상품: ['수시입출금', '체크카드'],
+    계좌: [
+      { 번호: '013-11001-00001', 상품: '수시입출금', 잔액: 5_800_000, 상태: '정상' },
+      { 번호: '013-11001-00002', 상품: '체크카드',   잔액: 0,         상태: '정상' },
+    ],
+    최근거래: [
+      { 일자: '04.28', 내용: '전세보증금 이체',   금액: -50_000_000 },
+      { 일자: '04.25', 내용: '타행 급여입금',     금액:   3_200_000 },
+      { 일자: '04.20', 내용: '생활비 카드(타행)', 금액:    -950_000 },
+      { 일자: '04.15', 내용: '보험료 자동이체',   금액:    -180_000 },
+    ],
+  },
+  '810502': {
+    고객번호: '100000012', 고객명: '박성호', 유형: '개인사업자',
+    생년월일: '1981-05-02', 성별: '남', 연락처: '010-9876-5432',
+    주소: '대구시 중구 음식점로 45', 등급: '일반',
+    사업정보: {
+      사업자번호: '502-04-00812', 상호: '성호한식당',
+      업종: '음식점업 (한식)', 설립일: '2018-03-01', 연매출: '약 4억 5,600만원',
+    },
+    보유상품: ['사업자통장', '수시입출금'],
+    계좌: [
+      { 번호: '013-12001-00001', 상품: '사업자통장', 잔액: 8_200_000, 상태: '정상' },
+    ],
+    최근거래: [
+      { 일자: '04.28', 내용: '식자재 대금',        금액: -14_500_000 },
+      { 일자: '04.25', 내용: '카드매출입금(타행)', 금액:  27_000_000 },
+      { 일자: '04.20', 내용: '임대료 이체',        금액:  -3_500_000 },
+      { 일자: '04.15', 내용: '인건비',             금액:  -9_000_000 },
+    ],
+  },
+  '660101': {
+    고객번호: '100000013', 고객명: '대구정밀부품(주)', 유형: '법인',
+    생년월일: '1966-01-01', 성별: '남', 연락처: '053-000-1234',
+    주소: '대구시 달성군 테크노대로 100', 등급: 'VIP',
+    사업정보: {
+      사업자번호: '000-81-00660', 상호: '대구정밀부품 주식회사',
+      업종: '자동차 부품 제조업', 대표자: '김대표', 설립일: '2008-06-01', 연매출: '약 57억 6,000만원',
+    },
+    보유상품: ['법인 입출금통장', '인터넷뱅킹'],
+    계좌: [
+      { 번호: '013-13001-00001', 상품: '법인 입출금통장', 잔액: 73_000_000, 상태: '정상' },
+    ],
+    최근거래: [
+      { 일자: '04.28', 내용: '원자재 대금',   금액: -260_000_000 },
+      { 일자: '04.25', 내용: '매출 입금',     금액:  480_000_000 },
+      { 일자: '04.20', 내용: '급여 일괄이체', 금액:  -95_000_000 },
+      { 일자: '04.15', 내용: '기존 대출 이자',금액:   -1_200_000 },
+    ],
+  },
 }
 
 // ── 접이식 섹션 컴포넌트 ─────────────────────────────
@@ -638,6 +764,14 @@ export function CrmPanel() {
                 }
               </div>
             </div>
+
+            {/* ── 데모 고객: AI 영업기회 분석 버튼 ── */}
+            {DEMO_MAP[customer.고객번호] && (
+              <DemoAnalysisButton
+                demo={DEMO_MAP[customer.고객번호]}
+                customerName={customer.고객명}
+              />
+            )}
 
             {/* ── 기본정보 ── */}
             <CollapseSection title="기본정보" icon={User}>
