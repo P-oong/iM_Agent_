@@ -10,7 +10,14 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+.vite
 *.local
+
+# API 키·비밀 (Upstage 등) — 예시는 .env.example 만 커밋
+.env
+.env.local
+.env.*.local
+!.env.example
 
 # Editor directories and files
 .vscode/*

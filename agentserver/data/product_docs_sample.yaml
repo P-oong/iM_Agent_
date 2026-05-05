@@ -1,0 +1,33 @@
+# Role: Sample product and notice context used by the demo recommender.
+
+documents:
+  - doc_id: DOC001
+    product_id: P001
+    title: Spring savings campaign
+    summary: Mobile-first onboarding incentive for early-career customers.
+    channel_hint: mobile
+    tags: [savings, starter, campaign]
+  - doc_id: DOC002
+    product_id: P002
+    title: Loan refinancing bulletin
+    summary: Branch teams should prioritize households reacting to rate changes.
+    channel_hint: branch
+    tags: [loan, family, refinance]
+  - doc_id: DOC003
+    product_id: P003
+    title: Wealth and retirement briefing
+    summary: Advisors should highlight retirement income and asset diversification.
+    channel_hint: hybrid
+    tags: [retirement, wealth, advisory]
+  - doc_id: DOC004
+    product_id: P004
+    title: Premium card lifestyle event
+    summary: Promote digital rewards bundles to high-engagement customers.
+    channel_hint: mobile
+    tags: [premium, digital, lifestyle]
+  - doc_id: DOC005
+    product_id: P005
+    title: Senior deposit protection note
+    summary: Use stability and capital protection talking points for retirees.
+    channel_hint: branch
+    tags: [retirement, protect, branch]

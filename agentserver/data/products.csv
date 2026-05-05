@@ -1,0 +1,6 @@
+product_id,name,category,target_segments,min_age,max_age,priority_tags,base_fit_score,customer_value
+P001,Smart Start Deposit,deposit,young_professional;family_builder,20,45,starter;digital;savings,62,Easy savings product for goal-based planning
+P002,Home Step Loan Repricing,loan,family_builder;affluent,30,55,family;branch;housing,64,Lower repayment burden with refinance support
+P003,Retire Ready Portfolio,investment,affluent;retiree,40,70,retirement;premium;wealth,66,Asset allocation package for long-term income planning
+P004,Lifestyle Premium Card,card,young_professional;affluent,25,55,premium;digital;lifestyle,58,Rewards and subscription benefits for active customers
+P005,Stable Senior Deposit,deposit,retiree,55,80,retirement;branch;protect,65,Capital protection with predictable returns

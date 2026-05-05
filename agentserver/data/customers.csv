@@ -1,0 +1,5 @@
+customer_id,name,age,segment,monthly_income,assets,digital_engagement,life_stage,primary_goal,preferred_channel
+C001,Minji Kim,29,young_professional,4200,18000,high,starter,build_savings,mobile
+C002,Jisoo Park,41,family_builder,7600,95000,medium,growth,reduce_loan_cost,branch
+C003,Sunwoo Lee,58,retiree,3200,240000,low,retirement,protect_assets,branch
+C004,Ethan Choi,35,affluent,11000,380000,high,expansion,grow_investments,hybrid
