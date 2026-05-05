@@ -1,4 +1,14 @@
-"""Role: FastAPI server exposing the LangGraph sales agent as a REST API."""
+"""FastAPI 서버 — 레거시 LangGraph 엔드포인트와 신규 iM BRIDGE Agent 엔드포인트를 함께 제공합니다.
+
+[레거시] 프론트엔드에서 계속 사용 중인 엔드포인트
+  POST /api/analyze          — 구 LangGraph 파이프라인 (CSV 기반)
+  POST /analyze-opportunities — GPT 직접 호출 영업기회 분석
+
+[신규] iM BRIDGE 멀티에이전트 파이프라인
+  POST /api/bridge/analyze           — Router + Specialist
+  POST /api/bridge/sales-card        — + RAG/Policy + KPI + Assembler
+  POST /api/bridge/consulting-package — + 상담패키지 Reflection 보고서
+"""
 
 from __future__ import annotations
 
@@ -14,10 +24,27 @@ from openai import OpenAI as _OpenAI
 from pydantic import BaseModel, Field
 
 from bank_sales_agent.config.settings import get_settings
+
+# ── 레거시 LangGraph 그래프 (프론트엔드 /api/analyze 호환) ──────────────────
 from bank_sales_agent.graph.build_graph import build_sales_graph
 
+# ── 신규 iM BRIDGE Agent 모듈 ──────────────────────────────────────────────
+from bank_sales_agent.agents.router_agent import run_router
+from bank_sales_agent.agents.specialist_agent import run_specialist
+from bank_sales_agent.agents.policy_agent import run_policy_agent
+from bank_sales_agent.agents.assembler_agent import run_assembler
+from bank_sales_agent.agents.consulting_agent import run_consulting_package
+from bank_sales_agent.services.feature_mart import (
+    get_feature_mart,
+    get_customer_basic_info,
+    build_customer_payload,
+)
+from bank_sales_agent.services.product_catalog import get_candidate_products
+from bank_sales_agent.services.policy_rag import retrieve_policy_docs
+from bank_sales_agent.services.kpi_mapper import map_kpi_badges_for_products
 
-# ── Graph singleton (built once at startup) ────────────────────────────────
+
+# ── 레거시 Graph 싱글톤 (서버 시작 시 1회 빌드) ─────────────────────────────
 _graph: Any = None
 
 
@@ -25,7 +52,13 @@ _graph: Any = None
 async def lifespan(app: FastAPI):
     global _graph
     settings = get_settings()
-    _graph = build_sales_graph(settings)
+    try:
+        _graph = build_sales_graph(settings)
+    except Exception as exc:
+        # CSV 데이터가 없어도 신규 Bridge 엔드포인트는 정상 동작
+        import logging
+        logging.getLogger(__name__).warning("레거시 LangGraph 초기화 실패 (Bridge 엔드포인트는 영향 없음): %s", exc)
+        _graph = None
     yield
 
 
@@ -401,21 +434,6 @@ async def analyze_opportunities(req: OppAnalysisRequest) -> Dict[str, Any]:
 
 
 # ── iM BRIDGE Agent 엔드포인트 ────────────────────────────────────────────────
-
-from bank_sales_agent.agents.router_agent import run_router
-from bank_sales_agent.agents.specialist_agent import run_specialist
-from bank_sales_agent.agents.policy_agent import run_policy_agent
-from bank_sales_agent.agents.assembler_agent import run_assembler
-from bank_sales_agent.agents.consulting_agent import run_consulting_package
-from bank_sales_agent.services.feature_mart import (
-    get_feature_mart,
-    get_customer_basic_info,
-    build_customer_payload,
-)
-from bank_sales_agent.services.product_catalog import get_candidate_products
-from bank_sales_agent.services.policy_rag import retrieve_policy_docs
-from bank_sales_agent.services.kpi_mapper import map_kpi_badges_for_products
-
 
 class LiveContext(BaseModel):
     visit_reason_code: str = ""
