@@ -398,3 +398,101 @@ async def analyze_opportunities(req: OppAnalysisRequest) -> Dict[str, Any]:
         return json.loads(json_text)
     except json.JSONDecodeError:
         raise HTTPException(status_code=502, detail=f"GPT 응답 파싱 실패: {raw[:200]}")
+
+
+# ── iM BRIDGE Agent 엔드포인트 ────────────────────────────────────────────────
+
+from bank_sales_agent.agents.router_agent import run_router
+from bank_sales_agent.agents.specialist_agent import run_specialist
+from bank_sales_agent.services.feature_mart import (
+    get_feature_mart,
+    get_customer_basic_info,
+    build_customer_payload,
+)
+from bank_sales_agent.services.product_catalog import get_candidate_products
+
+
+class LiveContext(BaseModel):
+    visit_reason_code: str = ""
+    counter_task: str = ""
+    staff_note: str = ""
+
+
+class BridgeAnalyzeRequest(BaseModel):
+    cust_id: str
+    live_context: LiveContext = Field(default_factory=LiveContext)
+
+
+class BridgeAnalyzeResponse(BaseModel):
+    cust_id: str
+    router_result: Dict[str, Any]
+    specialist_result: Dict[str, Any]
+
+
+@app.post("/api/bridge/analyze", response_model=BridgeAnalyzeResponse)
+async def bridge_analyze(req: BridgeAnalyzeRequest) -> BridgeAnalyzeResponse:
+    """
+    iM BRIDGE Agent 메인 분석 엔드포인트.
+    Feature Mart 조회 → Router → Specialist → 추천 결과 반환
+    """
+    settings = get_settings()
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
+
+    # 1. Feature Mart 조회
+    try:
+        feature_mart_json = get_feature_mart(req.cust_id, settings.db_path)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    if not feature_mart_json:
+        raise HTTPException(
+            status_code=404,
+            detail=f"고객 {req.cust_id}의 Feature Mart 데이터가 없습니다. 배치 파이프라인을 먼저 실행하세요.",
+        )
+
+    # 2. 고객 기본 정보 조회
+    basic_info = get_customer_basic_info(req.cust_id, settings.db_path)
+
+    # 3. Feature Mart + Live Context 결합
+    customer_payload = build_customer_payload(
+        feature_mart_json,
+        req.live_context.model_dump(),
+        basic_info,
+    )
+
+    # 4. Router Agent
+    try:
+        router_result = run_router(customer_payload, api_key=api_key)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Router Agent 오류: {exc}")
+
+    # 5. 후보 상품 조회
+    customer_type = feature_mart_json.get("customer_segment", {}).get("customer_type", "개인")
+    candidate_products = get_candidate_products(
+        primary_label=router_result["primary_label"],
+        secondary_labels=router_result.get("secondary_labels", []),
+        customer_type=customer_type,
+        db_path=settings.db_path,
+    )
+
+    if not candidate_products:
+        raise HTTPException(status_code=404, detail="해당 카테고리에 적합한 후보 상품이 없습니다.")
+
+    # 6. Specialist Agent
+    try:
+        specialist_result = run_specialist(
+            router_result=router_result,
+            customer_payload=customer_payload,
+            candidate_products=candidate_products,
+            api_key=api_key,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Specialist Agent 오류: {exc}")
+
+    return BridgeAnalyzeResponse(
+        cust_id=req.cust_id,
+        router_result=router_result,
+        specialist_result=specialist_result,
+    )

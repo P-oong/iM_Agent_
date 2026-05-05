@@ -13,6 +13,7 @@ python-dotenv = "^1.0.0"
 pyyaml = "^6.0"
 langgraph = ">=0.2.0"
 fastapi = ">=0.100.0"
+openai = ">=1.0.0"
 uvicorn = {extras = ["standard"], version = ">=0.22.0"}
 
 [tool.poetry.group.optional.dependencies]
