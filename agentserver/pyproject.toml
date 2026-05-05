@@ -7,12 +7,13 @@ readme = "README.md"
 packages = [{ include = "bank_sales_agent", from = "src" }]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.10,<4.0"
 pydantic = "^2.0.0"
 python-dotenv = "^1.0.0"
 pyyaml = "^6.0"
 langgraph = ">=0.2.0"
 fastapi = ">=0.100.0"
+openai = ">=1.0.0"
 uvicorn = {extras = ["standard"], version = ">=0.22.0"}
 
 [tool.poetry.group.optional.dependencies]
@@ -34,8 +35,7 @@ langgraph-checkpoint-sqlite = "^3.0.3"
 langgraph-cli = "^0.4.21"
 
 [tool.poetry.scripts]
-bank-sales-agent = "bank_sales_agent.main:run"
-bank-sales-agent-ui = "bank_sales_agent.ui.app:run"
+bank-sales-agent = "bank_sales_agent.main_bridge:main"
 
 [build-system]
 requires = ["poetry-core>=1.9.0"]

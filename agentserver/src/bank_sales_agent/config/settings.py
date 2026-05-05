@@ -10,9 +10,11 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[4]
 DATA_DIR = PROJECT_ROOT / "data"
+DB_PATH = REPO_ROOT / "db" / "im_bank.db"
 
-load_dotenv(PROJECT_ROOT / ".env")
+load_dotenv(REPO_ROOT / ".env")
 
 
 class ScoreWeights(BaseModel):
@@ -53,6 +55,7 @@ class AppSettings(BaseModel):
         default_factory=lambda: PROJECT_ROOT
         / os.getenv("SQLITE_DB_PATH", ".langgraph/checkpoints.sqlite")
     )
+    db_path: Path = Field(default_factory=lambda: DB_PATH)
     score_weights: ScoreWeights = Field(default_factory=ScoreWeights)
 
 

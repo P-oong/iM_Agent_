@@ -1,4 +1,14 @@
-"""Role: FastAPI server exposing the LangGraph sales agent as a REST API."""
+"""FastAPI 서버 — 레거시 LangGraph 엔드포인트와 신규 iM BRIDGE Agent 엔드포인트를 함께 제공합니다.
+
+[레거시] 프론트엔드에서 계속 사용 중인 엔드포인트
+  POST /api/analyze          — 구 LangGraph 파이프라인 (CSV 기반)
+  POST /analyze-opportunities — GPT 직접 호출 영업기회 분석
+
+[신규] iM BRIDGE 멀티에이전트 파이프라인
+  POST /api/bridge/analyze           — Router + Specialist
+  POST /api/bridge/sales-card        — + RAG/Policy + KPI + Assembler
+  POST /api/bridge/consulting-package — + 상담패키지 Reflection 보고서
+"""
 
 from __future__ import annotations
 
@@ -14,10 +24,27 @@ from openai import OpenAI as _OpenAI
 from pydantic import BaseModel, Field
 
 from bank_sales_agent.config.settings import get_settings
+
+# ── 레거시 LangGraph 그래프 (프론트엔드 /api/analyze 호환) ──────────────────
 from bank_sales_agent.graph.build_graph import build_sales_graph
 
+# ── 신규 iM BRIDGE Agent 모듈 ──────────────────────────────────────────────
+from bank_sales_agent.agents.router_agent import run_router
+from bank_sales_agent.agents.specialist_agent import run_specialist
+from bank_sales_agent.agents.policy_agent import run_policy_agent
+from bank_sales_agent.agents.assembler_agent import run_assembler
+from bank_sales_agent.agents.consulting_agent import run_consulting_package
+from bank_sales_agent.services.feature_mart import (
+    get_feature_mart,
+    get_customer_basic_info,
+    build_customer_payload,
+)
+from bank_sales_agent.services.product_catalog import get_candidate_products
+from bank_sales_agent.services.policy_rag import retrieve_policy_docs
+from bank_sales_agent.services.kpi_mapper import map_kpi_badges_for_products
 
-# ── Graph singleton (built once at startup) ────────────────────────────────
+
+# ── 레거시 Graph 싱글톤 (서버 시작 시 1회 빌드) ─────────────────────────────
 _graph: Any = None
 
 
@@ -25,7 +52,13 @@ _graph: Any = None
 async def lifespan(app: FastAPI):
     global _graph
     settings = get_settings()
-    _graph = build_sales_graph(settings)
+    try:
+        _graph = build_sales_graph(settings)
+    except Exception as exc:
+        # CSV 데이터가 없어도 신규 Bridge 엔드포인트는 정상 동작
+        import logging
+        logging.getLogger(__name__).warning("레거시 LangGraph 초기화 실패 (Bridge 엔드포인트는 영향 없음): %s", exc)
+        _graph = None
     yield
 
 
@@ -381,7 +414,7 @@ async def analyze_opportunities(req: OppAnalysisRequest) -> Dict[str, Any]:
     client = _OpenAI(api_key=api_key)
     try:
         response = client.chat.completions.create(
-            model="gpt-4.1-mini",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user",   "content": _build_customer_prompt(req.customer)},
@@ -398,3 +431,269 @@ async def analyze_opportunities(req: OppAnalysisRequest) -> Dict[str, Any]:
         return json.loads(json_text)
     except json.JSONDecodeError:
         raise HTTPException(status_code=502, detail=f"GPT 응답 파싱 실패: {raw[:200]}")
+
+
+# ── iM BRIDGE Agent 엔드포인트 ────────────────────────────────────────────────
+
+class LiveContext(BaseModel):
+    visit_reason_code: str = ""
+    counter_task: str = ""
+    staff_note: str = ""
+
+
+class BridgeAnalyzeRequest(BaseModel):
+    cust_id: str
+    live_context: LiveContext = Field(default_factory=LiveContext)
+
+
+class BridgeAnalyzeResponse(BaseModel):
+    cust_id: str
+    router_result: Dict[str, Any]
+    specialist_result: Dict[str, Any]
+
+
+@app.post("/api/bridge/analyze", response_model=BridgeAnalyzeResponse)
+async def bridge_analyze(req: BridgeAnalyzeRequest) -> BridgeAnalyzeResponse:
+    """
+    iM BRIDGE Agent 메인 분석 엔드포인트.
+    Feature Mart 조회 → Router → Specialist → 추천 결과 반환
+    """
+    settings = get_settings()
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
+
+    # 1. Feature Mart 조회
+    try:
+        feature_mart_json = get_feature_mart(req.cust_id, settings.db_path)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    if not feature_mart_json:
+        raise HTTPException(
+            status_code=404,
+            detail=f"고객 {req.cust_id}의 Feature Mart 데이터가 없습니다. 배치 파이프라인을 먼저 실행하세요.",
+        )
+
+    # 2. 고객 기본 정보 조회
+    basic_info = get_customer_basic_info(req.cust_id, settings.db_path)
+
+    # 3. Feature Mart + Live Context 결합
+    customer_payload = build_customer_payload(
+        feature_mart_json,
+        req.live_context.model_dump(),
+        basic_info,
+    )
+
+    # 4. Router Agent
+    try:
+        router_result = run_router(customer_payload, api_key=api_key)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Router Agent 오류: {exc}")
+
+    # 5. 후보 상품 조회
+    customer_type = feature_mart_json.get("customer_segment", {}).get("customer_type", "개인")
+    candidate_products = get_candidate_products(
+        primary_label=router_result["primary_label"],
+        secondary_labels=router_result.get("secondary_labels", []),
+        customer_type=customer_type,
+        db_path=settings.db_path,
+    )
+
+    if not candidate_products:
+        raise HTTPException(status_code=404, detail="해당 카테고리에 적합한 후보 상품이 없습니다.")
+
+    # 6. Specialist Agent
+    try:
+        specialist_result = run_specialist(
+            router_result=router_result,
+            customer_payload=customer_payload,
+            candidate_products=candidate_products,
+            api_key=api_key,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Specialist Agent 오류: {exc}")
+
+    return BridgeAnalyzeResponse(
+        cust_id=req.cust_id,
+        router_result=router_result,
+        specialist_result=specialist_result,
+    )
+
+
+class SalesCardResponse(BaseModel):
+    cust_id: str
+    router_result: Dict[str, Any]
+    specialist_result: Dict[str, Any]
+    sales_cards: List[Dict[str, Any]]
+
+
+@app.post("/api/bridge/sales-card", response_model=SalesCardResponse)
+async def bridge_sales_card(req: BridgeAnalyzeRequest) -> SalesCardResponse:
+    """
+    iM BRIDGE Agent 전체 파이프라인 엔드포인트.
+    Feature Mart → Router → Specialist → RAG/Policy → KPI Mapper → Sales Card Assembler
+    """
+    settings = get_settings()
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
+
+    try:
+        customer_payload, router_result, specialist_result, policy_support_list, kpi_badge_map = (
+            await _run_full_pipeline(req.cust_id, req.live_context.model_dump(), settings, api_key)
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"파이프라인 오류: {exc}")
+
+    try:
+        assembled = run_assembler(
+            customer_payload=customer_payload,
+            router_result=router_result,
+            specialist_result=specialist_result,
+            policy_support_list=policy_support_list,
+            kpi_badge_map=kpi_badge_map,
+            api_key=api_key,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Assembler Agent 오류: {exc}")
+
+    return SalesCardResponse(
+        cust_id=req.cust_id,
+        router_result=router_result,
+        specialist_result=specialist_result,
+        sales_cards=assembled.get("sales_cards", []),
+    )
+
+
+# ── 상담패키지 보고서 (전체 파이프라인 최종) ────────────────────────────────────
+
+class ConsultingPackageResponse(BaseModel):
+    cust_id: str
+    router_result: Dict[str, Any]
+    specialist_result: Dict[str, Any]
+    consulting_package: Dict[str, Any]
+    reflection: Dict[str, Any]
+
+
+async def _run_full_pipeline(
+    cust_id: str,
+    live_context_dict: dict,
+    settings: Any,
+    api_key: str,
+) -> tuple[dict, dict, dict, list, dict]:
+    """Router → Specialist → RAG/Policy → KPI 공통 파이프라인"""
+    try:
+        feature_mart_json = get_feature_mart(cust_id, settings.db_path)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    if not feature_mart_json:
+        raise HTTPException(
+            status_code=404,
+            detail=f"고객 {cust_id}의 Feature Mart 데이터가 없습니다.",
+        )
+
+    basic_info = get_customer_basic_info(cust_id, settings.db_path)
+    customer_payload = build_customer_payload(feature_mart_json, live_context_dict, basic_info)
+
+    router_result = run_router(customer_payload, api_key=api_key)
+
+    customer_type = feature_mart_json.get("customer_segment", {}).get("customer_type", "개인")
+    candidate_products = get_candidate_products(
+        primary_label=router_result["primary_label"],
+        secondary_labels=router_result.get("secondary_labels", []),
+        customer_type=customer_type,
+        db_path=settings.db_path,
+    )
+    if not candidate_products:
+        raise HTTPException(status_code=404, detail="해당 카테고리에 적합한 후보 상품이 없습니다.")
+
+    specialist_result = run_specialist(
+        router_result=router_result,
+        customer_payload=customer_payload,
+        candidate_products=candidate_products,
+        api_key=api_key,
+    )
+
+    top_products = specialist_result.get("top_products", [])
+    base_date = feature_mart_json.get("base_date", "")
+    customer_context = {
+        "customer_segment": feature_mart_json.get("customer_segment", {}),
+        "live_context": live_context_dict,
+    }
+
+    policy_support_list: List[Dict[str, Any]] = []
+    for product in top_products:
+        retrieved_docs = retrieve_policy_docs(
+            product_id=product["product_id"],
+            data_dir=settings.data_dir,
+            query=product.get("product_name", ""),
+        )
+        try:
+            policy = run_policy_agent(
+                product=product,
+                customer_context=customer_context,
+                retrieved_docs=retrieved_docs,
+                api_key=api_key,
+            )
+        except Exception:
+            policy = {
+                "product_id": product["product_id"],
+                "product_name": product["product_name"],
+                "related_docs": [],
+                "required_documents": [],
+                "eligibility_summary": [],
+                "event_summary": [],
+                "caution_points": ["최신 공문을 직접 확인하십시오."],
+            }
+        policy_support_list.append(policy)
+
+    kpi_badge_map = map_kpi_badges_for_products(top_products, base_date, settings.data_dir)
+
+    return customer_payload, router_result, specialist_result, policy_support_list, kpi_badge_map
+
+
+@app.post("/api/bridge/consulting-package", response_model=ConsultingPackageResponse)
+async def bridge_consulting_package(req: BridgeAnalyzeRequest) -> ConsultingPackageResponse:
+    """
+    iM BRIDGE Agent 최종 상담패키지 엔드포인트.
+    Router → Specialist → RAG/Policy → KPI → Draft → Critic → Rewrite
+    """
+    settings = get_settings()
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
+
+    live_context_dict = req.live_context.model_dump()
+
+    try:
+        customer_payload, router_result, specialist_result, policy_support_list, kpi_badge_map = (
+            await _run_full_pipeline(req.cust_id, live_context_dict, settings, api_key)
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"파이프라인 오류: {exc}")
+
+    try:
+        result = run_consulting_package(
+            customer_payload=customer_payload,
+            router_result=router_result,
+            specialist_result=specialist_result,
+            policy_support_list=policy_support_list,
+            kpi_badge_map=kpi_badge_map,
+            api_key=api_key,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Consulting Package Agent 오류: {exc}")
+
+    return ConsultingPackageResponse(
+        cust_id=req.cust_id,
+        router_result=router_result,
+        specialist_result=specialist_result,
+        consulting_package=result.get("consulting_package", {}),
+        reflection=result.get("reflection", {}),
+    )
