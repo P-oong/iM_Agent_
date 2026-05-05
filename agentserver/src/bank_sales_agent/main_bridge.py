@@ -28,6 +28,7 @@ from bank_sales_agent.agents.router_agent import run_router
 from bank_sales_agent.agents.specialist_agent import run_specialist
 from bank_sales_agent.agents.policy_agent import run_policy_agent
 from bank_sales_agent.agents.assembler_agent import run_assembler
+from bank_sales_agent.agents.consulting_agent import run_consulting_package
 
 DEMO_LIVE_CONTEXTS: dict[str, dict] = {
     "C001": {"visit_reason_code": "LOAN_INQUIRY",    "counter_task": "주택대출 상담",      "staff_note": "주택 구입 관련 문의"},
@@ -53,6 +54,7 @@ def main() -> None:
     parser.add_argument("--counter-task", default=None, help="창구 업무")
     parser.add_argument("--staff-note", default=None, help="직원 메모")
     parser.add_argument("--full", action="store_true", help="전체 파이프라인 실행 (RAG/KPI/Assembler 포함)")
+    parser.add_argument("--package", action="store_true", help="상담패키지 보고서 생성 (Reflection 포함)")
     args = parser.parse_args()
 
     settings = get_settings()
@@ -157,7 +159,7 @@ def main() -> None:
     top_products = specialist_result.get("top_products", [])
     base_date = feature_mart_json.get("base_date", "")
 
-    if not args.full:
+    if not args.full and not args.package:
         final = {"cust_id": cust_id, "router_result": router_result, "specialist_result": specialist_result}
         print(f"\n{'='*60}\n최종 JSON (Specialist 까지)\n{'='*60}")
         print(json.dumps(final, ensure_ascii=False, indent=2))
@@ -226,13 +228,90 @@ def main() -> None:
         print(f"  세일즈톡: {card.get('staff_sales_talk', '')}")
         print(f"  다음 행동: {card.get('next_action', '')}")
 
+    if not args.package:
+        final = {
+            "cust_id": cust_id,
+            "router_result": router_result,
+            "specialist_result": specialist_result,
+            "sales_cards": assembled.get("sales_cards", []),
+        }
+        print(f"\n{'='*60}\n최종 JSON (전체)\n{'='*60}")
+        print(json.dumps(final, ensure_ascii=False, indent=2))
+        return
+
+    # ── 상담패키지 보고서 (--package 모드) ────────────────────────────────────────
+
+    print(f"\n{'='*60}")
+    print("[상담패키지] Consulting Package Agent 실행 중...")
+    print("  Draft 생성 -> Critic 평가 -> Rewrite (필요시)")
+    print(f"{'='*60}")
+
+    pkg_result = run_consulting_package(
+        customer_payload=customer_payload,
+        router_result=router_result,
+        specialist_result=specialist_result,
+        policy_support_list=policy_support_list,
+        kpi_badge_map=kpi_badge_map,
+        api_key=api_key,
+    )
+
+    pkg = pkg_result.get("consulting_package", {})
+    ref = pkg_result.get("reflection", {})
+
+    print(f"\n{'='*60}")
+    print(f"최종 상담패키지 보고서")
+    print(f"{'='*60}")
+    print(f"\n[고객 요약] {pkg.get('customer_brief', '')}")
+    print(f"[전략] {pkg.get('recommended_strategy', '')}")
+
+    for card in pkg.get("top_cards", []):
+        prob = card.get("acceptance_probability", 0)
+        band = card.get("probability_label", "")
+        kpi = card.get("kpi_badge", {})
+        print(f"\n  [{card.get('rank')}위] {card.get('product_name')}  ({band} / {prob:.0%})")
+        print(f"  핵심이유: {card.get('main_reason', '')}")
+        print(f"  고객신호:")
+        for s in card.get("customer_signals", []):
+            print(f"    - {s}")
+        print(f"  KPI: [{kpi.get('badge_text')}] 점수 {kpi.get('kpi_score')} / {kpi.get('priority_level')}")
+        if card.get("required_documents"):
+            print(f"  필요서류: {', '.join(card.get('required_documents', []))}")
+        if card.get("caution_points"):
+            for cp in card.get("caution_points", []):
+                print(f"  [!] {cp}")
+        print(f"  [상담멘트] {card.get('staff_talk', '')}")
+        print(f"  [다음행동] {card.get('next_action', '')}")
+
+    if pkg.get("do_not_say"):
+        print(f"\n  [금지 표현]")
+        for d in pkg.get("do_not_say", []):
+            print(f"    X {d}")
+
+    qs = pkg.get("quality_score", {})
+    print(f"\n{'='*60}")
+    print(f"Reflection 품질 점수")
+    print(f"{'='*60}")
+    print(f"  간결성:     {qs.get('conciseness', 0):.2f}")
+    print(f"  핵심표현력:  {qs.get('clarity', 0):.2f}")
+    print(f"  정보성:     {qs.get('informativeness', 0):.2f}")
+    print(f"  실행성:     {qs.get('actionability', 0):.2f}")
+    print(f"  안전성:     {qs.get('compliance_safety', 0):.2f}")
+    print(f"  평균:       {ref.get('avg_quality_score', 0):.3f}")
+    print(f"  Rewrite 여부: {'Yes' if ref.get('rewritten') else 'No'}")
+
+    if ref.get("issues"):
+        print(f"  발견된 이슈:")
+        for issue in ref["issues"]:
+            print(f"    [{issue.get('type')}] {issue.get('message')}")
+
     final = {
         "cust_id": cust_id,
         "router_result": router_result,
         "specialist_result": specialist_result,
-        "sales_cards": assembled.get("sales_cards", []),
+        "consulting_package": pkg,
+        "reflection": ref,
     }
-    print(f"\n{'='*60}\n최종 JSON (전체)\n{'='*60}")
+    print(f"\n{'='*60}\n최종 JSON (상담패키지)\n{'='*60}")
     print(json.dumps(final, ensure_ascii=False, indent=2))
 
 
