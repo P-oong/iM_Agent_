@@ -1,0 +1,202 @@
+/* =====================================================
+   소개 페이지 — about- prefix
+   ===================================================== */
+
+.about-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ── 히어로 ── */
+.about-hero {
+  text-align: center;
+  padding: 40px 24px 36px;
+  background: linear-gradient(135deg, #f0fdf9 0%, #e8f8f5 100%);
+  border: 1.5px solid rgba(0,199,169,0.25);
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+.about-hero-icon {
+  width: 72px; height: 72px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, var(--im-mint), #009e86);
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 6px 24px rgba(0,199,169,0.35);
+}
+.about-title {
+  font-size: 32px;
+  font-weight: 900;
+  color: #0c1c18;
+  margin: 0 0 10px;
+  letter-spacing: -0.03em;
+}
+.about-sub {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 16px;
+  line-height: 1.6;
+}
+.about-tags {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.about-tag {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: rgba(0,199,169,0.12);
+  color: #009e86;
+  border: 1px solid rgba(0,199,169,0.3);
+}
+
+/* ── 카드 ── */
+.about-card {
+  background: #fff;
+  border: 1.5px solid #e8ecef;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  margin-bottom: 20px;
+}
+.about-card-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0c1c18;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+}
+.about-body {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.75;
+  margin: 0 0 12px;
+}
+.about-body:last-child { margin-bottom: 0; }
+
+/* ── 섹션 ── */
+.about-section {
+  margin-bottom: 20px;
+}
+.about-section-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0c1c18;
+  margin: 0 0 14px;
+  letter-spacing: -0.01em;
+}
+
+/* ── 기능 그리드 ── */
+.about-feature-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.about-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #fff;
+  border: 1.5px solid #e8ecef;
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color 0.15s;
+}
+.about-feature-item:hover { border-color: var(--im-mint); }
+.about-feature-icon {
+  width: 36px; height: 36px;
+  background: rgba(0,199,169,0.1);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--im-mint);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.about-feature-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 3px;
+}
+.about-feature-desc {
+  font-size: 12px;
+  color: #888;
+  line-height: 1.5;
+}
+
+/* ── 기술 스택 ── */
+.about-tech-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.about-tech-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #fff;
+  border: 1.5px solid #e8ecef;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.about-tech-chip:hover {
+  border-color: var(--im-mint);
+  box-shadow: 0 2px 10px rgba(0,199,169,0.1);
+}
+
+/* ── 사용법 단계 ── */
+.about-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.about-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #fff;
+  border: 1.5px solid #e8ecef;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.about-step-num {
+  width: 30px; height: 30px;
+  background: var(--im-mint);
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.about-step-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  margin-bottom: 3px;
+}
+.about-step-desc {
+  font-size: 12px;
+  color: #777;
+  font-family: monospace;
+  line-height: 1.5;
+}
