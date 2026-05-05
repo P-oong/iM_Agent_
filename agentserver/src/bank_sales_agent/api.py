@@ -414,7 +414,7 @@ async def analyze_opportunities(req: OppAnalysisRequest) -> Dict[str, Any]:
     client = _OpenAI(api_key=api_key)
     try:
         response = client.chat.completions.create(
-            model="gpt-4.1-mini",
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user",   "content": _build_customer_prompt(req.customer)},
@@ -539,91 +539,15 @@ async def bridge_sales_card(req: BridgeAnalyzeRequest) -> SalesCardResponse:
     if not api_key:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
 
-    # 1. Feature Mart 조회
     try:
-        feature_mart_json = get_feature_mart(req.cust_id, settings.db_path)
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    if not feature_mart_json:
-        raise HTTPException(
-            status_code=404,
-            detail=f"고객 {req.cust_id}의 Feature Mart 데이터가 없습니다.",
+        customer_payload, router_result, specialist_result, policy_support_list, kpi_badge_map = (
+            await _run_full_pipeline(req.cust_id, req.live_context.model_dump(), settings, api_key)
         )
-
-    basic_info = get_customer_basic_info(req.cust_id, settings.db_path)
-    customer_payload = build_customer_payload(
-        feature_mart_json, req.live_context.model_dump(), basic_info
-    )
-
-    # 2. Router Agent
-    try:
-        router_result = run_router(customer_payload, api_key=api_key)
+    except HTTPException:
+        raise
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Router Agent 오류: {exc}")
+        raise HTTPException(status_code=502, detail=f"파이프라인 오류: {exc}")
 
-    # 3. 후보 상품 조회
-    customer_type = feature_mart_json.get("customer_segment", {}).get("customer_type", "개인")
-    candidate_products = get_candidate_products(
-        primary_label=router_result["primary_label"],
-        secondary_labels=router_result.get("secondary_labels", []),
-        customer_type=customer_type,
-        db_path=settings.db_path,
-    )
-    if not candidate_products:
-        raise HTTPException(status_code=404, detail="해당 카테고리에 적합한 후보 상품이 없습니다.")
-
-    # 4. Specialist Agent
-    try:
-        specialist_result = run_specialist(
-            router_result=router_result,
-            customer_payload=customer_payload,
-            candidate_products=candidate_products,
-            api_key=api_key,
-        )
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Specialist Agent 오류: {exc}")
-
-    top_products = specialist_result.get("top_products", [])
-    base_date = feature_mart_json.get("base_date", "")
-
-    # 5. 상품별 RAG/Policy Agent 병렬 실행
-    customer_context = {
-        "customer_segment": feature_mart_json.get("customer_segment", {}),
-        "live_context": req.live_context.model_dump(),
-    }
-    policy_support_list: List[Dict[str, Any]] = []
-    for product in top_products:
-        retrieved_docs = retrieve_policy_docs(
-            product_id=product["product_id"],
-            data_dir=settings.data_dir,
-            query=product.get("product_name", ""),
-        )
-        try:
-            policy = run_policy_agent(
-                product=product,
-                customer_context=customer_context,
-                retrieved_docs=retrieved_docs,
-                api_key=api_key,
-            )
-        except Exception:
-            policy = {
-                "product_id": product["product_id"],
-                "product_name": product["product_name"],
-                "related_docs": [{"doc_id": d["doc_id"], "doc_title": d["doc_title"],
-                                   "doc_type": d["doc_type"], "matched_reason": d["matched_reason"]}
-                                  for d in retrieved_docs],
-                "required_documents": [],
-                "eligibility_summary": [],
-                "event_summary": [],
-                "caution_points": ["최신 공문을 직접 확인하십시오."],
-            }
-        policy_support_list.append(policy)
-
-    # 6. KPI Mapper (결정론적, AI 없음)
-    kpi_badge_map = map_kpi_badges_for_products(top_products, base_date, settings.data_dir)
-
-    # 7. Sales Card Assembler
     try:
         assembled = run_assembler(
             customer_payload=customer_payload,
@@ -661,7 +585,11 @@ async def _run_full_pipeline(
     api_key: str,
 ) -> tuple[dict, dict, dict, list, dict]:
     """Router → Specialist → RAG/Policy → KPI 공통 파이프라인"""
-    feature_mart_json = get_feature_mart(cust_id, settings.db_path)
+    try:
+        feature_mart_json = get_feature_mart(cust_id, settings.db_path)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     if not feature_mart_json:
         raise HTTPException(
             status_code=404,
