@@ -12,7 +12,7 @@ export function Footer() {
       <span style={{ color: '#ccc' }}>·</span>
       <Link to="/about" style={{ color: 'var(--im-mint)', textDecoration: 'none' }}>소개</Link>
       <span style={{ color: '#ccc' }}>·</span>
-      <span>Powered by Upstage Solar Pro 3</span>
+      <span>Powered by AI</span>
     </footer>
   )
 }

@@ -146,7 +146,7 @@ export function AiPage() {
         <div>
           <h1 className="ai-hero-title">AI 고객 분석</h1>
           <p className="ai-hero-sub">
-            Solar Pro 3 모델이 고객 데이터를 실시간으로 분석합니다
+            AI가 고객 데이터를 실시간으로 분석합니다
           </p>
         </div>
       </div>
@@ -165,7 +165,7 @@ export function AiPage() {
           onClick={() => { setMode('upstage'); setResult(null); setStreamText(''); setStage('idle') }}
           disabled={isRunning}
         >
-          <Sparkles size={14} />Upstage 직접
+          <Sparkles size={14} />직접 입력
         </button>
       </div>
 
@@ -253,7 +253,7 @@ export function AiPage() {
                         onChange={e => setModelId(e.target.value)} placeholder="solar-pro3" />
                     </label>
                     <p className="ai-config-note">
-                      Upstage AI Console에서 발급된 API 키와 모델명을 입력하세요
+                      API 키와 모델명을 입력하세요
                     </p>
                   </div>
                 </motion.div>
@@ -346,7 +346,7 @@ export function AiPage() {
               <div className="ai-guide-steps">
                 {[
                   { Icon: User,       t: '고객 선택',  d: '왼쪽 목록에서 분석할 고객을 선택합니다' },
-                  { Icon: Sparkles,   t: 'AI 분석',    d: 'Solar Pro 3가 재무·영업 기회를 실시간 분석합니다' },
+                  { Icon: Sparkles,   t: 'AI 분석',    d: 'AI가 재무·영업 기회를 실시간 분석합니다' },
                   { Icon: TrendingUp, t: '결과 확인',  d: '영업 기회, 리스크, 추천 멘트를 확인합니다' },
                 ].map(({ Icon, t, d }) => (
                   <div key={t} className="ai-guide-step">

@@ -124,6 +124,12 @@
   scrollbar-width: thin;
   scrollbar-color: #d0f5ee transparent;
 }
+.rs-drawer-body--noscroll {
+  overflow-y: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
 .rs-drawer-body::-webkit-scrollbar { width: 4px; }
 .rs-drawer-body::-webkit-scrollbar-track { background: transparent; }
 .rs-drawer-body::-webkit-scrollbar-thumb { background: #c8ede8; border-radius: 99px; }
