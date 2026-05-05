@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{ include = "bank_sales_agent", from = "src" }]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.10,<4.0"
 pydantic = "^2.0.0"
 python-dotenv = "^1.0.0"
 pyyaml = "^6.0"

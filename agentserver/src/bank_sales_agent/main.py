@@ -20,7 +20,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the bank sales LangGraph prototype.")
     parser.add_argument(
         "--customer-id",
-        help="Customer ID to evaluate when starting a new thread.",
+        default="C001",
+        help="Customer ID to evaluate when starting a new thread. (default: C001)",
     )
     parser.add_argument(
         "--thread-id",
