@@ -3,7 +3,6 @@ import {
   ArrowRight,
   BotMessageSquare,
   ChevronRight,
-  CreditCard,
   Monitor,
   Sparkles,
   Trophy,
@@ -18,8 +17,8 @@ const FEATURES = [
     Icon: Monitor,
     title: '전산화면 연동',
     desc: '실명번호 입력 하나로 CRM · AI 분석이 동시에 자동 연동됩니다.',
-    href: '/banking/0156',
-    badge: '[0156]',
+    href: '/banking/0151',
+    badge: '[0151]',
     color: 'var(--im-mint)',
   },
   {
@@ -84,8 +83,8 @@ export function HomePage() {
               차세대 은행원 영업지원 플랫폼
             </p>
             <div className="home-hero-ctas">
-              <Link to="/banking/0310" className="home-cta-primary">
-                카드 발급 시작
+              <Link to="/banking/0151" className="home-cta-primary">
+                전산화면 열기
                 <ArrowRight size={16} />
               </Link>
               <Link to="/ai" className="home-cta-secondary">
@@ -111,7 +110,7 @@ export function HomePage() {
               <BotMessageSquare size={22} />
             </div>
             <div className="hero-icon-center">
-              <CreditCard size={32} />
+              <Monitor size={32} />
             </div>
           </motion.div>
         </div>

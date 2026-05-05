@@ -19,7 +19,7 @@ const CAT_MAP: Record<string, CatMeta> = {
     label: '전체',
     desc: '모든 업무 화면 목록입니다.',
     screens: [
-      { code: '0156', name: '고객실명조회',    desc: '실명번호로 고객 정보를 조회합니다.',       path: '/banking/0156' },
+      { code: '0151', name: '수신 기장 및 재발행', desc: '수신 계좌 기장 처리 및 통장 재발행 업무를 처리합니다.', path: '/banking/0151' },
       { code: '0110', name: '계좌기본조회',    desc: '계좌의 기본 정보를 조회합니다.' },
       { code: '0210', name: '대출기본조회',    desc: '대출 계좌의 기본 정보를 조회합니다.' },
       { code: '0310', name: '카드 발급 가능 조회', desc: '실명번호 입력 → 자동 심사 → 즉시 신청.', path: '/banking/0310' },
@@ -31,7 +31,7 @@ const CAT_MAP: Record<string, CatMeta> = {
     label: '고객/신용',
     desc: '고객 정보 및 신용 관련 업무 화면입니다.',
     screens: [
-      { code: '0156', name: '고객실명조회',  desc: '실명번호로 고객 기본 정보를 조회합니다.',     path: '/banking/0156' },
+      { code: '0151', name: '수신 기장 및 재발행', desc: '수신 계좌 기장 처리 및 통장 재발행 업무를 처리합니다.', path: '/banking/0151' },
       { code: '0157', name: '고객기본정보',  desc: '고객의 등록 정보와 거래 현황을 확인합니다.' },
       { code: '0158', name: '신용등급조회',  desc: '고객의 신용등급 및 평가 내역을 조회합니다.' },
       { code: '0159', name: '고객우대현황',  desc: '우대금리 적용 및 등급 현황을 조회합니다.' },

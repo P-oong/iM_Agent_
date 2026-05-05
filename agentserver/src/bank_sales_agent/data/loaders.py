@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import csv
 from pathlib import Path
+from typing import Any
 
-import pandas as pd
 import yaml
 
 from bank_sales_agent.domain.schemas import Customer, DemoDataBundle, KpiMetric, Product, ProductDocument
@@ -15,16 +16,32 @@ def _split_values(value: str) -> list[str]:
     return [item.strip() for item in value.split(";") if item.strip()]
 
 
+def _read_csv(path: Path) -> list[dict[str, Any]]:
+    """Read a CSV file and return a list of dicts with auto-cast numeric values."""
+    rows: list[dict[str, Any]] = []
+    with path.open(newline="", encoding="utf-8") as fh:
+        reader = csv.DictReader(fh)
+        for raw in reader:
+            record: dict[str, Any] = {}
+            for k, v in raw.items():
+                try:
+                    record[k] = int(v)
+                except ValueError:
+                    try:
+                        record[k] = float(v)
+                    except ValueError:
+                        record[k] = v
+            rows.append(record)
+    return rows
+
+
 def load_customers(data_dir: Path) -> list[Customer]:
     """Load customer records from the demo CSV."""
-    frame = pd.read_csv(data_dir / "customers.csv")
-    return [Customer(**row) for row in frame.to_dict(orient="records")]
+    return [Customer(**row) for row in _read_csv(data_dir / "customers.csv")]
 
 
 def load_products(data_dir: Path) -> list[Product]:
     """Load product records from the demo CSV."""
-    frame = pd.read_csv(data_dir / "products.csv")
-    records = frame.to_dict(orient="records")
     return [
         Product(
             **{
@@ -33,14 +50,13 @@ def load_products(data_dir: Path) -> list[Product]:
                 "priority_tags": _split_values(str(record["priority_tags"])),
             }
         )
-        for record in records
+        for record in _read_csv(data_dir / "products.csv")
     ]
 
 
 def load_kpi_table(data_dir: Path) -> dict[str, KpiMetric]:
     """Load KPI metrics keyed by product ID."""
-    frame = pd.read_csv(data_dir / "kpi_table.csv")
-    metrics = [KpiMetric(**row) for row in frame.to_dict(orient="records")]
+    metrics = [KpiMetric(**row) for row in _read_csv(data_dir / "kpi_table.csv")]
     return {metric.product_id: metric for metric in metrics}
 
 
@@ -54,7 +70,6 @@ def load_product_documents(data_dir: Path) -> list[ProductDocument]:
 
 def load_demo_bundle(data_dir: Path) -> DemoDataBundle:
     """Load all demo resources in one shot for the orchestrator."""
-    # TODO: split into repository classes if data sources become external.
     return DemoDataBundle(
         customers=load_customers(data_dir),
         products=load_products(data_dir),

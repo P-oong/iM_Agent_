@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
-
 from bank_sales_agent.domain.schemas import Customer, DemoDataBundle
 from bank_sales_agent.graph.state import AgentState
 
@@ -12,16 +10,23 @@ def build_scoring_node(bundle: DemoDataBundle):
     """Create a node that produces candidate products with propensity scores."""
 
     def scoring_node(state: AgentState) -> AgentState:
-        customer_id = state.get("customer_id")
-        if not customer_id:
-            return {"errors": ["customer_id is required to start the graph."]}
+        # If customer_profile is pre-populated (e.g. from API), skip CSV lookup
+        if state.get("customer_profile"):
+            try:
+                customer = Customer.model_validate(state["customer_profile"])
+            except Exception as exc:
+                return {"errors": [f"Invalid customer_profile: {exc}"]}
+        else:
+            customer_id = state.get("customer_id")
+            if not customer_id:
+                return {"errors": ["customer_id is required to start the graph."]}
 
-        customer = next(
-            (item for item in bundle.customers if item.customer_id == customer_id),
-            None,
-        )
-        if customer is None:
-            return {"errors": [f"Unknown customer_id: {customer_id}"]}
+            customer = next(
+                (item for item in bundle.customers if item.customer_id == customer_id),
+                None,
+            )
+            if customer is None:
+                return {"errors": [f"Unknown customer_id: {customer_id}"]}
 
         scored_products: list[dict[str, object]] = []
         for product in bundle.products:
@@ -58,8 +63,8 @@ def build_scoring_node(bundle: DemoDataBundle):
                     "priority_tags": product.priority_tags,
                     "customer_value": product.customer_value,
                     "candidate_reason": reasons[:2],
-                    "propensity_score": float(np.clip(propensity_score, 0.0, 100.0)),
-                    "customer_fit_score": float(np.clip(propensity_score, 0.0, 100.0)),
+                "propensity_score": float(max(0.0, min(100.0, propensity_score))),
+                "customer_fit_score": float(max(0.0, min(100.0, propensity_score))),
                     "document_boost": 0.0,
                     "kpi_score": 0.0,
                     "expected_kpi": 0.0,

@@ -6,7 +6,7 @@ import { AboutPage } from '@/pages/AboutPage'
 import { AiPage } from '@/pages/AiPage'
 import { DemoPage } from '@/pages/DemoPage'
 import { HomePage } from '@/pages/HomePage'
-import { Screen0156 } from '@/pages/banking/Screen0156'
+import { Screen0151 } from '@/pages/banking/Screen0151'
 import { ScreenTemplate } from '@/pages/banking/ScreenTemplate'
 import { BankingCategoryPage } from '@/pages/banking/BankingCategoryPage'
 import { Screen0310 } from '@/pages/banking/Screen0310'
@@ -68,7 +68,7 @@ const router = createBrowserRouter([
         errorElement: <GlobalError />,
         children: [
           { index: true,        element: <BankingCategoryPage /> },
-          { path: '0156',       element: <Screen0156 /> },
+          { path: '0151',       element: <Screen0151 /> },
           { path: '0310',       element: <Screen0310 /> },
           { path: 'template',   element: <ScreenTemplate /> },
           { path: 'cat/:catId', element: <BankingCategoryPage /> },

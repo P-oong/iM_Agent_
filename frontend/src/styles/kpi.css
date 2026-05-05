@@ -408,14 +408,14 @@
 .prod-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 4px;
+  gap: 4px;
+  margin-top: 3px;
 }
 .prod-tag {
-  font-size: 11px;
-  padding: 3px 10px;
+  font-size: 10px;
+  padding: 2px 7px;
   border-radius: 99px;
-  border: 1.5px solid var(--im-mint);
+  border: 1px solid var(--im-mint);
   color: var(--im-mint);
   background: #edfaf7;
   font-weight: 600;

@@ -5,7 +5,7 @@ import '@/styles/banking-nav.css'
 
 // ── 화면 코드 → 라우트 ───────────────────────────────
 const SCREEN_ROUTES: Record<string, string> = {
-  '0156': '/banking/0156',
+  '0151': '/banking/0151',
   '0310': '/banking/0310',
 }
 function resolveRoute(code: string): string {
@@ -14,7 +14,7 @@ function resolveRoute(code: string): string {
 
 // ── 화면 경로 → 메타 ─────────────────────────────────
 const SCREEN_META: Record<string, { code: string; name: string }> = {
-  '/banking/0156': { code: '0156', name: '고객실명조회' },
+  '/banking/0151': { code: '0151', name: '수신 기장 및 재발행' },
   '/banking/0310': { code: '0310', name: '카드 발급 조회' },
 }
 

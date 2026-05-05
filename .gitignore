@@ -1,0 +1,4 @@
+# API 키·비밀 — Git에 올라가지 않도록
+.env
+.env.local
+.env.*.local

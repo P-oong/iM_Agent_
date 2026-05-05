@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
+  Cpu,
   Loader2,
   Settings2,
   Sparkles,
@@ -23,9 +24,11 @@ import {
   DEFAULT_MODEL,
   streamChatCompletion,
 } from '@/services/upstageApi'
+import { analyzeWithAgent, type AgentAnalysisResult } from '@/services/agentApi'
 import '@/styles/ai-page.css'
 
 type Stage = 'idle' | 'streaming' | 'done' | 'error'
+type AnalysisMode = 'upstage' | 'agent'
 
 interface AnalysisResult {
   customerSummary?: string
@@ -69,6 +72,7 @@ export function AiPage() {
   const [apiKey, setApiKey]         = useState(getUpstageApiKey)
   const [modelId, setModelId]       = useState(DEFAULT_MODEL)
   const [showConfig, setShowConfig] = useState(false)
+  const [mode, setMode]             = useState<AnalysisMode>('agent')
 
   // Screen0156 연동 — 실명번호가 바뀌면 자동 선택
   useEffect(() => {
@@ -98,8 +102,22 @@ export function AiPage() {
     setResult(null)
     setStreamText('')
 
-    let accumulated = ''
+    // ── 에이전트 서버 모드 ──────────────────────────────────────────────
+    if (mode === 'agent') {
+      try {
+        const agentResult: AgentAnalysisResult = await analyzeWithAgent(selected)
+        // AgentAnalysisResult is already in AnalysisResult shape
+        setResult(agentResult)
+        setStage('done')
+      } catch (err) {
+        setErrorMsg(err instanceof Error ? err.message : String(err))
+        setStage('error')
+      }
+      return
+    }
 
+    // ── Upstage 직접 스트리밍 모드 ─────────────────────────────────────
+    let accumulated = ''
     try {
       await streamChatCompletion(
         [{ role: 'user', content: buildAnalysisPrompt(selected) }],
@@ -131,6 +149,24 @@ export function AiPage() {
             Solar Pro 3 모델이 고객 데이터를 실시간으로 분석합니다
           </p>
         </div>
+      </div>
+
+      {/* ── 분석 모드 토글 ── */}
+      <div className="ai-mode-toggle">
+        <button
+          className={`ai-mode-btn${mode === 'agent' ? ' ai-mode-btn--active' : ''}`}
+          onClick={() => { setMode('agent'); setResult(null); setStreamText(''); setStage('idle') }}
+          disabled={isRunning}
+        >
+          <Cpu size={14} />에이전트 서버
+        </button>
+        <button
+          className={`ai-mode-btn${mode === 'upstage' ? ' ai-mode-btn--active' : ''}`}
+          onClick={() => { setMode('upstage'); setResult(null); setStreamText(''); setStage('idle') }}
+          disabled={isRunning}
+        >
+          <Sparkles size={14} />Upstage 직접
+        </button>
       </div>
 
       <div className="ai-body">
@@ -189,11 +225,11 @@ export function AiPage() {
             </div>
           </div>
 
-          {/* API 설정 */}
+          {/* API 설정 — Upstage 직접 모드일 때만 표시 */}
           <div className="ai-card">
             <button className="ai-config-toggle" onClick={() => setShowConfig(v => !v)}>
               <Settings2 size={15} />
-              <span>API 설정</span>
+              <span>API 설정 {mode === 'agent' && <span style={{ color: 'var(--im-mint)', fontSize: 11 }}>(에이전트 서버 사용 중)</span>}</span>
               {showConfig ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
             <AnimatePresence>
@@ -233,9 +269,10 @@ export function AiPage() {
             whileTap={{ scale: 0.97 }}
           >
             {isRunning ? (
-              <><Loader2 size={18} className="ai-spin" />분석 중...</>
+              <><Loader2 size={18} className="ai-spin" />{mode === 'agent' ? '에이전트 분석 중...' : '분석 중...'}</>
             ) : (
-              <><Sparkles size={18} />{selected ? `${selected.name} 고객 분석 시작` : '고객을 선택하세요'}</>
+              <>{mode === 'agent' ? <Cpu size={18} /> : <Sparkles size={18} />}
+                {selected ? `${selected.name} 고객 분석 시작` : '고객을 선택하세요'}</>
             )}
           </motion.button>
 
@@ -324,9 +361,35 @@ export function AiPage() {
             </div>
           )}
 
-          {/* ── 스트리밍 출력 (실시간) ── */}
+          {/* ── 에이전트 모드 로딩 인디케이터 ── */}
           <AnimatePresence>
-            {(stage === 'streaming' || (stage === 'done' && !result && streamText)) && (
+            {mode === 'agent' && stage === 'streaming' && (
+              <motion.div
+                className="ai-card ai-stream-card"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="ai-card-title">
+                  <Loader2 size={14} className="ai-spin" />LangGraph 에이전트 분석 중...
+                </div>
+                <div className="ai-stream-output" style={{ padding: '12px 0' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {['고객 스코어링', 'KPI 산출', '상품 지식 검색', '정책 검토', 'AI 설명 생성'].map((step, i) => (
+                      <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-2)' }}>
+                        <Loader2 size={13} className="ai-spin" style={{ animationDelay: `${i * 0.15}s` }} />
+                        {step}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── 스트리밍 출력 (Upstage 직접 모드 실시간) ── */}
+          <AnimatePresence>
+            {mode === 'upstage' && (stage === 'streaming' || (stage === 'done' && !result && streamText)) && (
               <motion.div
                 className="ai-card ai-stream-card"
                 initial={{ opacity: 0, y: 12 }}

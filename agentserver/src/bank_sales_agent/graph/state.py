@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 
 
 class SalesGraphState(TypedDict, total=False):
@@ -10,19 +10,19 @@ class SalesGraphState(TypedDict, total=False):
 
     thread_id: str
     customer_id: str
-    customer_profile: dict[str, Any]
-    product_knowledge: list[dict[str, Any]]
-    scored_products: list[dict[str, Any]]
-    top_products: list[dict[str, Any]]
-    recommendations: list[dict[str, Any]]
-    policy_flags: list[str]
+    customer_profile: Dict[str, Any]
+    product_knowledge: List[Dict[str, Any]]
+    scored_products: List[Dict[str, Any]]
+    top_products: List[Dict[str, Any]]
+    recommendations: List[Dict[str, Any]]
+    policy_flags: List[str]
     approval_required: bool
     review_status: str
-    approved_product_id: str | None
+    approved_product_id: Optional[str]
     approval_note: str
     awaiting_approval: bool
-    crm_draft: dict[str, Any] | None
-    errors: list[str]
+    crm_draft: Optional[Dict[str, Any]]
+    errors: List[str]
 
 
 AgentState = SalesGraphState

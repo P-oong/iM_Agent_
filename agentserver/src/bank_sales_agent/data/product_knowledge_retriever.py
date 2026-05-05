@@ -5,8 +5,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-import numpy as np
-
 from bank_sales_agent.domain.schemas import Customer, Product, ProductDocument
 
 
@@ -81,7 +79,7 @@ class DeterministicProductKnowledgeRetriever:
                 score += 4.0
             if customer.segment in document.tags:
                 score += 3.0
-        return float(np.clip(score, 0.0, 25.0))
+        return float(max(0.0, min(25.0, score)))
 
     def _build_eligibility_conditions(self, customer: Customer, product: Product) -> list[str]:
         conditions = [f"Age should be between {product.min_age} and {product.max_age}."]

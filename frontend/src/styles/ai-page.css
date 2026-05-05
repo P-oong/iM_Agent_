@@ -8,6 +8,40 @@
   padding: 28px 20px 60px;
 }
 
+/* ── 모드 토글 ── */
+.ai-mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.ai-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.ai-mode-btn:hover:not(:disabled) {
+  border-color: var(--im-mint);
+  color: var(--im-mint);
+}
+.ai-mode-btn--active {
+  background: var(--im-mint);
+  border-color: var(--im-mint);
+  color: #fff !important;
+}
+.ai-mode-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ── 히어로 헤더 ── */
 .ai-hero {
   display: flex;

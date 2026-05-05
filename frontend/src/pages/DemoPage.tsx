@@ -4,8 +4,6 @@ import {
   BadgeCheck,
   BotMessageSquare,
   Building2,
-  ChevronDown,
-  ChevronUp,
   Lightbulb,
   Sparkles,
   Target,
@@ -73,7 +71,6 @@ function ScoreBadge({ score }: { score: number }) {
 }
 
 function OpportunityCard({ opp, index }: { opp: DemoCustomer['opportunities'][number]; index: number }) {
-  const [open, setOpen] = useState(index === 0)
   return (
     <motion.div
       className="dm-opp-card"
@@ -81,64 +78,50 @@ function OpportunityCard({ opp, index }: { opp: DemoCustomer['opportunities'][nu
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08 }}
     >
-      <button className="dm-opp-header" onClick={() => setOpen(v => !v)}>
+      <div className="dm-opp-header" style={{ cursor: 'default' }}>
         <div className="dm-opp-rank">TOP {opp.rank}</div>
         <div className="dm-opp-title-wrap">
           <span className="dm-opp-title">{opp.title}</span>
         </div>
         <ScoreBadge score={opp.score} />
-        <div className="dm-opp-chevron">
-          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </div>
+
+      <div className="dm-opp-body">
+        {/* 분석 근거 */}
+        <div className="dm-section">
+          <div className="dm-section-label">
+            <Target size={13} />AI 분석 근거
+          </div>
+          <ul className="dm-analysis-list">
+            {opp.analysisPoints.map((pt, i) => (
+              <li key={i} className="dm-analysis-item">
+                <span className="dm-analysis-dot" />
+                {pt}
+              </li>
+            ))}
+          </ul>
         </div>
-      </button>
 
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            className="dm-opp-body"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            style={{ overflow: 'hidden' }}
-          >
-            {/* 분석 근거 */}
-            <div className="dm-section">
-              <div className="dm-section-label">
-                <Target size={13} />AI 분석 근거
-              </div>
-              <ul className="dm-analysis-list">
-                {opp.analysisPoints.map((pt, i) => (
-                  <li key={i} className="dm-analysis-item">
-                    <span className="dm-analysis-dot" />
-                    {pt}
-                  </li>
-                ))}
-              </ul>
-            </div>
+        {/* 추천 멘트 */}
+        <div className="dm-section">
+          <div className="dm-section-label">
+            <BadgeCheck size={13} />추천 상담 멘트
+          </div>
+          <blockquote className="dm-script">{opp.script}</blockquote>
+        </div>
 
-            {/* 추천 멘트 */}
-            <div className="dm-section">
-              <div className="dm-section-label">
-                <BadgeCheck size={13} />추천 상담 멘트
-              </div>
-              <blockquote className="dm-script">{opp.script}</blockquote>
-            </div>
-
-            {/* 기대 효과 */}
-            <div className="dm-effects">
-              <div className="dm-effect-item dm-effect-customer">
-                <span className="dm-effect-label">고객 혜택</span>
-                <span className="dm-effect-value">{opp.customerBenefit}</span>
-              </div>
-              <div className="dm-effect-item dm-effect-bank">
-                <span className="dm-effect-label">은행 효과</span>
-                <span className="dm-effect-value">{opp.bankBenefit}</span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* 기대 효과 */}
+        <div className="dm-effects">
+          <div className="dm-effect-item dm-effect-customer">
+            <span className="dm-effect-label">고객 혜택</span>
+            <span className="dm-effect-value">{opp.customerBenefit}</span>
+          </div>
+          <div className="dm-effect-item dm-effect-bank">
+            <span className="dm-effect-label">은행 효과</span>
+            <span className="dm-effect-value">{opp.bankBenefit}</span>
+          </div>
+        </div>
+      </div>
     </motion.div>
   )
 }

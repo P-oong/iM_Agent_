@@ -8,6 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  envDir: '../',  // 상위 폴더(iM_Agent_/)에서 .env 읽기
   css: {
     devSourcemap: true,
   },
@@ -33,6 +34,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/api\/upstage/, ''),
         secure: true,
+      },
+      // agentserver (FastAPI on :8000) — CORS 없이 직접 연결
+      '/api/agent': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/api\/agent/, ''),
       },
     },
     // .tsx뿐 아니라 .css 변경도 즉시 HMR (Windows/동기화 폴더 대비)

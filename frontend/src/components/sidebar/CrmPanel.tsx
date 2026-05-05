@@ -1,19 +1,19 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  BadgeDollarSign, BarChart3, Bot, Building2, CheckCircle2,
+  BadgeDollarSign, BarChart3, Building2, CheckCircle2,
   ChevronDown, ChevronUp, CreditCard, Home,
-  Landmark, Loader2, Monitor, Send, Shield, Sparkles, TrendingDown, User, Wallet,
+  Landmark, Monitor, Shield, Sparkles, TrendingDown, User, Wallet,
   Zap,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
+import { useEffect, useMemo, useState, type ComponentType } from 'react'
 import { useCustomer } from '@/contexts/CustomerContext'
 import { useKpi } from '@/contexts/KpiContext'
-import { streamChatCompletion, DEFAULT_MODEL, getUpstageApiKey } from '@/services/upstageApi'
 import { buildCheongyakOpportunities } from '@/data/cheongyakEventData'
 import { getKpiRules } from '@/data/kpiData'
 import { buildMastercardOpportunities } from '@/data/mastercardEventData'
 import { DEMO_CUSTOMERS, type DemoCustomer } from '@/data/demoCustomers'
 import { DemoModal } from '@/components/sidebar/DemoModal'
+import { type CustomerForAnalysis } from '@/services/openaiApi'
 import '@/styles/kpi.css'
 
 // ── 데모 고객 매핑 (고객번호 → DemoCustomer) ──────────────
@@ -23,52 +23,68 @@ const DEMO_MAP: Record<string, DemoCustomer> = {
   '100000013': DEMO_CUSTOMERS[2], // 대구정밀부품
 }
 
+// ── MockCustomer → CustomerForAnalysis 변환 ────────────
+function toCustomerForAnalysis(c: MockCustomer, demo: DemoCustomer): CustomerForAnalysis {
+  return {
+    name: c.고객명,
+    type: c.유형,
+    grade: c.등급,
+    products: c.보유상품,
+    accounts: c.계좌.map(a => ({ product: a.상품, balance: a.잔액 })),
+    transactions: c.최근거래.map(t => ({
+      date: t.일자,
+      description: t.내용,
+      amount: t.금액,
+    })),
+    businessInfo: c.사업정보
+      ? {
+          companyName: c.사업정보.상호,
+          industry: c.사업정보.업종,
+          annualRevenue: c.사업정보.연매출,
+        }
+      : undefined,
+    visitPurpose: demo.visitPurpose,
+    aiEvent: demo.aiEvent,
+  }
+}
+
 // ── 데모 분석 버튼 + 팝업 트리거 ────────────────────────
-function DemoAnalysisButton({ demo, customerName }: { demo: DemoCustomer; customerName: string }) {
+function DemoAnalysisButton({
+  demo,
+  customerName,
+  mockCustomer,
+}: {
+  demo: DemoCustomer
+  customerName: string
+  mockCustomer: MockCustomer
+}) {
   const [open, setOpen] = useState(false)
+  const customerForAi = toCustomerForAnalysis(mockCustomer, demo)
   return (
     <>
-      <div style={{ padding: '10px 12px 4px' }}>
-        {/* 내점 목적 / AI 이벤트 뱃지 */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-          <span style={{
-            fontSize: 10, padding: '3px 8px', borderRadius: 99,
-            background: 'rgba(0,199,169,0.1)', color: '#007a64',
-            fontWeight: 700, border: '1px solid rgba(0,199,169,0.25)',
-          }}>
-            내점: {demo.visitPurpose}
-          </span>
-          <span style={{
-            fontSize: 10, padding: '3px 8px', borderRadius: 99,
-            background: 'rgba(251,191,36,0.12)', color: '#92400e',
-            fontWeight: 700, border: '1px solid rgba(251,191,36,0.3)',
-          }}>
-            {demo.aiEvent}
-          </span>
-        </div>
-        {/* 분석 버튼 */}
+      <div style={{ padding: '6px 10px 4px' }}>
         <button
           onClick={() => setOpen(true)}
           style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            width: '100%', padding: '10px 0',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            width: '100%', padding: '7px 0',
             background: 'linear-gradient(135deg, var(--im-mint), #007c6a)',
-            color: '#fff', border: 'none', borderRadius: 12,
-            fontSize: 13, fontWeight: 800, cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(0,199,169,0.35)',
+            color: '#fff', border: 'none', borderRadius: 8,
+            fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            boxShadow: '0 3px 10px rgba(0,199,169,0.3)',
             letterSpacing: '0.01em',
             transition: 'transform 0.12s, box-shadow 0.12s',
           }}
           onMouseEnter={e => {
             e.currentTarget.style.transform = 'translateY(-1px)'
-            e.currentTarget.style.boxShadow = '0 6px 18px rgba(0,199,169,0.45)'
+            e.currentTarget.style.boxShadow = '0 5px 14px rgba(0,199,169,0.4)'
           }}
           onMouseLeave={e => {
             e.currentTarget.style.transform = ''
-            e.currentTarget.style.boxShadow = '0 4px 14px rgba(0,199,169,0.35)'
+            e.currentTarget.style.boxShadow = '0 3px 10px rgba(0,199,169,0.3)'
           }}
         >
-          <Zap size={15} />
+          <Zap size={13} />
           AI 영업기회 분석
         </button>
       </div>
@@ -76,6 +92,7 @@ function DemoAnalysisButton({ demo, customerName }: { demo: DemoCustomer; custom
         <DemoModal
           demo={demo}
           customerName={customerName}
+          customer={customerForAi}
           onClose={() => setOpen(false)}
         />
       )}
@@ -120,10 +137,8 @@ function getRecommendedProducts(type: CustomerType, products: string[]): Recomme
 
   if (type === '개인') {
     return [
-      { name: 'iM 신용카드',    desc: '소비 패턴 맞춤 캐시백·할인',       priority: products.includes('신용카드') ? 'low' : 'high' },
-      { name: 'iM LIVING 카드', desc: '생활요금 10% 할인',                  priority: 'mid' },
-      { name: '청약저축',        desc: '내집 마련 필수 상품',                priority: products.includes('청약') ? 'low' : 'high' },
-      { name: 'ISA 계좌',       desc: '비과세 절세 통합 자산관리',           priority: products.includes('ISA') ? 'low' : 'high' },
+      { name: 'iM 신용카드', desc: '소비 패턴 맞춤 캐시백·할인', priority: products.includes('신용카드') ? 'low' : 'high' },
+      { name: 'ISA 계좌',    desc: '비과세 절세 통합 자산관리',  priority: products.includes('ISA') ? 'low' : 'high' },
     ]
   }
   if (type === '개인사업자') {
@@ -131,7 +146,6 @@ function getRecommendedProducts(type: CustomerType, products: string[]): Recomme
       (has('결제계좌') && has('타행'))
       || has('결제계좌(타행)')
       || has('가맹정산(타행)')
-
     return [
       {
         name: '노란우산',
@@ -145,25 +159,12 @@ function getRecommendedProducts(type: CustomerType, products: string[]): Recomme
           : '카드·VAN 매출 입금은 당행 계좌로 — 실적·여신 반영에 유리',
         priority: 'high',
       },
-      {
-        name: '네이버페이 커넥트',
-        desc: '정산계좌 당행 전환 시 단말 연동 무상(약 30만원 상당) 등 프로모션 연계',
-        priority: 'high',
-      },
-      {
-        name: '보증서 대출',
-        desc: '가맹·정산 실적 연계 저금리 운전·시설자금',
-        priority: 'high',
-      },
     ]
   }
   // 법인
   return [
-    { name: '기업운전자금대출', desc: '법인 운영 자금, 한도 우대',            priority: 'high' },
-    { name: '법인당좌예금',     desc: '수표·전자어음 결제 전용 계좌',          priority: 'high' },
-    { name: '법인 신용카드',    desc: '임직원 법인카드, 비용 통합 관리',       priority: 'high' },
-    { name: '기업외환서비스',   desc: '수출입 환전·송금 우대수수료',            priority: 'mid'  },
-    { name: '퇴직연금(DB/DC)',  desc: '임직원 퇴직연금 운용',                  priority: 'mid'  },
+    { name: '기업운전자금대출', desc: '법인 운영 자금, 한도 우대',      priority: 'high' },
+    { name: '법인 신용카드',    desc: '임직원 법인카드, 비용 통합 관리', priority: 'high' },
   ]
 }
 
@@ -513,154 +514,25 @@ function CollapseSection({ title, icon: Icon, badge, children, defaultOpen = tru
   )
 }
 
-// ── 고객 데이터 → AI 프롬프트 요약 ─────────────────────
-function buildCustomerContext(c: MockCustomer): string {
-  const totalBal = c.계좌.reduce((s, a) => s + a.잔액, 0)
-  const lines = [
-    `고객명: ${c.고객명} / 유형: ${c.유형} / 등급: ${c.등급}`,
-    `보유상품: ${c.보유상품.join(', ')}`,
-    `총 잔액: ${totalBal.toLocaleString()}원`,
-    `최근거래: ${c.최근거래.map(t => `${t.일자} ${t.내용} ${t.금액 > 0 ? '+' : ''}${t.금액.toLocaleString()}`).join(' | ')}`,
-  ]
-  if (c.사업정보) {
-    lines.push(`사업정보: ${c.사업정보.상호} (${c.사업정보.업종}) 연매출 ${c.사업정보.연매출 ?? '미확인'}`)
-  }
-  return lines.join('\n')
-}
-
-/** 자동 인사이트 요약용 — 이모지 + 핵심 내용, 5줄 이내 */
-const AI_INSIGHT_SYSTEM = `당신은 iM뱅크 창구 행원을 돕는 AI 어시스턴트입니다.
-고객 데이터를 분석하여 핵심 인사이트를 아래 형식으로 4~5줄로 답하세요.
-각 줄은 이모지 하나로 시작하고 40자 이내의 자연스러운 한국어로 작성합니다.
-BIZFAST·태블릿·전자서명·서명 절차는 절대 언급하지 마세요.
-
-예시)
-💰 ISA·펀드 미보유 — 장기 투자 상품 추천 우선 검토
-⚠️ 부채비율 높음 — 신규 대출 권유 전 상환 여력 확인 필요
-✅ VIP 고객 — 프리미엄 우대금리·전용 혜택 적극 안내 권장
-📋 청약 만기 도래 — 갱신 또는 목돈 운용 상품으로 전환 제안
-🎯 카드 미보유 — iM i 카드 발급으로 즉시 KPI 적립 가능
-
-추가 서론·인사 없이 인사이트 줄만 출력하세요.`
-
-/** 채팅 Q&A용 — 구체적이고 실용적인 중간 수준 답변 */
-const AI_CHAT_SYSTEM = `당신은 iM뱅크 창구 행원을 돕는 AI 어시스턴트입니다.
-행원의 질문에 대해 다음 원칙으로 답변하세요.
-- 3~5문장으로 핵심 내용을 담아 구체적으로 답합니다.
-- 불필요한 서론·인사·반복 요약은 생략하고 바로 답변을 시작합니다.
-- 상품 추천 시 이유·혜택·예상 KPI를 포함합니다.
-- 법인·개인사업자 고객에게는 사업 특화 상품과 세무 혜택을 우선 언급합니다.
-- BIZFAST·태블릿·전자서명·서명 절차는 답변에 포함하지 않습니다.
-- 한국 은행 실무에 맞는 전문 표현을 사용하되 과도하게 격식체로 쓰지 마세요.`
-
-type ChatMsg = { role: 'user' | 'ai'; text: string }
-
 // ─────────────────────────────────────────────────────
 export function CrmPanel() {
   const { mode, isOppCompleted, addKpi } = useKpi()
   const { activeResidentId } = useCustomer()
 
-  const [customer,    setCustomer]    = useState<MockCustomer | null>(null)
-  const [notFound,    setNotFound]    = useState(false)
+  const [customer, setCustomer] = useState<MockCustomer | null>(null)
+  const [notFound, setNotFound] = useState(false)
 
-  // AI 자동 분석
-  const [aiSummary,   setAiSummary]   = useState('')
-  const [aiLoading,   setAiLoading]   = useState(false)
-  const abortRef = useRef<AbortController | null>(null)
-
-  // AI 채팅
-  const [chatMsgs,    setChatMsgs]    = useState<ChatMsg[]>([])
-  const [chatInput,   setChatInput]   = useState('')
-  const [chatLoading, setChatLoading] = useState(false)
-  const chatEndRef = useRef<HTMLDivElement>(null)
-
-  // 고객 변경 → MOCK_DB 조회 + AI 분석 트리거
+  // 고객 변경 → MOCK_DB 조회
   useEffect(() => {
     if (activeResidentId) {
       const found = MOCK_DB[activeResidentId.slice(0, 6)] ?? null
       setCustomer(found)
       setNotFound(!found)
-      setAiSummary('')
-      setChatMsgs([])
     } else {
       setCustomer(null)
       setNotFound(false)
-      setAiSummary('')
-      setChatMsgs([])
     }
   }, [activeResidentId])
-
-  // 고객 확정 → AI 자동 분석 스트리밍
-  useEffect(() => {
-    if (!customer) return
-    abortRef.current?.abort()
-    abortRef.current = new AbortController()
-
-    setAiSummary('')
-    setAiLoading(true)
-
-    const ctx = buildCustomerContext(customer)
-    const messages = [
-      { role: 'system' as const, content: AI_INSIGHT_SYSTEM },
-      { role: 'user'   as const, content: `다음 고객을 분석해주세요:\n${ctx}` },
-    ]
-
-    streamChatCompletion(messages, DEFAULT_MODEL, getUpstageApiKey(), chunk => {
-      setAiSummary(prev => prev + chunk)
-    })
-      .catch(() => {/* 취소/에러 무시 */})
-      .finally(() => setAiLoading(false))
-
-    return () => abortRef.current?.abort()
-  }, [customer])
-
-  // 채팅 메시지 추가 → 자동 스크롤
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [chatMsgs, chatLoading])
-
-  // 채팅 전송
-  async function sendChat() {
-    if (!chatInput.trim() || !customer || chatLoading) return
-    const userText = chatInput.trim()
-    setChatInput('')
-    setChatMsgs(prev => [...prev, { role: 'user', text: userText }])
-    setChatLoading(true)
-
-    const ctx = buildCustomerContext(customer)
-    const history = chatMsgs.map(m => ({
-      role: (m.role === 'ai' ? 'assistant' : 'user') as 'user' | 'assistant',
-      content: m.text,
-    }))
-
-    const messages = [
-      { role: 'system' as const,    content: `${AI_CHAT_SYSTEM}\n\n현재 상담 고객 정보:\n${ctx}` },
-      ...history,
-      { role: 'user' as const,      content: userText },
-    ]
-
-    let aiText = ''
-    setChatMsgs(prev => [...prev, { role: 'ai', text: '' }])
-
-    try {
-      await streamChatCompletion(messages, DEFAULT_MODEL, getUpstageApiKey(), chunk => {
-        aiText += chunk
-        setChatMsgs(prev => {
-          const next = [...prev]
-          next[next.length - 1] = { role: 'ai', text: aiText }
-          return next
-        })
-      })
-    } catch {
-      setChatMsgs(prev => {
-        const next = [...prev]
-        next[next.length - 1] = { role: 'ai', text: '⚠ 응답 오류가 발생했습니다.' }
-        return next
-      })
-    } finally {
-      setChatLoading(false)
-    }
-  }
 
   type OppRow = {
     key: string
@@ -715,7 +587,7 @@ export function CrmPanel() {
 
   const isDone = (key: string) =>
     customer ? isOppCompleted(customer.고객번호, key) : false
-  const sortedOpps = [...opportunities].sort((a, b) => b.kpi - a.kpi)
+  const sortedOpps = [...opportunities].sort((a, b) => b.kpi - a.kpi).slice(0, 4)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -725,7 +597,7 @@ export function CrmPanel() {
           <Monitor size={28} className="crm-empty-icon" />
           <p className="crm-empty-title">고객 정보 없음</p>
           <p className="crm-empty-desc">
-            전산화면 <strong>[0156]</strong>에서<br />
+            전산화면 <strong>[0151]</strong>에서<br />
             고객 실명번호를 조회하면<br />
             자동으로 여기에 표시됩니다.
           </p>
@@ -748,28 +620,12 @@ export function CrmPanel() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
           >
-            {/* ── AI 인사이트 (자동 분석) ── */}
-            <div className="crm-ai-card">
-              <div className="crm-ai-header">
-                <Bot size={13} />
-                <span>AI 인사이트</span>
-                {aiLoading && <Loader2 size={11} className="crm-ai-spin" />}
-              </div>
-              <div className="crm-ai-body">
-                {aiSummary
-                  ? <p className="crm-ai-text">{aiSummary}</p>
-                  : aiLoading
-                    ? <p className="crm-ai-placeholder">분석 중...</p>
-                    : <p className="crm-ai-placeholder">분석 결과가 없습니다.</p>
-                }
-              </div>
-            </div>
-
             {/* ── 데모 고객: AI 영업기회 분석 버튼 ── */}
             {DEMO_MAP[customer.고객번호] && (
               <DemoAnalysisButton
                 demo={DEMO_MAP[customer.고객번호]}
                 customerName={customer.고객명}
+                mockCustomer={customer}
               />
             )}
 
@@ -901,45 +757,6 @@ export function CrmPanel() {
             </CollapseSection>
             )}
 
-            {/* ── AI 채팅 Q&A ── */}
-            <div className="crm-chat">
-              <div className="crm-chat-header">
-                <Bot size={12} />
-                <span>AI에게 질문</span>
-              </div>
-              <div className="crm-chat-body">
-                {chatMsgs.length === 0 && (
-                  <p className="crm-chat-hint">
-                    이 고객에 대해 무엇이든 물어보세요.<br />
-                    예) "대출 가능할까요?" "어떤 카드 추천?"
-                  </p>
-                )}
-                {chatMsgs.map((m, i) => (
-                  <div key={i} className={`crm-chat-msg crm-chat-msg--${m.role}`}>
-                    {m.text || <Loader2 size={10} className="crm-ai-spin" />}
-                  </div>
-                ))}
-                <div ref={chatEndRef} />
-              </div>
-              <div className="crm-chat-input-row">
-                <input
-                  className="crm-chat-input"
-                  placeholder="질문 입력..."
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChat()}
-                  disabled={chatLoading}
-                />
-                <button
-                  className="crm-chat-send"
-                  onClick={sendChat}
-                  disabled={!chatInput.trim() || chatLoading}
-                  title="전송 (Enter)"
-                >
-                  <Send size={12} />
-                </button>
-              </div>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>
