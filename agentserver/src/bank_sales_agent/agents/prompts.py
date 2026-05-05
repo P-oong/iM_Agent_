@@ -267,6 +267,119 @@ SPECIALIST_USER_TEMPLATE = """아래 Router 결과, 고객 데이터, 후보 상
 수정 후 최종 JSON만 반환하십시오."""
 
 
+# ── Policy/RAG Agent ─────────────────────────────────────────────────────────
+
+POLICY_AGENT_SYSTEM_PROMPT = """당신은 은행 창구 직원을 지원하는 Policy/RAG Agent입니다.
+
+당신의 역할은 이미 선정된 추천 상품에 대해 관련 공문, 규정, 이벤트, 필요서류를 정리하는 것입니다.
+
+절대 규칙:
+1. 새로운 상품을 추천하지 마십시오.
+2. 수락 확률을 수정하지 마십시오.
+3. KPI를 판단하지 마십시오.
+4. 제공된 문서 내용 안에서만 요약하십시오.
+5. 문서에 없는 혜택이나 조건을 만들지 마십시오.
+6. 최신 공문 확인이 필요한 내용은 caution_points에 명시하십시오.
+7. 출력은 JSON만 반환하십시오."""
+
+POLICY_AGENT_USER_TEMPLATE = """아래 추천 상품과 검색된 문서를 바탕으로 직원 상담 보조 정보를 생성하십시오.
+
+[추천 상품]
+{product_result}
+
+[고객 맥락]
+{customer_context}
+
+[검색된 문서]
+{retrieved_docs}
+
+[출력 형식]
+{{
+  "product_id": "...",
+  "product_name": "...",
+  "related_docs": [
+    {{
+      "doc_id": "...",
+      "doc_title": "...",
+      "doc_type": "POLICY | EVENT | NOTICE | MANUAL",
+      "matched_reason": "..."
+    }}
+  ],
+  "required_documents": ["..."],
+  "eligibility_summary": ["..."],
+  "event_summary": ["..."],
+  "caution_points": ["..."]
+}}
+
+문서에 없는 내용은 만들지 마십시오. 최신 공문 확인이 필요한 항목은 caution_points에 명시하십시오.
+최종 JSON만 반환하십시오."""
+
+
+# ── Sales Card Assembler ──────────────────────────────────────────────────────
+
+ASSEMBLER_SYSTEM_PROMPT = """당신은 은행 창구 직원을 위한 Sales Card Assembler입니다.
+
+당신의 역할은 고객 신호, 추천 상품, 수락 확률, 관련 규정, 필요서류, KPI 뱃지를 바탕으로 직원 대시보드에 표시할 최종 상담 카드를 생성하는 것입니다.
+
+절대 규칙:
+1. 추천 상품 순위와 수락 확률을 임의로 변경하지 마십시오.
+2. KPI를 수락 확률의 근거처럼 표현하지 마십시오.
+3. KPI는 직원 참고용 뱃지로만 표현하십시오.
+4. 문서에 없는 혜택, 서류, 조건을 만들지 마십시오.
+5. 고객에게 부담을 줄 수 있는 표현은 피하고 상담형 문장으로 작성하십시오.
+6. staff_sales_talk는 2~3문장의 자연스러운 한국어 상담 멘트로 작성하십시오.
+7. next_action은 직원이 다음에 취해야 할 구체적인 행동 1문장으로 작성하십시오.
+8. 출력은 JSON만 반환하십시오."""
+
+ASSEMBLER_USER_TEMPLATE = """아래 데이터를 바탕으로 직원 대시보드용 Sales Card를 생성하십시오.
+
+[고객 데이터]
+{customer_payload}
+
+[Router 결과]
+{router_result}
+
+[Specialist 결과]
+{specialist_result}
+
+[Policy/RAG 결과]
+{policy_support_list}
+
+[KPI Badge]
+{kpi_badge_map}
+
+[출력 형식]
+{{
+  "cust_id": "...",
+  "sales_cards": [
+    {{
+      "rank": 1,
+      "product_id": "...",
+      "product_name": "...",
+      "acceptance_probability": 0.00,
+      "probability_band": "...",
+      "main_reason": "...",
+      "customer_evidence": ["..."],
+      "required_documents": ["..."],
+      "event_summary": ["..."],
+      "policy_cautions": ["..."],
+      "kpi_badge": {{
+        "badge_text": "...",
+        "kpi_score": 0,
+        "priority_level": "...",
+        "display_color": "...",
+        "branch_campaign": "..."
+      }},
+      "staff_sales_talk": "...",
+      "next_action": "..."
+    }}
+  ]
+}}
+
+KPI는 직원 참고용 뱃지로만 표현하고 수락 확률 근거에 사용하지 마십시오.
+최종 JSON만 반환하십시오."""
+
+
 # ── 프롬프트 빌더 함수 ──────────────────────────────────────────────────────────
 
 def build_router_prompt(customer_payload: dict) -> str:
@@ -284,4 +397,39 @@ def build_specialist_prompt(
         router_result=json.dumps(router_result, ensure_ascii=False, indent=2),
         customer_payload=json.dumps(customer_payload, ensure_ascii=False, indent=2),
         candidate_products=json.dumps(candidate_products, ensure_ascii=False, indent=2),
+    )
+
+
+def build_policy_agent_prompt(
+    product_result: dict,
+    customer_context: dict,
+    retrieved_docs: list[dict],
+) -> str:
+    # content 필드는 LLM 토큰 절약을 위해 2000자로 제한
+    trimmed_docs = []
+    for d in retrieved_docs:
+        td = {k: v for k, v in d.items() if k != "content"}
+        td["content"] = d.get("content", "")[:2000]
+        trimmed_docs.append(td)
+
+    return POLICY_AGENT_USER_TEMPLATE.format(
+        product_result=json.dumps(product_result, ensure_ascii=False, indent=2),
+        customer_context=json.dumps(customer_context, ensure_ascii=False, indent=2),
+        retrieved_docs=json.dumps(trimmed_docs, ensure_ascii=False, indent=2),
+    )
+
+
+def build_assembler_prompt(
+    customer_payload: dict,
+    router_result: dict,
+    specialist_result: dict,
+    policy_support_list: list[dict],
+    kpi_badge_map: dict,
+) -> str:
+    return ASSEMBLER_USER_TEMPLATE.format(
+        customer_payload=json.dumps(customer_payload, ensure_ascii=False, indent=2),
+        router_result=json.dumps(router_result, ensure_ascii=False, indent=2),
+        specialist_result=json.dumps(specialist_result, ensure_ascii=False, indent=2),
+        policy_support_list=json.dumps(policy_support_list, ensure_ascii=False, indent=2),
+        kpi_badge_map=json.dumps(kpi_badge_map, ensure_ascii=False, indent=2),
     )

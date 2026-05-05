@@ -1,6 +1,7 @@
 """
 iM BRIDGE Agent CLI 테스트 스크립트
-실행: python src/bank_sales_agent/main_bridge.py --cust-id C003
+  기본 모드: python src/bank_sales_agent/main_bridge.py --cust-id C003
+  전체 모드: python src/bank_sales_agent/main_bridge.py --cust-id C003 --full
 """
 
 from __future__ import annotations
@@ -21,8 +22,12 @@ from bank_sales_agent.services.feature_mart import (
     get_feature_mart,
 )
 from bank_sales_agent.services.product_catalog import get_candidate_products
+from bank_sales_agent.services.policy_rag import retrieve_policy_docs
+from bank_sales_agent.services.kpi_mapper import map_kpi_badges_for_products
 from bank_sales_agent.agents.router_agent import run_router
 from bank_sales_agent.agents.specialist_agent import run_specialist
+from bank_sales_agent.agents.policy_agent import run_policy_agent
+from bank_sales_agent.agents.assembler_agent import run_assembler
 
 DEMO_LIVE_CONTEXTS: dict[str, dict] = {
     "C001": {"visit_reason_code": "LOAN_INQUIRY",    "counter_task": "주택대출 상담",      "staff_note": "주택 구입 관련 문의"},
@@ -47,6 +52,7 @@ def main() -> None:
     parser.add_argument("--visit-reason", default=None, help="내점 사유 코드 (없으면 기본값 사용)")
     parser.add_argument("--counter-task", default=None, help="창구 업무")
     parser.add_argument("--staff-note", default=None, help="직원 메모")
+    parser.add_argument("--full", action="store_true", help="전체 파이프라인 실행 (RAG/KPI/Assembler 포함)")
     args = parser.parse_args()
 
     settings = get_settings()
@@ -148,15 +154,85 @@ def main() -> None:
 
     print(f"\n  Specialist confidence: {specialist_result.get('confidence', 0)}")
 
-    # 최종 JSON 출력
+    top_products = specialist_result.get("top_products", [])
+    base_date = feature_mart_json.get("base_date", "")
+
+    if not args.full:
+        final = {"cust_id": cust_id, "router_result": router_result, "specialist_result": specialist_result}
+        print(f"\n{'='*60}\n최종 JSON (Specialist 까지)\n{'='*60}")
+        print(json.dumps(final, ensure_ascii=False, indent=2))
+        return
+
+    # ── 전체 파이프라인 (--full 모드) ───────────────────────────────────────────
+
+    # 5. RAG/Policy Agent
+    print(f"\n[5/7] RAG/Policy Agent 실행 중...")
+    customer_context = {
+        "customer_segment": feature_mart_json.get("customer_segment", {}),
+        "live_context": live_context,
+    }
+    policy_support_list = []
+    for product in top_products:
+        retrieved_docs = retrieve_policy_docs(
+            product_id=product["product_id"],
+            data_dir=settings.data_dir,
+            query=product.get("product_name", ""),
+        )
+        print(f"  [{product['product_id']}] 문서 {len(retrieved_docs)}건 검색")
+        policy = run_policy_agent(
+            product=product,
+            customer_context=customer_context,
+            retrieved_docs=retrieved_docs,
+            api_key=api_key,
+        )
+        policy_support_list.append(policy)
+        if policy.get("required_documents"):
+            print(f"    필요서류: {', '.join(policy['required_documents'][:3])}")
+
+    # 6. KPI Mapper
+    print(f"\n[6/7] KPI 매핑 중...")
+    kpi_badge_map = map_kpi_badges_for_products(top_products, base_date, settings.data_dir)
+    for pid, badge in kpi_badge_map.items():
+        print(f"  [{pid}] {badge['badge_text']} (점수: {badge['kpi_score']}, {badge['priority_level']})")
+
+    # 7. Sales Card Assembler
+    print(f"\n[7/7] Sales Card Assembler 실행 중...")
+    assembled = run_assembler(
+        customer_payload=customer_payload,
+        router_result=router_result,
+        specialist_result=specialist_result,
+        policy_support_list=policy_support_list,
+        kpi_badge_map=kpi_badge_map,
+        api_key=api_key,
+    )
+
+    print(f"\n{'='*60}")
+    print(f"최종 Sales Card")
+    print(f"{'='*60}")
+    for card in assembled.get("sales_cards", []):
+        prob = card.get("acceptance_probability", 0)
+        band = card.get("probability_band", "")
+        kpi = card.get("kpi_badge", {})
+        print(f"\n  [{card['rank']}위] {card['product_name']}  ({band} / {prob:.0%})")
+        print(f"  근거: {card.get('main_reason', '')}")
+        if card.get("required_documents"):
+            print(f"  필요서류: {', '.join(card['required_documents'])}")
+        if card.get("event_summary"):
+            print(f"  이벤트: {', '.join(card['event_summary'])}")
+        if card.get("policy_cautions"):
+            for c in card["policy_cautions"]:
+                print(f"  [!] {c}")
+        print(f"  KPI: [{kpi.get('badge_text')}] {kpi.get('branch_campaign') or ''}")
+        print(f"  세일즈톡: {card.get('staff_sales_talk', '')}")
+        print(f"  다음 행동: {card.get('next_action', '')}")
+
     final = {
         "cust_id": cust_id,
         "router_result": router_result,
         "specialist_result": specialist_result,
+        "sales_cards": assembled.get("sales_cards", []),
     }
-    print(f"\n{'='*60}")
-    print("최종 JSON 출력")
-    print(f"{'='*60}")
+    print(f"\n{'='*60}\n최종 JSON (전체)\n{'='*60}")
     print(json.dumps(final, ensure_ascii=False, indent=2))
 
 
