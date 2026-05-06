@@ -1,0 +1,191 @@
+[
+  {
+    "doc_id": "P001_POLICY",
+    "doc_title": "iM 자유적금 상품 안내 및 필요서류",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P001"],
+    "file_path": "policy_docs/P001_policy.txt",
+    "summary": "iM 자유적금 가입 조건, 금리, 필요서류, 유의사항을 안내하는 문서입니다.",
+    "keywords": ["자유적금", "적금", "자동이체", "이율", "만기"]
+  },
+  {
+    "doc_id": "P001_EVENT",
+    "doc_title": "급여이체 고객 적금 우대금리 이벤트",
+    "doc_type": "EVENT",
+    "linked_product_ids": ["P001", "P002"],
+    "file_path": "policy_docs/P001_event.txt",
+    "summary": "급여이체 고객 대상 적금/예금 우대금리 특별 이벤트 안내 문서입니다.",
+    "keywords": ["급여이체", "우대금리", "이벤트", "적금", "예금"]
+  },
+  {
+    "doc_id": "P002_POLICY",
+    "doc_title": "iM 정기예금 상품 안내 및 필요서류",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P002"],
+    "file_path": "policy_docs/P002_policy.txt",
+    "summary": "iM 정기예금 가입 조건, 금리 체계, 필요서류, 중도해지 안내 문서입니다.",
+    "keywords": ["정기예금", "예금", "만기", "금리", "중도해지"]
+  },
+  {
+    "doc_id": "P003_POLICY",
+    "doc_title": "iM 주택청약종합저축 안내",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P003"],
+    "file_path": "policy_docs/P003_policy.txt",
+    "summary": "주택청약종합저축 가입 자격, 납입 방법, 청약 가점 조건을 안내하는 문서입니다.",
+    "keywords": ["청약", "주택청약", "저축", "청약가점", "무주택"]
+  },
+  {
+    "doc_id": "P004_POLICY",
+    "doc_title": "iM 주택담보대출 심사 기준 및 필요서류",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P004"],
+    "file_path": "policy_docs/P004_policy.txt",
+    "summary": "주택담보대출 LTV/DSR 기준, 신청 절차, 필요서류를 안내하는 공문입니다.",
+    "keywords": ["주담대", "주택담보대출", "LTV", "DSR", "심사"]
+  },
+  {
+    "doc_id": "P005_POLICY",
+    "doc_title": "iM 신용대출 한도 산정 기준 및 필요서류",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P005"],
+    "file_path": "policy_docs/P005_policy.txt",
+    "summary": "신용대출 한도 산정 기준, 금리 체계, 신청 서류를 안내하는 문서입니다.",
+    "keywords": ["신용대출", "한도", "금리", "대출연장", "대환"]
+  },
+  {
+    "doc_id": "P005_MATURITY",
+    "doc_title": "대출 만기 연장 및 대환대출 안내",
+    "doc_type": "NOTICE",
+    "linked_product_ids": ["P004", "P005", "P006"],
+    "file_path": "policy_docs/P005_maturity.txt",
+    "summary": "대출 만기 임박 고객 대상 연장, 대환대출 절차와 필요서류를 안내하는 문서입니다.",
+    "keywords": ["만기연장", "대환대출", "대출연장", "중도상환", "금리비교"]
+  },
+  {
+    "doc_id": "P006_POLICY",
+    "doc_title": "iM 사업자대출(운전자금) 심사 기준 및 필요서류",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P006"],
+    "file_path": "policy_docs/P006_policy.txt",
+    "summary": "개인사업자 및 법인 대상 운전자금 대출 심사 기준, 한도, 필요서류 안내 문서입니다.",
+    "keywords": ["사업자대출", "운전자금", "개인사업자", "법인", "심사"]
+  },
+  {
+    "doc_id": "P006_EVENT",
+    "doc_title": "소상공인 사업자대출 특별 금리 지원 캠페인",
+    "doc_type": "EVENT",
+    "linked_product_ids": ["P006", "P008"],
+    "file_path": "policy_docs/P006_event.txt",
+    "summary": "소상공인 고객 대상 사업자대출 우대금리 및 수수료 면제 이벤트 안내 문서입니다.",
+    "keywords": ["소상공인", "우대금리", "수수료면제", "이벤트", "사업자"]
+  },
+  {
+    "doc_id": "P007_POLICY",
+    "doc_title": "iM 라이프스타일 신용카드 발급 안내",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P007"],
+    "file_path": "policy_docs/P007_policy.txt",
+    "summary": "iM 라이프스타일 신용카드 발급 조건, 혜택, 연회비, 필요서류를 안내하는 문서입니다.",
+    "keywords": ["신용카드", "라이프스타일", "혜택", "연회비", "발급"]
+  },
+  {
+    "doc_id": "P007_EVENT",
+    "doc_title": "직장인 신용카드 발급 우대 이벤트",
+    "doc_type": "EVENT",
+    "linked_product_ids": ["P007"],
+    "file_path": "policy_docs/P007_event.txt",
+    "summary": "급여이체 고객 신용카드 신규 발급 시 연회비 면제 및 포인트 제공 이벤트 안내입니다.",
+    "keywords": ["직장인", "카드이벤트", "연회비면제", "포인트", "급여고객"]
+  },
+  {
+    "doc_id": "P008_POLICY",
+    "doc_title": "iM 사업자카드 발급 및 가맹점 결제계좌 연동 안내",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P008"],
+    "file_path": "policy_docs/P008_policy.txt",
+    "summary": "사업자카드 발급 조건, 가맹점 매출 정산 계좌 연동 방법, 필요서류 안내 문서입니다.",
+    "keywords": ["사업자카드", "가맹점", "결제계좌", "정산", "사업자등록증"]
+  },
+  {
+    "doc_id": "P008_EVENT",
+    "doc_title": "소상공인 결제계좌 활성화 이벤트",
+    "doc_type": "EVENT",
+    "linked_product_ids": ["P008", "P006"],
+    "file_path": "policy_docs/P008_event.txt",
+    "summary": "소상공인 신규 가맹점 결제계좌 등록 시 수수료 우대 및 혜택 이벤트 안내 문서입니다.",
+    "keywords": ["소상공인", "결제계좌", "수수료우대", "가맹점", "이벤트"]
+  },
+  {
+    "doc_id": "P009_POLICY",
+    "doc_title": "iM ISA(개인종합자산관리계좌) 가입 안내",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P009"],
+    "file_path": "policy_docs/P009_policy.txt",
+    "summary": "ISA 가입 유형, 비과세 한도, 의무 보유 기간, 편입 상품 안내 문서입니다.",
+    "keywords": ["ISA", "개인종합자산관리", "비과세", "절세", "만기"]
+  },
+  {
+    "doc_id": "P009_EVENT",
+    "doc_title": "예금 만기 고객 ISA 전환 특별 우대",
+    "doc_type": "EVENT",
+    "linked_product_ids": ["P009", "P010"],
+    "file_path": "policy_docs/P009_event.txt",
+    "summary": "정기예금/적금 만기 자금을 ISA로 전환 시 우대 금리 및 수수료 면제 이벤트입니다.",
+    "keywords": ["ISA전환", "예금만기", "절세", "우대금리", "이벤트"]
+  },
+  {
+    "doc_id": "P010_POLICY",
+    "doc_title": "iM 펀드 가입 안내 및 투자설명서",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P010"],
+    "file_path": "policy_docs/P010_policy.txt",
+    "summary": "펀드 가입 절차, 투자 위험 고지, 적합성 테스트, 필요서류 안내 문서입니다.",
+    "keywords": ["펀드", "투자", "적합성", "원금손실", "수익"]
+  },
+  {
+    "doc_id": "P011_POLICY",
+    "doc_title": "iM 퇴직연금 IRP 가입 안내",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P011"],
+    "file_path": "policy_docs/P011_policy.txt",
+    "summary": "IRP 가입 자격, 세액공제 한도, 연간 납입 한도, 필요서류 안내 문서입니다.",
+    "keywords": ["IRP", "퇴직연금", "세액공제", "연금", "노후"]
+  },
+  {
+    "doc_id": "P012_POLICY",
+    "doc_title": "노란우산공제 가입 안내",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P012"],
+    "file_path": "policy_docs/P012_policy.txt",
+    "summary": "개인사업자·소상공인 대상 노란우산공제 가입 조건, 소득공제, 필요서류 안내입니다.",
+    "keywords": ["노란우산", "소상공인", "소득공제", "공제", "사업자"]
+  },
+  {
+    "doc_id": "P013_POLICY",
+    "doc_title": "iM 외화예금 가입 안내",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P013"],
+    "file_path": "policy_docs/P013_policy.txt",
+    "summary": "외화예금 통화 종류, 환율 적용 기준, 필요서류, 환위험 안내 문서입니다.",
+    "keywords": ["외화예금", "환율", "달러", "외환", "환위험"]
+  },
+  {
+    "doc_id": "P014_POLICY",
+    "doc_title": "iM 무역금융 지원 안내",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P014"],
+    "file_path": "policy_docs/P014_policy.txt",
+    "summary": "수출입 기업 대상 무역금융 한도, 필요서류, 신청 절차 안내 문서입니다.",
+    "keywords": ["무역금융", "수출", "수입", "L/C", "환어음"]
+  },
+  {
+    "doc_id": "P015_POLICY",
+    "doc_title": "iM 기업대출 심사 기준 및 필요서류",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P015"],
+    "file_path": "policy_docs/P015_policy.txt",
+    "summary": "법인 기업 대상 시설자금·운전자금 대출 심사 기준, 한도, 필요서류 안내 문서입니다.",
+    "keywords": ["기업대출", "시설자금", "법인", "담보", "보증서"]
+  }
+]
