@@ -23,6 +23,7 @@ import {
   type AiOpportunity,
   type CustomerForAnalysis,
 } from '@/services/openaiApi'
+import { analyzeBridge } from '@/services/bridgeApi'
 import '@/styles/demo-modal.css'
 
 const TYPE_CONFIG = {
@@ -107,24 +108,38 @@ interface DemoModalProps {
   customerName: string
   customer: CustomerForAnalysis
   onClose: () => void
+  /** DB cust_id가 있으면 멀티에이전트 pipeline 사용, 없으면 GPT 직접 호출 */
+  custId?: string
+  /** 이전 분석 캐시 — 있으면 API 재호출 없이 바로 표시 */
+  cachedResult?: AiAnalysisResult | null
+  /** 분석 완료 시 부모에 결과 전달 (캐싱용) */
+  onResult?: (result: AiAnalysisResult) => void
 }
 
-export function DemoModal({ demo, customerName, customer, onClose }: DemoModalProps) {
-  const [phase, setPhase] = useState<'loading' | 'done' | 'error'>('loading')
-  const [result, setResult] = useState<AiAnalysisResult | null>(null)
+export function DemoModal({ demo, customerName, customer, onClose, custId, cachedResult, onResult }: DemoModalProps) {
+  const [phase, setPhase] = useState<'loading' | 'done' | 'error'>(
+    cachedResult ? 'done' : 'loading'
+  )
+  const [result, setResult] = useState<AiAnalysisResult | null>(cachedResult ?? null)
   const [errorMsg, setErrorMsg] = useState('')
 
   const cfg = TYPE_CONFIG[demo.type]
   const TypeIcon = cfg.Icon
 
-  // GPT 분석 호출
+  // 캐시가 있으면 API 호출 생략
   useEffect(() => {
+    if (cachedResult) return
     let cancelled = false
-    analyzeCustomerWithGpt(customer)
+    const apiFn = custId
+      ? () => analyzeBridge(custId)
+      : () => analyzeCustomerWithGpt(customer)
+
+    apiFn()
       .then(data => {
         if (!cancelled) {
           setResult(data)
           setPhase('done')
+          onResult?.(data)
         }
       })
       .catch(err => {
@@ -134,7 +149,7 @@ export function DemoModal({ demo, customerName, customer, onClose }: DemoModalPr
         }
       })
     return () => { cancelled = true }
-  }, [customer])
+  }, [custId, customer, cachedResult, onResult])
 
   // ESC 키로 닫기
   useEffect(() => {
@@ -155,6 +170,7 @@ export function DemoModal({ demo, customerName, customer, onClose }: DemoModalPr
       <div className="dmo-center">
         <motion.div
           className="dmo-modal"
+          data-ai-modal
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.96 }}
@@ -171,10 +187,6 @@ export function DemoModal({ demo, customerName, customer, onClose }: DemoModalPr
                 <span className="dmo-type-badge">{demo.type}</span>
               </div>
               <div className="dmo-header-sub">{demo.job}</div>
-            </div>
-            <div className="dmo-header-visit">
-              <span className="dmo-visit-label">내점 목적</span>
-              <span className="dmo-visit-value">{demo.visitPurpose}</span>
             </div>
             <button className="dmo-close-btn" onClick={onClose}>
               <X size={18} />
@@ -199,37 +211,56 @@ export function DemoModal({ demo, customerName, customer, onClose }: DemoModalPr
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                 >
-                  <div className="dmo-loading-icon">
-                    <BotMessageSquare size={36} />
-                    <motion.div
-                      className="dmo-loading-ring"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-                    >
-                      <Loader2 size={56} />
-                    </motion.div>
+                  {/* 중앙 애니메이션 */}
+                  <div className="dmo-loading-visual">
+                    <div className="dmo-ring dmo-ring--outer" />
+                    <div className="dmo-ring dmo-ring--middle" />
+                    <div className="dmo-ring dmo-ring--inner" />
+                    <div className="dmo-loading-center-icon">
+                      <BotMessageSquare size={28} />
+                    </div>
                   </div>
-                  <p className="dmo-loading-title">GPT-4.1로 고객 분석 중...</p>
-                  <p className="dmo-loading-sub">거래 흐름 · 소비 패턴 · 자금 이동 이벤트를 분석합니다</p>
+
+                  <p className="dmo-loading-title">
+                    {custId ? 'iM BRIDGE 멀티에이전트 분석 중' : 'AI 고객 분석 중'}
+                  </p>
+                  <p className="dmo-loading-sub">
+                    {custId
+                      ? 'Router → Specialist → RAG/Policy → KPI → Assembler'
+                      : '거래 흐름 · 소비 패턴 · 자금 이동 이벤트 분석'}
+                  </p>
+
                   <div className="dmo-loading-steps">
-                    {[
-                      '고객 거래 데이터 수집',
-                      '소비 패턴 및 이벤트 감지',
-                      '영업 기회 우선순위 산정',
-                    ].map((step, i) => (
+                    {(custId
+                      ? [
+                          { label: 'Feature Mart 데이터 조회', delay: 0 },
+                          { label: '라우터 · 스페셜리스트 에이전트', delay: 0.5 },
+                          { label: '정책 RAG · KPI · 영업카드 조립', delay: 1.0 },
+                        ]
+                      : [
+                          { label: '고객 거래 데이터 수집', delay: 0 },
+                          { label: '소비 패턴 및 이벤트 감지', delay: 0.5 },
+                          { label: '영업기회 우선순위 산정', delay: 1.0 },
+                        ]
+                    ).map(({ label, delay }) => (
                       <motion.div
-                        key={step}
+                        key={label}
                         className="dmo-loading-step"
-                        initial={{ opacity: 0, x: -12 }}
+                        initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.4 }}
+                        transition={{ delay }}
                       >
                         <motion.span
                           className="dmo-step-dot"
-                          animate={{ scale: [1, 1.4, 1] }}
-                          transition={{ delay: i * 0.4 + 0.2, duration: 0.5 }}
+                          animate={{ opacity: [0.4, 1, 0.4] }}
+                          transition={{ delay, duration: 1.2, repeat: Infinity }}
                         />
-                        {step}
+                        {label}
+                        <motion.span
+                          className="dmo-step-dots-anim"
+                          animate={{ opacity: [0, 1, 0] }}
+                          transition={{ delay: delay + 0.3, duration: 1.2, repeat: Infinity }}
+                        >...</motion.span>
                       </motion.div>
                     ))}
                   </div>
@@ -291,10 +322,10 @@ export function DemoModal({ demo, customerName, customer, onClose }: DemoModalPr
                     </div>
                   </motion.div>
 
-                  {/* TOP 3 영업기회 */}
+                  {/* 영업기회 */}
                   <div className="dmo-card">
                     <div className="dmo-card-title">
-                      <Zap size={15} />추천 영업기회 TOP 3
+                      <Zap size={15} />추천 영업기회
                     </div>
                     <div className="dmo-opp-list">
                       {result.opportunities.map((opp, i) => (

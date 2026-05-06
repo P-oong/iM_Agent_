@@ -1,11 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   BadgeDollarSign, BarChart3, Building2, CheckCircle2,
-  ChevronDown, ChevronUp, CreditCard, Home,
+  ChevronDown, ChevronUp, CreditCard, ExternalLink, Home,
   Landmark, Monitor, Shield, Sparkles, TrendingDown, User, Wallet,
   Zap,
 } from 'lucide-react'
 import { useEffect, useMemo, useState, type ComponentType } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useCustomer } from '@/contexts/CustomerContext'
 import { useKpi } from '@/contexts/KpiContext'
 import { buildCheongyakOpportunities } from '@/data/cheongyakEventData'
@@ -13,14 +14,50 @@ import { getKpiRules } from '@/data/kpiData'
 import { buildMastercardOpportunities } from '@/data/mastercardEventData'
 import { DEMO_CUSTOMERS, type DemoCustomer } from '@/data/demoCustomers'
 import { DemoModal } from '@/components/sidebar/DemoModal'
-import { type CustomerForAnalysis } from '@/services/openaiApi'
+import { type AiAnalysisResult, type CustomerForAnalysis } from '@/services/openaiApi'
 import '@/styles/kpi.css'
+
+// 페이지 새로고침 전까지 분석 결과를 유지하는 모듈 레벨 캐시 (custId → result)
+const AI_RESULT_CACHE = new Map<string, AiAnalysisResult>()
 
 // ── 데모 고객 매핑 (고객번호 → DemoCustomer) ──────────────
 const DEMO_MAP: Record<string, DemoCustomer> = {
   '100000011': DEMO_CUSTOMERS[0], // 김민지
   '100000012': DEMO_CUSTOMERS[1], // 박성호
   '100000013': DEMO_CUSTOMERS[2], // 대구정밀부품
+}
+
+// ── 고객번호 → DB cust_id 매핑 ────────────────────────────
+const CUST_ID_MAP: Record<string, string> = {
+  '100000001': 'C001',
+  '100000002': 'C002',
+  '100000003': 'C003',
+  '100000004': 'C004',
+  '100000005': 'C005',
+  '100000006': 'C006',
+  '100000007': 'C007',
+  '100000008': 'C008',
+  '100000009': 'C009',
+  '100000010': 'C010',
+  '100000011': 'DEMO-1',
+  '100000012': 'DEMO-2',
+  '100000013': 'DEMO-3',
+}
+
+// MockCustomer → 기본 DemoCustomer 변환 (DEMO_MAP에 없는 고객용)
+function toDemoCustomer(c: MockCustomer): DemoCustomer {
+  return {
+    id: c.고객번호,
+    type: c.유형 as DemoCustomer['type'],
+    name: c.고객명,
+    job: c.사업정보?.업종 ?? '방문 고객',
+    visitPurpose: '창구 방문',
+    aiEvent: '내점 고객 영업기회 감지',
+    summary: '',
+    keyMetrics: [],
+    opportunities: [],
+    coreMessage: '',
+  }
 }
 
 // ── MockCustomer → CustomerForAnalysis 변환 ────────────
@@ -48,45 +85,122 @@ function toCustomerForAnalysis(c: MockCustomer, demo: DemoCustomer): CustomerFor
   }
 }
 
+// ── AI 결과 기반 페이지 라우팅 ────────────────────────────
+function getShortcutRoute(title: string): string {
+  if (/카드|가맹|결제|비즈|소호/.test(title)) return '/banking/0310'
+  return '/banking'
+}
+
 // ── 데모 분석 버튼 + 팝업 트리거 ────────────────────────
 function DemoAnalysisButton({
   demo,
   customerName,
   mockCustomer,
+  custId,
 }: {
   demo: DemoCustomer
   customerName: string
   mockCustomer: MockCustomer
+  custId?: string
 }) {
+  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  // 모듈 캐시에서 현재 고객 결과 읽기 (key: custId 또는 고객번호)
+  const cacheKey = custId ?? mockCustomer.고객번호
+  const [, forceUpdate] = useState(0)
   const customerForAi = toCustomerForAnalysis(mockCustomer, demo)
+  const cachedResult = AI_RESULT_CACHE.get(cacheKey) ?? null
+
+  const hasCache = cachedResult !== null
+  const topOpp = cachedResult?.opportunities?.[0] ?? null
+
+  function handleResult(result: AiAnalysisResult) {
+    AI_RESULT_CACHE.set(cacheKey, result)
+    forceUpdate(n => n + 1)
+  }
+
   return (
     <>
-      <div style={{ padding: '6px 10px 4px' }}>
+      <div style={{ padding: '0 10px 16px' }}>
+        {/* 분석 버튼 */}
         <button
           onClick={() => setOpen(true)}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            width: '100%', padding: '7px 0',
-            background: 'linear-gradient(135deg, var(--im-mint), #007c6a)',
-            color: '#fff', border: 'none', borderRadius: 8,
-            fontSize: 12, fontWeight: 700, cursor: 'pointer',
-            boxShadow: '0 3px 10px rgba(0,199,169,0.3)',
+            width: '100%', padding: '10px 0',
+            background: hasCache
+              ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)'
+              : 'linear-gradient(135deg, var(--im-mint), #007c6a)',
+            color: '#fff', border: 'none', borderRadius: 10,
+            fontSize: 13, fontWeight: 700, cursor: 'pointer',
+            boxShadow: hasCache
+              ? '0 3px 12px rgba(59,130,246,0.35)'
+              : '0 3px 12px rgba(0,199,169,0.35)',
             letterSpacing: '0.01em',
             transition: 'transform 0.12s, box-shadow 0.12s',
           }}
-          onMouseEnter={e => {
-            e.currentTarget.style.transform = 'translateY(-1px)'
-            e.currentTarget.style.boxShadow = '0 5px 14px rgba(0,199,169,0.4)'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.transform = ''
-            e.currentTarget.style.boxShadow = '0 3px 10px rgba(0,199,169,0.3)'
-          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+          onMouseLeave={e => { e.currentTarget.style.transform = '' }}
         >
-          <Zap size={13} />
-          AI 영업기회 분석
+          <Zap size={14} />
+          {hasCache ? 'AI 분석 결과 보기' : 'AI 영업기회 분석'}
         </button>
+
+        {/* 분석 완료 후 — 추천 영업기회 미니카드 */}
+        {hasCache && topOpp && (
+          <div style={{
+            marginTop: 8,
+            background: 'linear-gradient(135deg, rgba(59,130,246,0.06) 0%, rgba(29,78,216,0.04) 100%)',
+            border: '1px solid rgba(59,130,246,0.22)',
+            borderRadius: 10,
+            padding: '10px 12px',
+          }}>
+            {/* 헤더: AI 추천 + 제목 + 점수 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
+              <span style={{
+                fontSize: 9, fontWeight: 800, color: '#3b82f6',
+                background: 'rgba(59,130,246,0.12)', padding: '2px 6px',
+                borderRadius: 4, letterSpacing: '0.06em', flexShrink: 0,
+              }}>AI 추천</span>
+              <span style={{
+                fontSize: 12, fontWeight: 700, color: '#1e293b',
+                flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{topOpp.title}</span>
+              <span style={{
+                fontSize: 11, fontWeight: 800, color: '#3b82f6', flexShrink: 0,
+              }}>{topOpp.score}점</span>
+            </div>
+
+            {/* 분석 포인트 첫 줄 */}
+            {topOpp.analysisPoints?.[0] && (
+              <p style={{
+                fontSize: 10.5, color: '#64748b', margin: '0 0 8px',
+                lineHeight: 1.5,
+                display: '-webkit-box', WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>{topOpp.analysisPoints[0]}</p>
+            )}
+
+            {/* 바로가기 버튼 */}
+            <button
+              onClick={() => navigate(getShortcutRoute(topOpp.title))}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                width: '100%', padding: '7px 0',
+                background: 'linear-gradient(135deg, #2563eb, #1d4ed8)',
+                color: '#fff', border: 'none', borderRadius: 7,
+                fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                letterSpacing: '0.01em',
+                transition: 'transform 0.12s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = '' }}
+            >
+              <ExternalLink size={12} />
+              바로가기 — 카드 발급
+            </button>
+          </div>
+        )}
       </div>
       {open && (
         <DemoModal
@@ -94,6 +208,9 @@ function DemoAnalysisButton({
           customerName={customerName}
           customer={customerForAi}
           onClose={() => setOpen(false)}
+          custId={custId}
+          cachedResult={cachedResult}
+          onResult={handleResult}
         />
       )}
     </>
@@ -516,7 +633,7 @@ function CollapseSection({ title, icon: Icon, badge, children, defaultOpen = tru
 
 // ─────────────────────────────────────────────────────
 export function CrmPanel() {
-  const { mode, isOppCompleted, addKpi } = useKpi()
+  const { mode, isOppCompleted, addKpi, cardIssuedFor } = useKpi()
   const { activeResidentId } = useCustomer()
 
   const [customer, setCustomer] = useState<MockCustomer | null>(null)
@@ -587,6 +704,17 @@ export function CrmPanel() {
 
   const isDone = (key: string) =>
     customer ? isOppCompleted(customer.고객번호, key) : false
+
+  // 마스터카드/청약 모드 — 실제 거래(카드 발급)가 완료된 경우에만 거래 완료 허용
+  // cardIssuedFor 는 Screen0310에서 신청 완료 시 set되는 residentIdFront (6자리)
+  const currentResidentFront = activeResidentId?.slice(0, 6) ?? ''
+  const canCompleteOpp = (oppMode: typeof mode): boolean => {
+    if (oppMode === 'default') return true
+    if (oppMode === 'mastercard') return cardIssuedFor === currentResidentFront
+    if (oppMode === 'cheongyak') return true
+    return true
+  }
+
   const sortedOpps = [...opportunities].sort((a, b) => b.kpi - a.kpi).slice(0, 4)
 
   return (
@@ -620,14 +748,13 @@ export function CrmPanel() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
           >
-            {/* ── 데모 고객: AI 영업기회 분석 버튼 ── */}
-            {DEMO_MAP[customer.고객번호] && (
-              <DemoAnalysisButton
-                demo={DEMO_MAP[customer.고객번호]}
-                customerName={customer.고객명}
-                mockCustomer={customer}
-              />
-            )}
+            {/* ── AI 영업기회 분석 버튼 (모든 고객) ── */}
+            <DemoAnalysisButton
+              demo={DEMO_MAP[customer.고객번호] ?? toDemoCustomer(customer)}
+              customerName={customer.고객명}
+              mockCustomer={customer}
+              custId={CUST_ID_MAP[customer.고객번호]}
+            />
 
             {/* ── 기본정보 ── */}
             <CollapseSection title="기본정보" icon={User}>
@@ -736,18 +863,25 @@ export function CrmPanel() {
                           <div className="opp-desc">{opp.desc}</div>
                           <div className="opp-footer">
                             <span className="opp-category">{footerSub}</span>
-                            <button
-                              className={`opp-btn${mc ? ' opp-btn--mc' : ''}${cq ? ' opp-btn--cq' : ''}`}
-                              disabled={done}
-                              onClick={() => addKpi(
-                                opp.kpi,
-                                mc ? `MC ${opp.title}` : cq ? `청약 ${opp.title}` : `${opp.key} 신규`,
-                                opp.key,
-                                customer.고객번호,
-                              )}
-                            >
-                              {done ? '완료됨' : '거래 완료'}
-                            </button>
+                            {(() => {
+                              const canComplete = canCompleteOpp(mode)
+                              const btnDisabled = done || !canComplete
+                              return (
+                                <button
+                                  className={`opp-btn${mc ? ' opp-btn--mc' : ''}${cq ? ' opp-btn--cq' : ''}${!canComplete && !done ? ' opp-btn--locked' : ''}`}
+                                  disabled={btnDisabled}
+                                  title={!canComplete && !done ? '카드 발급 후 거래 완료 가능합니다' : undefined}
+                                  onClick={() => addKpi(
+                                    opp.kpi,
+                                    mc ? `MC ${opp.title}` : cq ? `청약 ${opp.title}` : `${opp.key} 신규`,
+                                    opp.key,
+                                    customer.고객번호,
+                                  )}
+                                >
+                                  {done ? '완료됨' : !canComplete ? '🔒 거래 완료' : '거래 완료'}
+                                </button>
+                              )
+                            })()}
                           </div>
                         </motion.div>
                       )

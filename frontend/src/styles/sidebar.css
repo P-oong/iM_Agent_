@@ -89,7 +89,7 @@
 /* ── 슬라이드 드로어 ── */
 .rs-drawer {
   pointer-events: all;
-  width: 200px;
+  width: 260px;
   align-self: stretch;
   background: #ffffff;
   border-left: 2px solid var(--im-mint);
@@ -120,7 +120,7 @@
 .rs-drawer-body {
   flex: 1;
   overflow-y: auto;
-  padding: 6px;
+  padding: 12px 10px;
   scrollbar-width: thin;
   scrollbar-color: #d0f5ee transparent;
 }
@@ -243,17 +243,17 @@
 .crm-search-btn:active { transform: scale(0.98); }
 
 .crm-section {
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 .crm-section-title {
   display: flex;
   align-items: center;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--im-mint);
   border-bottom: 1.5px solid var(--im-mint);
-  padding-bottom: 3px;
-  margin-bottom: 5px;
+  padding-bottom: 5px;
+  margin-bottom: 8px;
 }
 
 .crm-badge-row { margin-bottom: 4px; }
@@ -267,45 +267,45 @@
   border-radius: 99px;
 }
 
-.crm-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-.crm-table td { padding: 2px 3px; vertical-align: top; line-height: 1.45; }
+.crm-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.crm-table td { padding: 4px 4px; vertical-align: top; line-height: 1.55; }
 .crm-td-label { color: #888; white-space: nowrap; width: 58px; }
-.crm-name { font-size: 13px; font-weight: 700; color: #111; }
+.crm-name { font-size: 14px; font-weight: 700; color: #111; }
 
 /* 계좌 카드 */
 .crm-account {
   background: #f8fffe;
   border: 1px solid #d4f5ee;
-  border-radius: 7px;
-  padding: 5px 8px;
-  margin-bottom: 4px;
+  border-radius: 9px;
+  padding: 9px 11px;
+  margin-bottom: 7px;
   transition: border-color 0.15s;
 }
 .crm-account:hover { border-color: var(--im-mint); }
-.crm-account-num { font-size: 10.5px; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #333; margin-bottom: 2px; letter-spacing: 0.02em; }
-.crm-account-info { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
-.crm-product { font-size: 10px; color: #555; }
+.crm-account-num { font-size: 11px; font-family: 'Pretendard Variable', Pretendard, sans-serif; color: #333; margin-bottom: 4px; letter-spacing: 0.02em; }
+.crm-account-info { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.crm-product { font-size: 11px; color: #555; }
 .crm-status {
-  font-size: 9.5px;
-  padding: 1px 5px;
+  font-size: 10px;
+  padding: 1px 6px;
   border-radius: 99px;
   background: #eee;
   color: #888;
 }
 .crm-status--ok { background: #e6fff9; color: #009e86; }
-.crm-account-balance { font-size: 12px; font-weight: 700; color: #111; text-align: right; }
+.crm-account-balance { font-size: 13px; font-weight: 700; color: #111; text-align: right; }
 
 /* 최근거래 */
-.crm-tx-table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+.crm-tx-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .crm-tx-table th {
   background: #f5f5f5;
-  padding: 3px 5px;
+  padding: 5px 7px;
   border-bottom: 1px solid #e0e0e0;
   font-weight: 600;
   color: #555;
   text-align: left;
 }
-.crm-tx-table td { padding: 3px 5px; border-bottom: 1px solid #f0f0f0; }
+.crm-tx-table td { padding: 5px 7px; border-bottom: 1px solid #f0f0f0; }
 .crm-tx-plus  { color: #0066cc; font-weight: 600; text-align: right; }
 .crm-tx-minus { color: #cc3300; font-weight: 600; text-align: right; }
 
@@ -368,7 +368,7 @@
   font-family: inherit;
   color: inherit;
 }
-.crm-collapse-body { margin-top: 8px; }
+.crm-collapse-body { margin-top: 10px; }
 
 .crm-section-badge {
   font-size: 8.5px;
@@ -428,17 +428,17 @@
 }
 
 /* ── 추천 상품 ── */
-.crm-rec-list { display: flex; flex-direction: column; gap: 3px; }
+.crm-rec-list { display: flex; flex-direction: column; gap: 7px; }
 .crm-rec-item {
   position: relative;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 9px 11px;
+  border-radius: 9px;
   border: 1px solid #e4e9f2;
   background: #f7f9fc;
 }
 .crm-rec--high { border-color: #a7f3e4; background: #f0fdf9; }
-.crm-rec-name  { font-size: 10.5px; font-weight: 700; color: #1a2332; }
-.crm-rec-desc  { font-size: 9.5px; color: #6b7a8d; margin-top: 0; }
+.crm-rec-name  { font-size: 11.5px; font-weight: 700; color: #1a2332; }
+.crm-rec-desc  { font-size: 10.5px; color: #6b7a8d; margin-top: 3px; }
 .crm-rec-badge {
   position: absolute;
   top: 4px; right: 6px;
@@ -456,11 +456,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 5px;
-  padding: 4px 6px;
-  border-radius: 5px;
+  padding: 8px 10px;
+  border-radius: 8px;
   border: 1px solid #e4e9f2;
   background: #f7f9fc;
-  margin-bottom: 3px;
+  margin-bottom: 6px;
   opacity: 0.85;
 }
 .crm-rate--have { background: #f0fdf9; border-color: #a7f3e4; opacity: 1; }

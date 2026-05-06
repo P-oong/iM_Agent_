@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useCustomer } from '@/contexts/CustomerContext'
+import { useKpi } from '@/contexts/KpiContext'
 import { DUMMY_CUSTOMERS } from '@/data/dummyCustomers'
 import type { DummyCustomer } from '@/data/dummyCustomers'
 import '../../styles/banking.css'
@@ -160,6 +161,7 @@ const STEP_ORDER: Step[] = ['input','consent','collecting','result','select','do
 // ─────────────────────────────────────────────────────
 export function Screen0310() {
   const { activeResidentId, setActiveResidentId } = useCustomer()
+  const { signalCardIssuance } = useKpi()
 
   const [step,         setStep]         = useState<Step>('input')
   const [idType,       setIdType]       = useState<IdTypeValue>('resident')
@@ -174,7 +176,6 @@ export function Screen0310() {
   const [statusState,  setStatusState]  = useState<'idle' | 'error' | 'success'>('idle')
   const [statusMsg,    setStatusMsg]    = useState('실명번호를 입력하고 [조회] 버튼을 클릭하세요.')
   const [appNo,        setAppNo]        = useState('')
-
   const frontRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { if (activeResidentId) setFront(activeResidentId) }, [activeResidentId])
@@ -245,6 +246,8 @@ export function Screen0310() {
     setStep('done')
     setStatusState('success')
     setStatusMsg(`카드 신청 완료. 접수번호: ${no}`)
+    // CRM 마스터카드 이벤트 탭 알림 활성화
+    if (customer) signalCardIssuance(customer.residentIdFront)
   }
 
   const reset = () => {
@@ -858,7 +861,9 @@ export function Screen0310() {
                   <div className="cd-done-row"><span className="cd-done-label">접수 일시</span><span className="cd-done-val">{new Date().toLocaleString('ko-KR')}</span></div>
                 </div>
 
-                <div className="cd-done-kpi">🏆 이 거래로 KPI <strong>+1pt</strong>가 적립됩니다.</div>
+                <div className="cd-done-kpi">
+                  🏆 KPI 실적 반영 — 좌측 CRM 영업기회 탭에서 <strong>거래 완료</strong>를 눌러 포인트를 적립하세요.
+                </div>
 
                 <div className="cd-done-actions">
                   <button className="bk-btn" onClick={reset}>새 고객 조회</button>

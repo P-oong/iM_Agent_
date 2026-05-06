@@ -50,6 +50,10 @@ export interface KpiContextValue {
   /** 현재 모드에서의 완료 키 조회 */
   isOppCompleted: (customerNo: string, oppKey: string) => boolean
   addKpi: (points: number, label: string, key?: string, customerNo?: string) => void
+  /** 카드 발급 완료 신호 — 실명번호 앞 6자리 */
+  cardIssuedFor: string | null
+  signalCardIssuance: (residentIdFront: string) => void
+  clearCardIssuanceSignal: () => void
 }
 
 export function getLevelInfo(total: number): LevelInfo {
@@ -89,6 +93,15 @@ export function KpiProvider({ children }: { children: ReactNode }) {
   const [completedDefault, setCompletedDefault] = useState<Set<string>>(new Set())
   const [completedMc, setCompletedMc] = useState<Set<string>>(new Set())
   const [completedCheongyak, setCompletedCheongyak] = useState<Set<string>>(new Set())
+  const [cardIssuedFor, setCardIssuedFor] = useState<string | null>(null)
+
+  const signalCardIssuance = useCallback((residentIdFront: string) => {
+    setCardIssuedFor(residentIdFront)
+  }, [])
+
+  const clearCardIssuanceSignal = useCallback(() => {
+    setCardIssuedFor(null)
+  }, [])
 
   const levelInfo = useMemo(() => getLevelInfo(defaultPoints), [defaultPoints])
 
@@ -146,6 +159,9 @@ export function KpiProvider({ children }: { children: ReactNode }) {
       toasts,
       isOppCompleted,
       addKpi,
+      cardIssuedFor,
+      signalCardIssuance,
+      clearCardIssuanceSignal,
     }),
     [
       mode,
@@ -157,6 +173,9 @@ export function KpiProvider({ children }: { children: ReactNode }) {
       toasts,
       isOppCompleted,
       addKpi,
+      cardIssuedFor,
+      signalCardIssuance,
+      clearCardIssuanceSignal,
     ],
   )
 
