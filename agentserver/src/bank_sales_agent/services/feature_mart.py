@@ -48,16 +48,23 @@ def get_customer_basic_info(cust_id: str, db_path: Path) -> dict | None:
         conn.close()
 
 
-def build_customer_payload(feature_mart_json: dict, live_context: dict, basic_info: dict | None = None) -> dict:
-    """Feature Mart JSON + Live Context를 에이전트 입력 형태로 결합합니다."""
+def build_customer_payload(feature_mart_json: dict, basic_info: dict | None = None) -> dict:
+    """
+    Feature Mart JSON을 에이전트 입력 형태로 변환합니다.
+
+    DB의 llm_input_json 최상위에 behavior_signals / explainable_signals 가 위치하므로,
+    이를 feature_mart 안으로 끌어올려 Router/Specialist/Consulting 프롬프트가
+    한 곳에서 행동 신호를 활용할 수 있도록 합니다.
+    """
     payload: dict = {
         "cust_id": feature_mart_json.get("cust_id"),
         "base_date": feature_mart_json.get("base_date"),
         "feature_mart": {
             "customer_segment": feature_mart_json.get("customer_segment", {}),
             "rfm_pc": feature_mart_json.get("rfm_pc", {}),
+            "behavior_signals": feature_mart_json.get("behavior_signals", {}),
+            "explainable_signals": feature_mart_json.get("explainable_signals", []),
         },
-        "live_context": live_context,
     }
     if basic_info:
         payload["customer_info"] = {

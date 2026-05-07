@@ -178,5 +178,126 @@
     "branch_campaign": "법인 기업대출 확대 캠페인",
     "valid_from": "2026-05-01",
     "valid_to": "2026-05-31"
+  },
+  {
+    "product_id": "P016",
+    "product_name": "iM i 카드",
+    "kpi_category": "카드 신규 (개인)",
+    "kpi_score": 7,
+    "priority_level": "HIGH",
+    "badge_text": "라이프스타일 카드 KPI",
+    "display_color": "red",
+    "branch_campaign": "iM i 카드 모바일 발급 캠페인",
+    "valid_from": "2026-05-01",
+    "valid_to": "2026-05-31",
+    "post_management": [
+      "발급 후 3개월 내 전월 실적 30만원 이상 충족 여부 모니터링",
+      "자동이체 카드결제 등록 안내 (추가 캐시백 0.3%p)",
+      "분기 1회 사용 패턴 점검 및 부가 혜택 안내"
+    ]
+  },
+  {
+    "product_id": "P017",
+    "product_name": "BIZ 소호 카드",
+    "kpi_category": "소상공인 카드 신규",
+    "kpi_score": 9,
+    "priority_level": "HIGH",
+    "badge_text": "이번 달 중점 KPI (소호)",
+    "display_color": "red",
+    "branch_campaign": "BIZ 소호 신규 발급 + 정산통장 패키지",
+    "valid_from": "2026-04-01",
+    "valid_to": "2026-06-30",
+    "post_management": [
+      "발급 후 1개월 내 매입처 자동 분류 기능 사용 여부 확인",
+      "분기별 부가세 신고 시기 매입 내역 PDF 자동 발송",
+      "사업자 정산 통장(P022) 패키지 연동 미가입 시 추가 권유"
+    ]
+  },
+  {
+    "product_id": "P018",
+    "product_name": "BIZ 플러스 카드",
+    "kpi_category": "프리미엄 사업자 카드",
+    "kpi_score": 7,
+    "priority_level": "MEDIUM",
+    "badge_text": "프리미엄 사업자 KPI",
+    "display_color": "orange",
+    "branch_campaign": null,
+    "valid_from": "2026-05-01",
+    "valid_to": "2026-05-31",
+    "post_management": [
+      "임직원 부가카드 활용 현황 분기 점검",
+      "해외 가맹점 적립 한도(월 30만원) 사용률 모니터링",
+      "공항 라운지 이용 횟수 안내 (연 6회 한도)"
+    ]
+  },
+  {
+    "product_id": "P019",
+    "product_name": "iM 소상공인 보증서 대출",
+    "kpi_category": "소상공인 정책자금 여신",
+    "kpi_score": 9,
+    "priority_level": "HIGH",
+    "badge_text": "정책자금 중점 KPI",
+    "display_color": "red",
+    "branch_campaign": "지역신보 연계 보증서 대출 확대",
+    "valid_from": "2026-04-01",
+    "valid_to": "2026-12-31",
+    "post_management": [
+      "보증료 자동이체 등록 확인 (보증료율 0.5~1.5%)",
+      "분기별 매출·신용 변동 모니터링 (CB 점수 + 부가세 신고 매출)",
+      "거치 기간 종료 60일 전 분할상환 전환 사전 안내"
+    ]
+  },
+  {
+    "product_id": "P020",
+    "product_name": "iM 개인사업자 특판 대출",
+    "kpi_category": "사업자 만기연장·신규",
+    "kpi_score": 10,
+    "priority_level": "HIGH",
+    "badge_text": "이번 달 최우선 KPI (특판)",
+    "display_color": "red",
+    "branch_campaign": "특판 대출 + 정산통장 + BIZ 카드 패키지 캠페인",
+    "valid_from": "2026-05-01",
+    "valid_to": "2026-08-31",
+    "post_management": [
+      "만기 D-90 시점 자동 SMS 발송 + 영업점 사전 컨택",
+      "패키지 가입 미체결 고객 대상 추가 권유 (정산통장·BIZ 카드)",
+      "만기 D-30 우선 처리 접수 (KPI 1.5배 가산)",
+      "연체 발생 시 D+1 SMS, D+7 직접 컨택, D+15 신용 영향 안내"
+    ]
+  },
+  {
+    "product_id": "P021",
+    "product_name": "iM 온누리 가맹점주 대출",
+    "kpi_category": "전통시장 정책자금 여신",
+    "kpi_score": 8,
+    "priority_level": "HIGH",
+    "badge_text": "전통시장 중점 KPI",
+    "display_color": "orange",
+    "branch_campaign": "온누리 가맹점주 저금리 대출",
+    "valid_from": "2026-01-01",
+    "valid_to": "2026-12-31",
+    "post_management": [
+      "온누리 가맹 인증 유효기간 연 1회 점검",
+      "지자체 이차보전 사업 연계 추가 우대 적용 여부 확인",
+      "정책자금 예산 소진 시 마감 안내"
+    ]
+  },
+  {
+    "product_id": "P022",
+    "product_name": "iM 사업자 정산 통장",
+    "kpi_category": "사업자 수신·정산",
+    "kpi_score": 9,
+    "priority_level": "HIGH",
+    "badge_text": "정산 계좌 이전 KPI",
+    "display_color": "red",
+    "branch_campaign": "사업자 정산 통장 + BIZ 카드 패키지",
+    "valid_from": "2026-04-01",
+    "valid_to": "2026-12-31",
+    "post_management": [
+      "정산 주기 D+1 적용 후 1개월 사용 패턴 모니터링",
+      "월 매출 1천만원 이상 고객 추가 0.02%p 감면 자동 적용 확인",
+      "BIZ 소호 카드 미가입 고객 패키지 우대(0.05%p) 권유",
+      "사업자대출 자동 상환 연동 시 우대금리 0.1%p 적용 점검"
+    ]
   }
 ]

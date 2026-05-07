@@ -119,6 +119,13 @@ WITH txn_freq AS (
         SUM(CASE WHEN txn_type = 'DEPOSIT'
                   AND txn_date >= date('now','-30 days')
                   AND (memo LIKE '%카드매출%' OR memo LIKE '%가맹%' OR memo LIKE '%정산%') THEN 1 ELSE 0 END) AS merchant_deposit_cnt_30d,
+        SUM(CASE WHEN txn_type IN ('TRANSFER_OUT','AUTO_DEBIT','WITHDRAWAL')
+                  AND txn_date >= date('now','-30 days')
+                  AND (memo LIKE '%매입%' OR memo LIKE '%원자재%' OR memo LIKE '%임대료%'
+                       OR memo LIKE '%인건비%' OR memo LIKE '%급여%직원%' OR memo LIKE '%식자재%'
+                       OR memo LIKE '%원두%' OR memo LIKE '%재료비%' OR memo LIKE '%부가세%'
+                       OR memo LIKE '%법인세%' OR memo LIKE '%직원 급여%')
+                  THEN 1 ELSE 0 END) AS business_expense_cnt_30d,
         COUNT(DISTINCT CASE WHEN (memo LIKE '%급여%' OR memo LIKE '%월급%')
                              AND txn_type = 'DEPOSIT'
                              AND txn_date >= date('now','-180 days')
@@ -151,6 +158,7 @@ SELECT
     COALESCE(t.withdrawal_cnt_30d, 0)         AS withdrawal_cnt_30d,
     COALESCE(t.branch_visit_cnt_90d, 0)       AS branch_visit_cnt_90d,
     COALESCE(t.merchant_deposit_cnt_30d, 0)   AS merchant_deposit_cnt_30d,
+    COALESCE(t.business_expense_cnt_30d, 0)   AS business_expense_cnt_30d,
     COALESCE(t.salary_deposit_months_6m, 0)   AS salary_deposit_months_6m,
     COALESCE(d.mobile_login_cnt_30d, 0)       AS mobile_login_cnt_30d,
     COALESCE(d.product_page_view_cnt_30d, 0)  AS product_page_view_cnt_30d,
@@ -384,10 +392,359 @@ def compute_sales_fatigue(c: dict) -> float:
     return round(min(score, 1.0), 2)
 
 
+# ── 구간 피처(band / level) 헬퍼 ──────────────────────────────────────────────
+
+def _loan_maturity_band(days):
+    if days is None:           return "해당없음"
+    if days < 0:                return "만기지남"
+    if days <= 30:              return "만기임박_30일이내"
+    if days <= 60:              return "만기임박_60일이내"
+    if days <= 90:              return "만기임박_90일이내"
+    return "여유"
+
+
+def _deposit_maturity_band(days):
+    if days is None:           return "해당없음"
+    if days < 0:                return "만기지남"
+    if days <= 30:              return "만기임박_30일이내"
+    if days <= 60:              return "만기임박_60일이내"
+    return "여유"
+
+
+def _mobile_recency_band(days):
+    if days is None or days >= 999: return "장기미접속"
+    if days <= 7:               return "최근접속"
+    if days <= 30:              return "정상이용"
+    if days <= 90:              return "저활동"
+    return "장기미접속"
+
+
+def _branch_recency_band(days):
+    if days is None or days >= 999: return "장기미방문"
+    if days <= 30:              return "최근방문"
+    if days <= 90:              return "정상"
+    return "장기미방문"
+
+
+def _large_money_movement_band(r: dict) -> str:
+    dep = r.get("days_since_last_large_deposit", 999)
+    wdr = r.get("days_since_last_large_withdrawal", 999)
+    recent = min(dep if dep is not None else 999, wdr if wdr is not None else 999)
+    if recent <= 7:             return "최근거액이동"
+    if recent <= 30:            return "최근30일거액이동"
+    if recent <= 90:            return "3개월내이동"
+    return "거액이동없음"
+
+
+def _merchant_activity_level(cnt):
+    if cnt >= 10:               return "높음"
+    if cnt >= 4:                return "중간"
+    if cnt >= 1:                return "낮음"
+    return "없음"
+
+
+def _business_expense_level(cnt):
+    if cnt >= 7:                return "높음"
+    if cnt >= 3:                return "중간"
+    if cnt >= 1:                return "낮음"
+    return "없음"
+
+
+def _digital_activity_level(cnt):
+    if cnt >= 15:               return "높음"
+    if cnt >= 5:                return "중간"
+    if cnt >= 1:                return "낮음"
+    return "없음"
+
+
+def _consultation_level(cnt):
+    if cnt >= 3:                return "높음"
+    if cnt >= 1:                return "중간"
+    return "없음"
+
+
+def _salary_stability_level(months):
+    if months >= 5:             return "안정"
+    if months >= 2:             return "불규칙"
+    return "없음"
+
+
+def _avg_balance_band(amount):
+    if amount >= 50_000_000:    return "상"
+    if amount >= 10_000_000:    return "중상"
+    if amount >= 3_000_000:     return "중"
+    if amount >= 500_000:       return "하"
+    return "최하"
+
+
+def _idle_cash_band(amount):
+    if amount <= 0:             return "없음"
+    if amount >= 10_000_000:    return "있음_많음"
+    if amount >= 3_000_000:     return "있음_중간"
+    return "있음_소량"
+
+
+def _loan_balance_band(amount):
+    if amount == 0:             return "없음"
+    if amount >= 100_000_000:   return "큼"
+    if amount >= 30_000_000:    return "중간"
+    return "소액"
+
+
+def _card_spend_band(amount):
+    if amount == 0:             return "없음"
+    if amount >= 3_000_000:     return "큼"
+    if amount >= 1_000_000:     return "중간"
+    return "소액"
+
+
+def _inflow_band(amount):
+    if amount >= 100_000_000:   return "큼"
+    if amount >= 30_000_000:    return "중상"
+    if amount >= 5_000_000:     return "중"
+    if amount > 0:              return "소액"
+    return "없음"
+
+
+def _outflow_band(amount):
+    return _inflow_band(amount)
+
+
+def _sales_fatigue_level(score):
+    if score >= 0.7:            return "높음"
+    if score >= 0.4:            return "중간"
+    return "낮음"
+
+
+def _recommendation_tone(fatigue: float, complaint: int, card_reject: int) -> str:
+    if complaint == 1 or fatigue >= 0.6:
+        return "보수적_권유자제"
+    if card_reject == 1 or fatigue >= 0.4:
+        return "신중_상담중심"
+    return "일반_안내가능"
+
+
+# ── 자연어 요약 (P / C) ────────────────────────────────────────────────────────
+
+def _build_product_gap_summary(p: dict, missing_labels: list[str], customer_type: str) -> str:
+    if not missing_labels:
+        return "주요 상품 공백 없음"
+    has_biz = "사업자" if customer_type in ("개인사업자", "법인") else "개인"
+    return f"{has_biz} 고객으로 " + ", ".join(missing_labels) + "을(를) 보유하지 않은 상태"
+
+
+def _build_contact_summary(c: dict, fatigue: float) -> str:
+    topics = (c.get("recent_consult_topics_90d") or "").split(",")
+    topics = [t.strip() for t in topics if t.strip()]
+    parts = []
+    if topics:
+        parts.append("최근 상담 주제: " + ", ".join(topics[:3]))
+    if c.get("complaint_flag_180d") == 1:
+        parts.append("민원 이력 있음")
+    if c.get("campaign_reject_cnt_180d", 0) >= 1:
+        parts.append(f"캠페인 거절 {c['campaign_reject_cnt_180d']}회")
+    parts.append(f"영업 피로도 {_sales_fatigue_level(fatigue)}({fatigue:.2f})")
+    return " / ".join(parts) if parts else "최근 접촉 이력 없음"
+
+
+def _split_topics(topics_str: str | None) -> list[str]:
+    if not topics_str:
+        return []
+    return [t.strip() for t in topics_str.split(",") if t.strip()]
+
+
+# ── 행동신호(behavior_signals) 빌더 ─────────────────────────────────────────────
+
+def build_behavior_signals(r: dict, f: dict, m: dict, p: dict, c: dict, basic: dict) -> dict:
+    """7개 영업 카테고리 + risk 그룹별 자연어 신호 목록"""
+    sig: dict[str, list[str]] = {
+        "loan_signals":          [],   # 여신
+        "deposit_signals":       [],   # 수신
+        "card_signals":          [],   # 카드
+        "bancassurance_signals": [],   # 방카
+        "trust_signals":         [],   # 신탁
+        "fund_signals":          [],   # 펀드
+        "fx_signals":            [],   # 외환
+        "risk_signals":          [],
+    }
+    customer_type = basic.get("customer_type", "")
+
+    # ── 여신 ─────────────────────────────────────────────────────────────────
+    days_loan = r.get("days_until_nearest_loan_maturity")
+    if days_loan is not None and 0 <= days_loan <= 90:
+        sig["loan_signals"].append(f"대출 만기 {days_loan}일 이내")
+    if c.get("loan_inquiry_flag_90d") == 1:
+        sig["loan_signals"].append("최근 대출 관련 문의 이력")
+    if p.get("has_loan") == 1 and m.get("loan_balance_amt", 0) > 0:
+        sig["loan_signals"].append(
+            f"기존 대출 잔액 {int(m['loan_balance_amt']/10000):,}만원"
+        )
+    # 사업자 + 사업비 지출 반복 → 운전자금 니즈
+    if customer_type in ("개인사업자", "법인") and f.get("business_expense_cnt_30d", 0) >= 5:
+        sig["loan_signals"].append("사업 비용 지출이 반복되어 운전자금 니즈 가능")
+
+    # ── 수신 ─────────────────────────────────────────────────────────────────
+    if m.get("idle_cash_amt", 0) >= 3_000_000:
+        sig["deposit_signals"].append(
+            f"유휴자금 {int(m['idle_cash_amt']/10000):,}만원 관측"
+        )
+    days_dep = r.get("days_until_nearest_deposit_maturity")
+    if days_dep is not None and 0 <= days_dep <= 60:
+        sig["deposit_signals"].append(f"예금 만기 {days_dep}일 이내")
+    if m.get("avg_balance_percentile", 0) >= 0.6:
+        sig["deposit_signals"].append("평균잔액 중상 수준")
+    if c.get("deposit_inquiry_flag_90d") == 1:
+        sig["deposit_signals"].append("최근 예적금 관련 문의 이력")
+    if customer_type in ("개인사업자", "법인") and p.get("has_merchant_account") == 0 \
+            and f.get("merchant_deposit_cnt_30d", 0) >= 3:
+        sig["deposit_signals"].append("가맹점 결제계좌 미보유 + 사업자성 입금 반복")
+
+    # ── 카드 ─────────────────────────────────────────────────────────────────
+    if p.get("has_credit_card") == 0:
+        if customer_type in ("개인사업자", "법인"):
+            sig["card_signals"].append("자사 사업자/신용카드 미보유")
+        else:
+            sig["card_signals"].append("자사 신용카드 미보유")
+    if f.get("business_expense_cnt_30d", 0) >= 5:
+        sig["card_signals"].append("사업 관련 비용 지출 반복 (카드화 가능)")
+    if c.get("card_reject_flag_90d") == 1:
+        sig["card_signals"].append("최근 카드 거절 이력 있음 (재권유 주의)")
+    elif c.get("card_inquiry_flag_90d") == 1:
+        sig["card_signals"].append("최근 카드 상품 관심 신호")
+
+    # ── 방카 (보험) ──────────────────────────────────────────────────────────
+    age_band = basic.get("age_band", "")
+    if age_band in ("40대", "50대", "60대 이상") and m.get("avg_balance_percentile", 0) >= 0.6:
+        sig["bancassurance_signals"].append("중장년 + 평잔 중상 → 보장성/저축성 보험 검토 가능")
+
+    # ── 신탁 (퇴직연금/IRP) ──────────────────────────────────────────────────
+    if c.get("investment_inquiry_flag_90d") == 1:
+        sig["trust_signals"].append("퇴직연금/투자 관련 문의 이력")
+    if age_band in ("40대", "50대") and customer_type in ("개인", "개인사업자"):
+        sig["trust_signals"].append("노후 준비 단계 연령 - IRP 세액공제 안내 가능")
+
+    # ── 펀드 / ISA ───────────────────────────────────────────────────────────
+    if p.get("has_isa") == 0 and m.get("idle_cash_amt", 0) >= 5_000_000:
+        sig["fund_signals"].append("ISA 미보유 + 유휴자금 존재")
+    if p.get("has_fund") == 0 and m.get("avg_balance_percentile", 0) >= 0.7:
+        sig["fund_signals"].append("투자 상품 미보유 + 평잔 상위")
+    if c.get("investment_inquiry_flag_90d") == 1:
+        sig["fund_signals"].append("최근 투자/절세 관련 문의 이력")
+
+    # ── 외환 ─────────────────────────────────────────────────────────────────
+    if c.get("fx_inquiry_flag_90d") == 1:
+        sig["fx_signals"].append("외환/송금 관련 문의 이력")
+    if p.get("has_fx_account") == 0 and c.get("fx_inquiry_flag_90d") == 1:
+        sig["fx_signals"].append("외화예금 미보유")
+
+    # ── 리스크 ───────────────────────────────────────────────────────────────
+    fat = c.get("sales_fatigue_score", 0)
+    if c.get("complaint_flag_180d") == 1:
+        sig["risk_signals"].append("최근 민원 이력 있음")
+    else:
+        sig["risk_signals"].append("최근 민원 없음")
+    if fat >= 0.6:
+        sig["risk_signals"].append(f"영업 피로도 높음({fat:.2f}) - 적극 권유 자제")
+    elif fat <= 0.3:
+        sig["risk_signals"].append(f"영업 피로도 낮음({fat:.2f})")
+    if c.get("campaign_reject_cnt_180d", 0) >= 2:
+        sig["risk_signals"].append(f"캠페인 거절 {c['campaign_reject_cnt_180d']}회")
+
+    return sig
+
+
+# ── 설명가능 신호(explainable_signals) 빌더 ────────────────────────────────────
+
+def build_explainable_signals(
+    r: dict, f: dict, m: dict, p: dict, c: dict,
+    missing_labels: list[str],
+) -> list[str]:
+    out = []
+    days_loan = r.get("days_until_nearest_loan_maturity")
+    if days_loan is not None and 0 <= days_loan <= 90:
+        out.append(f"대출 만기 {days_loan}일 전")
+
+    days_dep = r.get("days_until_nearest_deposit_maturity")
+    if days_dep is not None and 0 <= days_dep <= 90:
+        out.append(f"예금 만기 {days_dep}일 전")
+
+    if f.get("merchant_deposit_cnt_30d", 0) >= 4:
+        out.append(f"최근 30일 사업자성 입금 {f['merchant_deposit_cnt_30d']}회")
+    if f.get("business_expense_cnt_30d", 0) >= 4:
+        out.append(f"최근 30일 사업 비용 지출 {f['business_expense_cnt_30d']}회")
+
+    pct = m.get("avg_balance_percentile", 0)
+    if pct >= 0.7:
+        out.append("평균잔액 상위 30% 이내")
+    elif pct >= 0.5:
+        out.append("평균잔액 중상 수준")
+
+    if m.get("idle_cash_amt", 0) >= 3_000_000:
+        out.append(f"유휴자금 {int(m['idle_cash_amt']/10000):,}만원")
+
+    if missing_labels:
+        out.append(f"미보유 상품: {', '.join(missing_labels[:3])}")
+
+    topics = _split_topics(c.get("recent_consult_topics_90d"))
+    if topics:
+        out.append(f"최근 상담 주제: {', '.join(topics[:3])}")
+
+    if c.get("complaint_flag_180d") == 1:
+        out.append("최근 민원 이력 있음")
+    elif c.get("sales_fatigue_score", 0) <= 0.3:
+        out.append("영업 피로도 낮음")
+
+    return out
+
+
 # ── llm_input_json 생성 (Python) ─────────────────────────────────────────────
 
 def build_llm_json(base: dict, r: dict, f: dict, m: dict, p: dict, c: dict,
                    missing_labels: list, fatigue: float) -> str:
+    customer_type = base.get("customer_type", "")
+
+    # 구간 피처 계산
+    r_bands = {
+        "loan_maturity_band":          _loan_maturity_band(r.get("days_until_nearest_loan_maturity")),
+        "deposit_maturity_band":       _deposit_maturity_band(r.get("days_until_nearest_deposit_maturity")),
+        "mobile_recency_band":         _mobile_recency_band(r.get("days_since_last_mobile_login")),
+        "branch_recency_band":         _branch_recency_band(r.get("days_since_last_branch_visit")),
+        "large_money_movement_band":   _large_money_movement_band(r),
+    }
+    f_levels = {
+        "merchant_activity_level":     _merchant_activity_level(f.get("merchant_deposit_cnt_30d", 0)),
+        "business_expense_level":      _business_expense_level(f.get("business_expense_cnt_30d", 0)),
+        "digital_activity_level":      _digital_activity_level(f.get("mobile_login_cnt_30d", 0)),
+        "consultation_level":          _consultation_level(f.get("consultation_cnt_90d", 0)),
+        "salary_stability_level":      _salary_stability_level(f.get("salary_deposit_months_6m", 0)),
+    }
+    m_bands = {
+        "avg_balance_band":            _avg_balance_band(m.get("avg_balance_3m", 0)),
+        "idle_cash_band":              _idle_cash_band(m.get("idle_cash_amt", 0)),
+        "loan_balance_band":           _loan_balance_band(m.get("loan_balance_amt", 0)),
+        "card_spend_band":             _card_spend_band(m.get("monthly_card_spend_amt", 0)),
+        "inflow_band":                 _inflow_band(m.get("total_deposit_amt_30d", 0)),
+        "outflow_band":                _outflow_band(m.get("total_withdrawal_amt_30d", 0)),
+    }
+
+    # C 축 부가 정보
+    fatigue_level = _sales_fatigue_level(fatigue)
+    rec_tone = _recommendation_tone(
+        fatigue,
+        c.get("complaint_flag_180d", 0),
+        c.get("card_reject_flag_90d", 0),
+    )
+    recent_topics = _split_topics(c.get("recent_consult_topics_90d"))
+    contact_summary = _build_contact_summary({**c, "sales_fatigue_score": fatigue}, fatigue)
+
+    # P 축 부가 정보
+    product_gap_summary = _build_product_gap_summary(p, missing_labels, customer_type)
+
+    # 행동신호 / 설명가능 신호
+    c_aug = {**c, "sales_fatigue_score": fatigue}
+    behavior_signals = build_behavior_signals(r, f, m, p, c_aug, base)
+    explainable_signals = build_explainable_signals(r, f, m, p, c_aug, missing_labels)
+
     payload = {
         "cust_id": base["cust_id"],
         "base_date": BASE_DATE,
@@ -399,55 +756,69 @@ def build_llm_json(base: dict, r: dict, f: dict, m: dict, p: dict, c: dict,
         },
         "rfm_pc": {
             "R": {
-                "days_since_last_branch_visit": r.get("days_since_last_branch_visit"),
-                "days_since_last_mobile_login": r.get("days_since_last_mobile_login"),
-                "days_until_nearest_deposit_maturity": r.get("days_until_nearest_deposit_maturity"),
-                "days_until_nearest_loan_maturity": r.get("days_until_nearest_loan_maturity"),
-                "recent_salary_deposit_flag": r.get("recent_salary_deposit_flag", 0),
-                "recent_large_outflow_flag": r.get("recent_large_outflow_flag", 0),
+                "days_since_last_branch_visit":         r.get("days_since_last_branch_visit"),
+                "days_since_last_mobile_login":         r.get("days_since_last_mobile_login"),
+                "days_until_nearest_deposit_maturity":  r.get("days_until_nearest_deposit_maturity"),
+                "days_until_nearest_loan_maturity":     r.get("days_until_nearest_loan_maturity"),
+                "recent_salary_deposit_flag":           r.get("recent_salary_deposit_flag", 0),
+                "recent_large_outflow_flag":            r.get("recent_large_outflow_flag", 0),
+                **r_bands,
             },
             "F": {
-                "transfer_cnt_30d": f.get("transfer_cnt_30d", 0),
-                "branch_visit_cnt_90d": f.get("branch_visit_cnt_90d", 0),
-                "mobile_login_cnt_30d": f.get("mobile_login_cnt_30d", 0),
-                "salary_deposit_months_6m": f.get("salary_deposit_months_6m", 0),
-                "merchant_deposit_cnt_30d": f.get("merchant_deposit_cnt_30d", 0),
-                "consultation_cnt_90d": f.get("consultation_cnt_90d", 0),
+                "transfer_cnt_30d":          f.get("transfer_cnt_30d", 0),
+                "branch_visit_cnt_90d":      f.get("branch_visit_cnt_90d", 0),
+                "mobile_login_cnt_30d":      f.get("mobile_login_cnt_30d", 0),
+                "salary_deposit_months_6m":  f.get("salary_deposit_months_6m", 0),
+                "merchant_deposit_cnt_30d":  f.get("merchant_deposit_cnt_30d", 0),
+                "business_expense_cnt_30d":  f.get("business_expense_cnt_30d", 0),
+                "consultation_cnt_90d":      f.get("consultation_cnt_90d", 0),
+                **f_levels,
             },
             "M": {
-                "avg_balance_3m": m.get("avg_balance_3m", 0),
-                "monthly_card_spend_amt": m.get("monthly_card_spend_amt", 0),
-                "loan_balance_amt": m.get("loan_balance_amt", 0),
-                "deposit_maturity_amt_60d": m.get("deposit_maturity_amt_60d", 0),
-                "idle_cash_amt": m.get("idle_cash_amt", 0),
-                "avg_balance_percentile": m.get("avg_balance_percentile", 0),
+                "avg_balance_3m":            m.get("avg_balance_3m", 0),
+                "monthly_card_spend_amt":    m.get("monthly_card_spend_amt", 0),
+                "loan_balance_amt":          m.get("loan_balance_amt", 0),
+                "deposit_maturity_amt_60d":  m.get("deposit_maturity_amt_60d", 0),
+                "idle_cash_amt":             m.get("idle_cash_amt", 0),
+                "avg_balance_percentile":    m.get("avg_balance_percentile", 0),
+                "total_deposit_amt_30d":     m.get("total_deposit_amt_30d", 0),
+                "total_withdrawal_amt_30d":  m.get("total_withdrawal_amt_30d", 0),
+                **m_bands,
             },
             "P": {
-                "has_salary_account": p.get("has_salary_account", 0),
-                "has_credit_card": p.get("has_credit_card", 0),
-                "has_loan": p.get("has_loan", 0),
-                "has_business_account": p.get("has_business_account", 0),
-                "has_merchant_account": p.get("has_merchant_account", 0),
-                "has_isa": p.get("has_isa", 0),
-                "has_fund": p.get("has_fund", 0),
-                "has_fx_account": p.get("has_fx_account", 0),
-                "missing_product_labels": missing_labels,
+                "has_salary_account":      p.get("has_salary_account", 0),
+                "has_credit_card":         p.get("has_credit_card", 0),
+                "has_loan":                p.get("has_loan", 0),
+                "has_business_account":    p.get("has_business_account", 0),
+                "has_merchant_account":    p.get("has_merchant_account", 0),
+                "has_isa":                 p.get("has_isa", 0),
+                "has_fund":                p.get("has_fund", 0),
+                "has_fx_account":          p.get("has_fx_account", 0),
+                "missing_product_labels":  missing_labels,
+                "product_gap_count":       len(missing_labels),
+                "product_gap_summary":     product_gap_summary,
             },
             "C": {
-                "recent_consult_topic": c.get("recent_consult_topic"),
-                "recent_consult_topics_90d": c.get("recent_consult_topics_90d"),
-                "loan_inquiry_flag_90d": c.get("loan_inquiry_flag_90d", 0),
-                "card_inquiry_flag_90d": c.get("card_inquiry_flag_90d", 0),
-                "deposit_inquiry_flag_90d": c.get("deposit_inquiry_flag_90d", 0),
-                "fx_inquiry_flag_90d": c.get("fx_inquiry_flag_90d", 0),
-                "investment_inquiry_flag_90d": c.get("investment_inquiry_flag_90d", 0),
-                "campaign_reject_cnt_180d": c.get("campaign_reject_cnt_180d", 0),
-                "card_reject_flag_90d": c.get("card_reject_flag_90d", 0),
-                "complaint_flag_180d": c.get("complaint_flag_180d", 0),
-                "sales_fatigue_score": fatigue,
-                "preferred_channel": c.get("preferred_channel", "영업점"),
+                "recent_consult_topic":          c.get("recent_consult_topic"),
+                "recent_consult_topics_90d":     c.get("recent_consult_topics_90d"),
+                "recent_interest_topics":        recent_topics,
+                "loan_inquiry_flag_90d":         c.get("loan_inquiry_flag_90d", 0),
+                "card_inquiry_flag_90d":         c.get("card_inquiry_flag_90d", 0),
+                "deposit_inquiry_flag_90d":      c.get("deposit_inquiry_flag_90d", 0),
+                "fx_inquiry_flag_90d":           c.get("fx_inquiry_flag_90d", 0),
+                "investment_inquiry_flag_90d":   c.get("investment_inquiry_flag_90d", 0),
+                "campaign_reject_cnt_180d":      c.get("campaign_reject_cnt_180d", 0),
+                "card_reject_flag_90d":          c.get("card_reject_flag_90d", 0),
+                "complaint_flag_180d":           c.get("complaint_flag_180d", 0),
+                "sales_fatigue_score":           fatigue,
+                "sales_fatigue_level":           fatigue_level,
+                "preferred_channel":             c.get("preferred_channel", "영업점"),
+                "contact_summary":               contact_summary,
+                "recommendation_tone":           rec_tone,
             },
         },
+        "behavior_signals":     behavior_signals,
+        "explainable_signals":  explainable_signals,
     }
     return json.dumps(payload, ensure_ascii=False)
 

@@ -508,6 +508,93 @@ RAW_PRODUCTS = [
         description="최대 50억원, 담보·보증서·신용 방식. 전담 기업금융 RM 배정.",
         requires_review=1,
     ),
+    # ── 카드 (시연 강화: 박성호용) ─────────────────────────────────────────────
+    dict(
+        product_id="P016", product_name="iM i 카드", product_name_en="iM i Card",
+        category="카드", sub_category="신용카드",
+        target_types=["개인", "개인사업자"],
+        min_age=20, max_age=99,
+        target_segments=["young_professional", "family_builder", "self_employed"],
+        priority_tags=["라이프스타일", "캐시백", "디지털", "전월실적"],
+        base_fit_score=68,
+        customer_value="iM뱅크 대표 라이프스타일 카드. 생활비 영역 통합 캐시백.",
+        description="전월 실적 30만원 이상 시 생활비(마트·편의점·외식·교통) 0.7~1.5% 캐시백, OTT·배달 10% 할인. 연회비 1만원, 모바일 발급 시 첫 해 면제.",
+        requires_review=0,
+    ),
+    dict(
+        product_id="P017", product_name="BIZ 소호 카드", product_name_en="BIZ SOHO Card",
+        category="카드", sub_category="사업자카드",
+        target_types=["개인사업자"],
+        min_age=20, max_age=99,
+        target_segments=["self_employed"],
+        priority_tags=["소상공인", "경비처리", "매입할인", "세무"],
+        base_fit_score=78,
+        customer_value="소상공인 전용 사업자 카드. 매입처 자동 분류 및 부가세 신고 연동.",
+        description="식자재·POS·도매 업종 가맹점 0.5%p 추가 할인, 전표 자동 분류, 부가세 신고서 자동 생성. 연회비 2만원, 사업장 매출 100만원 이상 발생 시 면제.",
+        requires_review=0,
+    ),
+    dict(
+        product_id="P018", product_name="BIZ 플러스 카드", product_name_en="BIZ Plus Card",
+        category="카드", sub_category="사업자카드",
+        target_types=["개인사업자", "법인"],
+        min_age=20, max_age=99,
+        target_segments=["self_employed", "corporate"],
+        priority_tags=["프리미엄", "경비처리", "한도우대", "공항라운지"],
+        base_fit_score=72,
+        customer_value="중·대형 사업자용 프리미엄 사업자카드. 한도·해외 우대.",
+        description="연 매출 3억 이상 사업자 대상. 기본 한도 5천만원, 해외 가맹점 1.0% 적립, 국내·외 공항 라운지 연 6회. 연회비 10만원.",
+        requires_review=0,
+    ),
+    # ── 여신 (시연 강화: 박성호용) ─────────────────────────────────────────────
+    dict(
+        product_id="P019", product_name="iM 소상공인 보증서 대출", product_name_en="SMB Guaranteed Loan",
+        category="여신", sub_category="사업자대출",
+        target_types=["개인사업자"],
+        min_age=20, max_age=70,
+        target_segments=["self_employed"],
+        priority_tags=["보증서", "지역신보", "소상공인", "정책자금"],
+        base_fit_score=82,
+        customer_value="지역신용보증재단 보증서 연계 소상공인 대출. 신용점수 부족 고객도 한도 확보.",
+        description="지역신보 보증비율 최대 90%, 한도 최대 3억원, 금리 연 4.2%~6.5%. 보증료 0.5~1.5% 별도. 사업 영위 6개월 이상.",
+        requires_review=1,
+    ),
+    dict(
+        product_id="P020", product_name="iM 개인사업자 특판 대출", product_name_en="SMB Special Loan",
+        category="여신", sub_category="사업자대출",
+        target_types=["개인사업자"],
+        min_age=20, max_age=70,
+        target_segments=["self_employed"],
+        priority_tags=["특판", "운전자금", "만기연장", "우대금리"],
+        base_fit_score=80,
+        customer_value="기존 사업자대출 만기 임박 고객 대상 특판 우대 상품.",
+        description="기존 사업자대출 만기 90일 전 ~ 연장 시 대상. 한도 최대 5억원, 금리 연 4.5%~6.0%, 일반 대비 0.4%p 우대. 운전자금 한정.",
+        requires_review=1,
+    ),
+    dict(
+        product_id="P021", product_name="iM 온누리 가맹점주 대출", product_name_en="Onnuri Merchant Loan",
+        category="여신", sub_category="사업자대출",
+        target_types=["개인사업자"],
+        min_age=20, max_age=70,
+        target_segments=["self_employed"],
+        priority_tags=["전통시장", "온누리상품권", "가맹점주", "저금리"],
+        base_fit_score=76,
+        customer_value="전통시장·골목상권 온누리 가맹점주 전용 저금리 대출.",
+        description="온누리상품권 가맹 등록 사업자 대상. 한도 최대 1억원, 금리 연 3.9%~5.5%(정책자금 연계), 거치 1년 가능. 가맹 인증서 필요.",
+        requires_review=1,
+    ),
+    # ── 수신 (시연 강화: 박성호용 가맹점 결제계좌) ────────────────────────────
+    dict(
+        product_id="P022", product_name="iM 사업자 정산 통장", product_name_en="Merchant Settlement Account",
+        category="수신", sub_category="가맹점 결제계좌",
+        target_types=["개인사업자", "법인"],
+        min_age=20, max_age=99,
+        target_segments=["self_employed", "corporate"],
+        priority_tags=["가맹점", "결제계좌", "정산", "수수료우대"],
+        base_fit_score=80,
+        customer_value="카드매출·PG 매출을 통합 정산하는 사업자 전용 수신 계좌.",
+        description="카드사·PG사 정산 자동 입금, 정산 주기 D+1로 단축, 결제수수료 0.05%p 감면, 첫 3개월 정산 수수료 면제. 사업자등록증·가맹 계약서 필요.",
+        requires_review=0,
+    ),
 ]
 
 # ── KPI 지표 ─────────────────────────────────────────────────────────────────
@@ -528,6 +615,14 @@ RAW_KPI = [
     dict(product_id="P013", kpi_score=65, revenue_score=68, strategic_score=62, retention_score=65),
     dict(product_id="P014", kpi_score=88, revenue_score=92, strategic_score=85, retention_score=82),
     dict(product_id="P015", kpi_score=90, revenue_score=95, strategic_score=88, retention_score=82),
+    # ── 데모 강화 신규 상품 KPI ───────────────────────────────────────────────
+    dict(product_id="P016", kpi_score=78, revenue_score=72, strategic_score=78, retention_score=80),  # iM i 카드
+    dict(product_id="P017", kpi_score=88, revenue_score=82, strategic_score=92, retention_score=86),  # BIZ 소호 카드
+    dict(product_id="P018", kpi_score=80, revenue_score=85, strategic_score=78, retention_score=75),  # BIZ 플러스 카드
+    dict(product_id="P019", kpi_score=92, revenue_score=78, strategic_score=98, retention_score=90),  # 보증서 대출
+    dict(product_id="P020", kpi_score=90, revenue_score=88, strategic_score=92, retention_score=88),  # 개인사업자 특판
+    dict(product_id="P021", kpi_score=85, revenue_score=72, strategic_score=95, retention_score=82),  # 온누리 가맹점주
+    dict(product_id="P022", kpi_score=86, revenue_score=80, strategic_score=90, retention_score=85),  # 사업자 정산 통장
 ]
 
 # ── 상품 지식 문서 ───────────────────────────────────────────────────────────
@@ -595,6 +690,63 @@ RAW_DOCUMENTS = [
         channel_hint="branch",
         tags=["사업자카드", "카드정산", "매출이전", "개인사업자"],
         related_product_ids=["P008"],
+        valid_from="2026-01-01", valid_until="2026-12-31",
+    ),
+    # ── 데모 시연 강화 문서 ───────────────────────────────────────────────
+    dict(
+        title="2026 봄 BIZ 소호 카드 신규 발급 캠페인",
+        summary="식자재·POS·도매 업종 사업자 대상 BIZ 소호 카드 신규 발급 시 첫 해 연회비 면제 + 매입처 0.5%p 추가 캐시백.",
+        channel_hint="branch",
+        tags=["BIZ소호", "사업자카드", "캐시백", "외식업"],
+        related_product_ids=["P017"],
+        valid_from="2026-04-01", valid_until="2026-06-30",
+    ),
+    dict(
+        title="iM i 카드 모바일 발급 첫 해 연회비 면제",
+        summary="iM뱅크 모바일 앱에서 iM i 카드 신규 발급 시 첫 해 연회비 1만원 면제 및 OTT 1개월 구독권 증정.",
+        channel_hint="mobile",
+        tags=["iM i카드", "라이프스타일", "연회비면제", "디지털"],
+        related_product_ids=["P016"],
+        valid_from="2026-03-01", valid_until="2026-12-31",
+    ),
+    dict(
+        title="소상공인 보증서 대출 정책자금 한도 확대",
+        summary="2026년 정책자금 연계 지역신보 보증서 대출 한도가 최대 3억원으로 상향. 보증료 일부 지원 병행.",
+        channel_hint="branch",
+        tags=["보증서대출", "지역신보", "정책자금", "소상공인"],
+        related_product_ids=["P019"],
+        valid_from="2026-04-01", valid_until="2026-12-31",
+    ),
+    dict(
+        title="개인사업자 특판 대출 만기연장 우대 캠페인",
+        summary="기존 사업자대출 만기 90일 이내 고객 대상 특판 우대금리 0.4%p, 연장 수수료 면제.",
+        channel_hint="branch",
+        tags=["특판대출", "만기연장", "운전자금", "우대금리"],
+        related_product_ids=["P020", "P006"],
+        valid_from="2026-05-01", valid_until="2026-08-31",
+    ),
+    dict(
+        title="온누리 가맹점주 전용 저금리 대출 안내",
+        summary="전통시장·골목상권 온누리 가맹점주 대상 저금리(연 3.9%~5.5%) 운전자금 대출. 거치 1년 가능.",
+        channel_hint="branch",
+        tags=["온누리", "전통시장", "가맹점주", "저금리"],
+        related_product_ids=["P021"],
+        valid_from="2026-01-01", valid_until="2026-12-31",
+    ),
+    dict(
+        title="사업자 정산 통장 결제수수료 우대 이벤트",
+        summary="카드매출·PG 매출 정산 계좌를 iM뱅크 사업자 정산 통장으로 이전 시 결제수수료 0.05%p 감면 + 첫 3개월 정산 수수료 면제.",
+        channel_hint="branch",
+        tags=["사업자정산", "가맹점결제", "수수료우대", "PG"],
+        related_product_ids=["P022", "P017"],
+        valid_from="2026-04-01", valid_until="2026-12-31",
+    ),
+    dict(
+        title="노란우산공제 사업자 가입 지원 (소득공제 최대 600만원)",
+        summary="개인사업자 노란우산공제 신규 가입 시 첫 달 납입금 매칭 지원. 연 소득공제 최대 600만원 활용 가능.",
+        channel_hint="branch",
+        tags=["노란우산", "소득공제", "소상공인", "절세"],
+        related_product_ids=["P012"],
         valid_from="2026-01-01", valid_until="2026-12-31",
     ),
 ]
