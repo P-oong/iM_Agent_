@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   BotMessageSquare,
   Building2,
+  Check,
   Lightbulb,
   Loader2,
   Sparkles,
@@ -23,8 +24,16 @@ import {
   type AiOpportunity,
   type CustomerForAnalysis,
 } from '@/services/openaiApi'
-import { analyzeBridge } from '@/services/bridgeApi'
+import { analyzeBridge, streamBridgeAnalysis, bridgeToAiResult } from '@/services/bridgeApi'
+import { BRIDGE_CACHE } from '@/services/aiAnalysisCache'
 import '@/styles/demo-modal.css'
+
+// ── 브릿지 에이전트 단계 정의 ─────────────────────────────────────────────
+const BRIDGE_STEPS = [
+  { id: 'router'     as const, label: '라우터',       sub: '카테고리 분류' },
+  { id: 'specialist' as const, label: '스페셜리스트',  sub: '상품 추천'    },
+  { id: 'assembler'  as const, label: 'RAG · 조합',   sub: '정책 검토'    },
+]
 
 const TYPE_CONFIG = {
   개인: {
@@ -123,6 +132,11 @@ export function DemoModal({ demo, customerName, customer, onClose, custId, cache
   const [result, setResult] = useState<AiAnalysisResult | null>(cachedResult ?? null)
   const [errorMsg, setErrorMsg] = useState('')
 
+  // 브릿지 스트리밍 진행 상태
+  const [currentStep, setCurrentStep] = useState<string | null>(null)
+  const [doneSteps, setDoneSteps] = useState<Set<string>>(new Set())
+  const [stepDetails, setStepDetails] = useState<Record<string, string>>({})
+
   const cfg = TYPE_CONFIG[demo.type]
   const TypeIcon = cfg.Icon
 
@@ -130,24 +144,65 @@ export function DemoModal({ demo, customerName, customer, onClose, custId, cache
   useEffect(() => {
     if (cachedResult) return
     let cancelled = false
-    const apiFn = custId
-      ? () => analyzeBridge(custId)
-      : () => analyzeCustomerWithGpt(customer)
 
-    apiFn()
-      .then(data => {
-        if (!cancelled) {
-          setResult(data)
-          setPhase('done')
-          onResult?.(data)
+    if (custId) {
+      // iM BRIDGE 스트리밍 파이프라인
+      const runStream = async () => {
+        try {
+          for await (const event of streamBridgeAnalysis(custId)) {
+            if (cancelled) break
+
+            if (event.step === 'error') {
+              setErrorMsg(event.message)
+              setPhase('error')
+              return
+            }
+
+            if (event.status === 'running') {
+              setCurrentStep(event.step)
+            } else if (event.status === 'done') {
+              setDoneSteps(prev => new Set([...prev, event.step]))
+              if ('detail' in event && event.detail) {
+                setStepDetails(prev => ({ ...prev, [event.step]: event.detail as string }))
+              }
+              if (event.step === 'assembler' && 'final' in event && event.final && 'data' in event && event.data) {
+                const aiResult = bridgeToAiResult(event.data)
+                if (!cancelled) {
+                  // raw bridge 응답도 캐시에 저장 (router/specialist/RAG 데이터용)
+                  if (custId) BRIDGE_CACHE.set(custId, event.data)
+                  setResult(aiResult)
+                  setPhase('done')
+                  onResult?.(aiResult)
+                }
+              }
+            }
+          }
+        } catch (err) {
+          if (!cancelled) {
+            setErrorMsg(err instanceof Error ? err.message : String(err))
+            setPhase('error')
+          }
         }
-      })
-      .catch(err => {
-        if (!cancelled) {
-          setErrorMsg(err instanceof Error ? err.message : String(err))
-          setPhase('error')
-        }
-      })
+      }
+      runStream()
+    } else {
+      // GPT 직접 호출
+      analyzeCustomerWithGpt(customer)
+        .then(data => {
+          if (!cancelled) {
+            setResult(data)
+            setPhase('done')
+            onResult?.(data)
+          }
+        })
+        .catch(err => {
+          if (!cancelled) {
+            setErrorMsg(err instanceof Error ? err.message : String(err))
+            setPhase('error')
+          }
+        })
+    }
+
     return () => { cancelled = true }
   }, [custId, customer, cachedResult, onResult])
 
@@ -224,46 +279,75 @@ export function DemoModal({ demo, customerName, customer, onClose, custId, cache
                   <p className="dmo-loading-title">
                     {custId ? 'iM BRIDGE 멀티에이전트 분석 중' : 'AI 고객 분석 중'}
                   </p>
-                  <p className="dmo-loading-sub">
-                    {custId
-                      ? 'Router → Specialist → RAG/Policy → KPI → Assembler'
-                      : '거래 흐름 · 소비 패턴 · 자금 이동 이벤트 분석'}
-                  </p>
 
-                  <div className="dmo-loading-steps">
-                    {(custId
-                      ? [
-                          { label: 'Feature Mart 데이터 조회', delay: 0 },
-                          { label: '라우터 · 스페셜리스트 에이전트', delay: 0.5 },
-                          { label: '정책 RAG · KPI · 영업카드 조립', delay: 1.0 },
-                        ]
-                      : [
-                          { label: '고객 거래 데이터 수집', delay: 0 },
-                          { label: '소비 패턴 및 이벤트 감지', delay: 0.5 },
-                          { label: '영업기회 우선순위 산정', delay: 1.0 },
-                        ]
-                    ).map(({ label, delay }) => (
-                      <motion.div
-                        key={label}
-                        className="dmo-loading-step"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay }}
-                      >
-                        <motion.span
-                          className="dmo-step-dot"
-                          animate={{ opacity: [0.4, 1, 0.4] }}
-                          transition={{ delay, duration: 1.2, repeat: Infinity }}
-                        />
-                        {label}
-                        <motion.span
-                          className="dmo-step-dots-anim"
-                          animate={{ opacity: [0, 1, 0] }}
-                          transition={{ delay: delay + 0.3, duration: 1.2, repeat: Infinity }}
-                        >...</motion.span>
-                      </motion.div>
-                    ))}
-                  </div>
+                  {custId ? (
+                    /* ── 브릿지 스트리밍 단계 인디케이터 ── */
+                    <div className="dmo-bridge-progress">
+                      {BRIDGE_STEPS.map((step, i) => {
+                        const isDone    = doneSteps.has(step.id)
+                        const isRunning = currentStep === step.id && !isDone
+                        return (
+                          <div key={step.id} className="dmo-bridge-step-wrap">
+                            <div className={`dmo-bridge-step ${isDone ? 'is-done' : isRunning ? 'is-running' : 'is-pending'}`}>
+                              <div className="dmo-bridge-step-circle">
+                                {isDone
+                                  ? <Check size={13} strokeWidth={3} />
+                                  : isRunning
+                                    ? <Loader2 size={13} className="dmo-spin" />
+                                    : <span>{i + 1}</span>
+                                }
+                              </div>
+                              <div className="dmo-bridge-step-text">
+                                <span className="dmo-bridge-step-name">{step.label}</span>
+                                <span className="dmo-bridge-step-sub">
+                                  {isDone && stepDetails[step.id]
+                                    ? stepDetails[step.id]
+                                    : step.sub}
+                                </span>
+                              </div>
+                            </div>
+                            {i < BRIDGE_STEPS.length - 1 && (
+                              <div className={`dmo-bridge-step-line ${isDone ? 'is-done' : ''}`} />
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    /* ── GPT 직접 호출 — 기존 애니메이션 ── */
+                    <>
+                      <p className="dmo-loading-sub">
+                        거래 흐름 · 소비 패턴 · 자금 이동 이벤트 분석
+                      </p>
+                      <div className="dmo-loading-steps">
+                        {[
+                          { label: '고객 거래 데이터 수집',       delay: 0   },
+                          { label: '소비 패턴 및 이벤트 감지',    delay: 0.5 },
+                          { label: '영업기회 우선순위 산정',       delay: 1.0 },
+                        ].map(({ label, delay }) => (
+                          <motion.div
+                            key={label}
+                            className="dmo-loading-step"
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay }}
+                          >
+                            <motion.span
+                              className="dmo-step-dot"
+                              animate={{ opacity: [0.4, 1, 0.4] }}
+                              transition={{ delay, duration: 1.2, repeat: Infinity }}
+                            />
+                            {label}
+                            <motion.span
+                              className="dmo-step-dots-anim"
+                              animate={{ opacity: [0, 1, 0] }}
+                              transition={{ delay: delay + 0.3, duration: 1.2, repeat: Infinity }}
+                            >...</motion.span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
 

@@ -503,6 +503,126 @@
 }
 .dmo-core-msg svg { color: var(--im-mint); flex-shrink: 0; }
 
+/* ── 브릿지 멀티에이전트 스텝 인디케이터 ── */
+.dmo-bridge-progress {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  margin: 18px 0 6px;
+  width: 100%;
+}
+
+.dmo-bridge-step-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.dmo-bridge-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 80px;
+  transition: opacity 0.3s ease;
+}
+
+.dmo-bridge-step.is-pending { opacity: 0.38; }
+.dmo-bridge-step.is-running { opacity: 1; }
+.dmo-bridge-step.is-done    { opacity: 1; }
+
+/* 원형 아이콘 */
+.dmo-bridge-step-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.35s ease;
+}
+
+.dmo-bridge-step.is-pending .dmo-bridge-step-circle {
+  background: rgba(148,163,184,0.12);
+  border: 2px solid rgba(148,163,184,0.35);
+  color: #94a3b8;
+}
+
+.dmo-bridge-step.is-running .dmo-bridge-step-circle {
+  background: rgba(0,199,169,0.14);
+  border: 2px solid var(--im-mint, #00c7a9);
+  color: var(--im-mint, #00c7a9);
+  box-shadow: 0 0 0 4px rgba(0,199,169,0.12), 0 0 16px rgba(0,199,169,0.2);
+}
+
+.dmo-bridge-step.is-done .dmo-bridge-step-circle {
+  background: rgba(0,199,169,0.18);
+  border: 2px solid var(--im-mint, #00c7a9);
+  color: var(--im-mint, #00c7a9);
+}
+
+/* 연결선 */
+.dmo-bridge-step-line {
+  flex: 1;
+  height: 2px;
+  min-width: 28px;
+  background: rgba(148,163,184,0.3);
+  margin-bottom: 26px;
+  transition: background 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dmo-bridge-step-line.is-done {
+  background: rgba(0,199,169,0.5);
+}
+
+/* 텍스트 */
+.dmo-bridge-step-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.dmo-bridge-step-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.dmo-bridge-step.is-pending .dmo-bridge-step-name { color: #94a3b8; }
+.dmo-bridge-step.is-running .dmo-bridge-step-name { color: var(--im-mint, #00c7a9); }
+.dmo-bridge-step.is-done    .dmo-bridge-step-name { color: #007a64; }
+
+.dmo-bridge-step-sub {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
+  font-weight: 500;
+  min-height: 14px;
+  transition: color 0.3s;
+}
+
+.dmo-bridge-step.is-done .dmo-bridge-step-sub {
+  color: var(--im-mint, #00c7a9);
+  font-weight: 600;
+}
+
+/* Loader2 회전 애니메이션 */
+.dmo-spin {
+  animation: dmo-spin-anim 0.9s linear infinite;
+}
+
+@keyframes dmo-spin-anim {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 /* ── 반응형 ── */
 @media (max-width: 540px) {
   .dmo-metrics-grid { grid-template-columns: repeat(2, 1fr); }

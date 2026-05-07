@@ -759,6 +759,169 @@ async def _run_full_pipeline(
     return customer_payload, router_result, specialist_result, policy_support_list, kpi_badge_map
 
 
+# ── SSE 스트리밍 엔드포인트 ──────────────────────────────────────────────────
+
+_LABEL_KO: dict[str, str] = {
+    "DEPOSIT_SAVINGS": "예적금/수신",
+    "PERSONAL_LOAN":   "개인대출",
+    "BUSINESS_LOAN":   "사업자대출",
+    "CARD":            "카드",
+    "CASH_MANAGEMENT": "자금관리",
+    "FX_REMITTANCE":   "외환/송금",
+    "INVESTMENT_TAX":  "투자/절세",
+}
+
+
+def _sse(data: dict) -> str:
+    return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+@app.post("/api/bridge/sales-card/stream")
+async def bridge_sales_card_stream(req: BridgeAnalyzeRequest):
+    """
+    iM BRIDGE Agent 진행 상황을 SSE로 스트리밍합니다.
+    Router → Specialist → Policy RAG → KPI → Assembler
+    """
+    import asyncio
+    from fastapi.responses import StreamingResponse as _StreamingResponse
+
+    settings = get_settings()
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
+
+    async def generate():
+        try:
+            # Feature Mart 조회
+            try:
+                feature_mart_json = await asyncio.to_thread(
+                    get_feature_mart, req.cust_id, settings.db_path
+                )
+            except FileNotFoundError as e:
+                yield _sse({"step": "error", "message": str(e)})
+                return
+
+            if not feature_mart_json:
+                yield _sse({"step": "error", "message": f"고객 {req.cust_id}의 Feature Mart 데이터가 없습니다."})
+                return
+
+            basic_info = await asyncio.to_thread(get_customer_basic_info, req.cust_id, settings.db_path)
+            customer_payload = build_customer_payload(
+                feature_mart_json, req.live_context.model_dump(), basic_info
+            )
+
+            # ── Step 1: Router ──────────────────────────────────────────
+            yield _sse({"step": "router", "status": "running", "label": "카테고리 분류"})
+            try:
+                router_result = await asyncio.to_thread(run_router, customer_payload, api_key)
+            except Exception as exc:
+                yield _sse({"step": "error", "message": f"Router Agent 오류: {exc}"})
+                return
+
+            label_ko = _LABEL_KO.get(router_result.get("primary_label", ""), router_result.get("primary_label", ""))
+            yield _sse({
+                "step": "router", "status": "done",
+                "detail": label_ko,
+                "confidence": round(float(router_result.get("confidence", 0)), 2),
+            })
+
+            # 후보 상품 조회
+            customer_type = feature_mart_json.get("customer_segment", {}).get("customer_type", "개인")
+            candidate_products = await asyncio.to_thread(
+                get_candidate_products,
+                router_result["primary_label"],
+                router_result.get("secondary_labels", []),
+                customer_type,
+                settings.db_path,
+            )
+            if not candidate_products:
+                yield _sse({"step": "error", "message": "해당 카테고리에 적합한 후보 상품이 없습니다."})
+                return
+
+            # ── Step 2: Specialist ──────────────────────────────────────
+            yield _sse({"step": "specialist", "status": "running", "label": "상품 추천"})
+            try:
+                specialist_result = await asyncio.to_thread(
+                    run_specialist, router_result, customer_payload, candidate_products, api_key
+                )
+            except Exception as exc:
+                yield _sse({"step": "error", "message": f"Specialist Agent 오류: {exc}"})
+                return
+
+            top_products: list[dict[str, Any]] = specialist_result.get("top_products", [])
+            yield _sse({
+                "step": "specialist", "status": "done",
+                "detail": f"{len(top_products)}개 상품 추천",
+            })
+
+            # ── Step 3: Policy RAG + KPI + Assembler ────────────────────
+            yield _sse({"step": "assembler", "status": "running", "label": "정책 RAG · 영업카드 조합"})
+
+            base_date = feature_mart_json.get("base_date", "")
+            customer_context = {
+                "customer_segment": feature_mart_json.get("customer_segment", {}),
+                "live_context": req.live_context.model_dump(),
+            }
+
+            policy_support_list: list[dict[str, Any]] = []
+            for product in top_products:
+                retrieved_docs = await asyncio.to_thread(
+                    retrieve_policy_docs,
+                    product["product_id"],
+                    settings.data_dir,
+                    product.get("product_name", ""),
+                )
+                try:
+                    policy = await asyncio.to_thread(
+                        run_policy_agent, product, customer_context, retrieved_docs, api_key
+                    )
+                except Exception:
+                    policy = {
+                        "product_id": product["product_id"],
+                        "product_name": product["product_name"],
+                        "related_docs": [],
+                        "required_documents": [],
+                        "eligibility_summary": [],
+                        "event_summary": [],
+                        "caution_points": ["최신 공문을 직접 확인하십시오."],
+                    }
+                policy_support_list.append(policy)
+
+            kpi_badge_map = map_kpi_badges_for_products(top_products, base_date, settings.data_dir)
+
+            try:
+                assembled = await asyncio.to_thread(
+                    run_assembler,
+                    customer_payload, router_result, specialist_result,
+                    policy_support_list, kpi_badge_map, api_key,
+                )
+            except Exception as exc:
+                yield _sse({"step": "error", "message": f"Assembler Agent 오류: {exc}"})
+                return
+
+            final_data = {
+                "cust_id": req.cust_id,
+                "router_result": router_result,
+                "specialist_result": specialist_result,
+                "sales_cards": assembled.get("sales_cards", []),
+            }
+
+            yield _sse({
+                "step": "assembler", "status": "done",
+                "final": True,
+                "data": final_data,
+            })
+
+        except Exception as exc:
+            yield _sse({"step": "error", "message": str(exc)})
+
+    return _StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 @app.post("/api/bridge/consulting-package", response_model=ConsultingPackageResponse)
 async def bridge_consulting_package(req: BridgeAnalyzeRequest) -> ConsultingPackageResponse:
     """
@@ -810,3 +973,81 @@ async def bridge_consulting_package(req: BridgeAnalyzeRequest) -> ConsultingPack
         consulting_package=result.get("consulting_package", {}),
         reflection=result.get("reflection", {}),
     )
+
+
+# ── 고객 기본정보 조회 (주민번호 앞자리) ────────────────────────────────────
+@app.get("/api/customers/{resident_id_front}")
+def get_customer_by_resident(resident_id_front: str):
+    """주민번호 앞 6자리로 DB에서 고객 기본정보·계좌·거래내역을 조회합니다."""
+    import sqlite3 as _sqlite3
+
+    settings = get_settings()
+    db_path = settings.db_path
+    if not db_path.exists():
+        raise HTTPException(status_code=503, detail="DB 파일을 찾을 수 없습니다")
+
+    conn = _sqlite3.connect(db_path)
+    conn.row_factory = _sqlite3.Row
+    try:
+        row = conn.execute(
+            """SELECT customer_id, resident_id_front, name, age, gender, job,
+                      customer_type, annual_income, credit_score,
+                      total_assets, total_debt, grade, notes
+               FROM customers WHERE resident_id_front = ?""",
+            (resident_id_front,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="고객을 찾을 수 없습니다")
+
+        cust = dict(row)
+        cust_id = cust["customer_id"]
+
+        accounts = [
+            {
+                "number": r["account_number"],
+                "product": r["product"],
+                "balance": r["balance"],
+                "status": r["status"],
+            }
+            for r in conn.execute(
+                "SELECT account_number, product, balance, status FROM accounts WHERE customer_id = ?",
+                (cust_id,),
+            ).fetchall()
+        ]
+
+        transactions = [
+            {
+                "date": r["tx_date"],
+                "description": r["description"],
+                "amount": r["amount"],
+            }
+            for r in conn.execute(
+                """SELECT tx_date, description, amount FROM transactions
+                   WHERE customer_id = ? ORDER BY tx_date DESC LIMIT 10""",
+                (cust_id,),
+            ).fetchall()
+        ]
+
+        # 보유상품 목록 — 계좌 product 컬럼 기준 순서 유지 중복 제거
+        products = list(dict.fromkeys(a["product"] for a in accounts))
+
+        return {
+            "customerId":      cust["customer_id"],
+            "residentIdFront": cust["resident_id_front"],
+            "name":            cust["name"],
+            "customerType":    cust["customer_type"],
+            "gender":          cust["gender"] or "",
+            "grade":           cust["grade"],
+            "age":             cust["age"],
+            "job":             cust["job"],
+            "annualIncome":    cust["annual_income"],
+            "creditScore":     cust["credit_score"],
+            "totalAssets":     cust["total_assets"],
+            "totalDebt":       cust["total_debt"],
+            "notes":           cust["notes"],
+            "products":        products,
+            "accounts":        accounts,
+            "transactions":    transactions,
+        }
+    finally:
+        conn.close()
