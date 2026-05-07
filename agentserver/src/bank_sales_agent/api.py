@@ -39,7 +39,10 @@ from bank_sales_agent.services.feature_mart import (
     get_customer_basic_info,
     build_customer_payload,
 )
-from bank_sales_agent.services.product_catalog import get_candidate_products
+from bank_sales_agent.services.product_catalog import (
+    get_candidate_products,
+    get_candidates_by_category,
+)
 from bank_sales_agent.services.policy_rag import retrieve_policy_docs
 from bank_sales_agent.services.kpi_mapper import map_kpi_badges_for_products
 
@@ -443,6 +446,7 @@ class BridgeAnalyzeResponse(BaseModel):
     cust_id: str
     router_result: Dict[str, Any]
     specialist_result: Dict[str, Any]
+    customer_payload: Dict[str, Any] = Field(default_factory=dict)
 
 
 @app.post("/api/bridge/analyze", response_model=BridgeAnalyzeResponse)
@@ -480,26 +484,26 @@ async def bridge_analyze(req: BridgeAnalyzeRequest) -> BridgeAnalyzeResponse:
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Router Agent 오류: {exc}")
 
-    # 5. 후보 상품 조회 (applicable_categories 전체 레이블 기반)
+    # 5. 후보 상품 조회 (applicable_categories 카테고리별 그룹화)
     customer_type = feature_mart_json.get("customer_segment", {}).get("customer_type", "개인")
     applicable_labels = [
         cat["label"] for cat in router_result.get("applicable_categories", [])
     ]
-    candidate_products = get_candidate_products(
+    candidates_by_category = get_candidates_by_category(
         applicable_labels=applicable_labels,
         customer_type=customer_type,
         db_path=settings.db_path,
     )
 
-    if not candidate_products:
+    if not candidates_by_category:
         raise HTTPException(status_code=404, detail="해당 카테고리에 적합한 후보 상품이 없습니다.")
 
-    # 6. Specialist Agent
+    # 6. Specialist Agent (카테고리별 동시 분석)
     try:
         specialist_result = run_specialist(
             router_result=router_result,
             customer_payload=customer_payload,
-            candidate_products=candidate_products,
+            candidates_by_category=candidates_by_category,
             api_key=api_key,
         )
     except Exception as exc:
@@ -509,6 +513,7 @@ async def bridge_analyze(req: BridgeAnalyzeRequest) -> BridgeAnalyzeResponse:
         cust_id=req.cust_id,
         router_result=router_result,
         specialist_result=specialist_result,
+        customer_payload=customer_payload,
     )
 
 
@@ -516,6 +521,9 @@ class SalesCardResponse(BaseModel):
     cust_id: str
     router_result: Dict[str, Any]
     specialist_result: Dict[str, Any]
+    customer_payload: Dict[str, Any] = Field(default_factory=dict)
+    policy_support: List[Dict[str, Any]] = Field(default_factory=list)
+    kpi_badges: Dict[str, Any] = Field(default_factory=dict)
     sales_cards: List[Dict[str, Any]]
 
 
@@ -555,6 +563,9 @@ async def bridge_sales_card(req: BridgeAnalyzeRequest) -> SalesCardResponse:
         cust_id=req.cust_id,
         router_result=router_result,
         specialist_result=specialist_result,
+        customer_payload=customer_payload,
+        policy_support=policy_support_list,
+        kpi_badges=kpi_badge_map,
         sales_cards=assembled.get("sales_cards", []),
     )
 
@@ -562,11 +573,99 @@ async def bridge_sales_card(req: BridgeAnalyzeRequest) -> SalesCardResponse:
 # ── 상담패키지 보고서 (전체 파이프라인 최종) ────────────────────────────────────
 
 class ConsultingPackageResponse(BaseModel):
+    """
+    iM BRIDGE 최종 응답.
+    프론트엔드는 아래 4가지 영역을 모두 받아 시각화할 수 있습니다.
+
+    [영역 1] feature_mart_summary  : 피처마트 핵심 + behavior_signals + explainable_signals
+    [영역 2] router_result          : applicable_categories / excluded_categories
+    [영역 3] specialist_result      : category_results (카테고리별 top_products + score_breakdown)
+    [영역 4] policy_support / kpi_badges : 상위 상품의 RAG 문서 요약 + KPI 사후관리
+    [통합]  consulting_package      : 위 4가지를 종합한 최종 상담패키지(직원용)
+    """
     cust_id: str
     router_result: Dict[str, Any]
     specialist_result: Dict[str, Any]
+    feature_mart_summary: Dict[str, Any] = Field(default_factory=dict)
+    policy_support: List[Dict[str, Any]] = Field(default_factory=list)
+    kpi_badges: Dict[str, Any] = Field(default_factory=dict)
     consulting_package: Dict[str, Any]
     reflection: Dict[str, Any]
+
+
+def _build_feature_mart_summary(customer_payload: dict) -> Dict[str, Any]:
+    """
+    프론트 표시용 피처마트 요약.
+    DB가 R/F/M/P/C 약어 키를 사용하므로 그대로 매핑하고,
+    behavior_signals / explainable_signals 는 customer_payload.feature_mart 에서 가져옵니다.
+    """
+    fm = customer_payload.get("feature_mart", {})
+    cust_seg = fm.get("customer_segment", {})
+    rfm_pc = fm.get("rfm_pc", {})
+
+    R = rfm_pc.get("R", {}) or {}
+    F = rfm_pc.get("F", {}) or {}
+    M = rfm_pc.get("M", {}) or {}
+    P = rfm_pc.get("P", {}) or {}
+    C = rfm_pc.get("C", {}) or {}
+
+    behavior_signals = fm.get("behavior_signals", {}) or {}
+    explainable_signals = fm.get("explainable_signals", []) or []
+
+    # 화면 카드용 핵심 지표 묶음 (실제 build_feature_mart.py 키 기준)
+    headline_metrics = {
+        "recency": {
+            "days_since_last_branch_visit": R.get("days_since_last_branch_visit"),
+            "days_since_last_mobile_login": R.get("days_since_last_mobile_login"),
+            "days_until_nearest_loan_maturity": R.get("days_until_nearest_loan_maturity"),
+            "days_until_nearest_deposit_maturity": R.get("days_until_nearest_deposit_maturity"),
+            "recent_salary_deposit_flag": R.get("recent_salary_deposit_flag"),
+            "recent_large_outflow_flag": R.get("recent_large_outflow_flag"),
+        },
+        "frequency": {
+            "transfer_cnt_30d": F.get("transfer_cnt_30d"),
+            "branch_visit_cnt_90d": F.get("branch_visit_cnt_90d"),
+            "mobile_login_cnt_30d": F.get("mobile_login_cnt_30d"),
+            "salary_deposit_months_6m": F.get("salary_deposit_months_6m"),
+            "merchant_deposit_cnt_30d": F.get("merchant_deposit_cnt_30d"),
+            "business_expense_cnt_30d": F.get("business_expense_cnt_30d"),
+        },
+        "monetary": {
+            "avg_balance_3m": M.get("avg_balance_3m"),
+            "monthly_card_spend_amt": M.get("monthly_card_spend_amt"),
+            "loan_balance_amt": M.get("loan_balance_amt"),
+            "deposit_maturity_amt_60d": M.get("deposit_maturity_amt_60d"),
+            "idle_cash_amt": M.get("idle_cash_amt"),
+            "avg_balance_percentile": M.get("avg_balance_percentile"),
+        },
+        "product_gap": {
+            "has_salary_account": P.get("has_salary_account"),
+            "has_credit_card": P.get("has_credit_card"),
+            "has_loan": P.get("has_loan"),
+            "has_business_account": P.get("has_business_account"),
+            "has_merchant_account": P.get("has_merchant_account"),
+            "has_isa": P.get("has_isa"),
+        },
+        "contact": {
+            "recent_consult_topic": C.get("recent_consult_topic"),
+            "recent_consult_topics_90d": C.get("recent_consult_topics_90d", []),
+            "recent_interest_topics": C.get("recent_interest_topics", []),
+            "loan_inquiry_flag_90d": C.get("loan_inquiry_flag_90d"),
+            "card_inquiry_flag_90d": C.get("card_inquiry_flag_90d"),
+            "deposit_inquiry_flag_90d": C.get("deposit_inquiry_flag_90d"),
+        },
+    }
+
+    return {
+        "cust_id": customer_payload.get("cust_id"),
+        "base_date": customer_payload.get("base_date"),
+        "customer_info": customer_payload.get("customer_info", {}),
+        "customer_segment": cust_seg,
+        "headline_metrics": headline_metrics,
+        "behavior_signals": behavior_signals,
+        "explainable_signals": explainable_signals,
+        "recommendation_tone": C.get("recommendation_tone"),
+    }
 
 
 async def _run_full_pipeline(
@@ -574,7 +673,7 @@ async def _run_full_pipeline(
     settings: Any,
     api_key: str,
 ) -> tuple[dict, dict, dict, list, dict]:
-    """Router → Specialist → RAG/Policy → KPI 공통 파이프라인"""
+    """Router → Specialist(카테고리별) → RAG/Policy → KPI 공통 파이프라인"""
     try:
         feature_mart_json = get_feature_mart(cust_id, settings.db_path)
     except FileNotFoundError as e:
@@ -589,35 +688,44 @@ async def _run_full_pipeline(
     basic_info = get_customer_basic_info(cust_id, settings.db_path)
     customer_payload = build_customer_payload(feature_mart_json, basic_info)
 
+    # ── 1) Router : applicable_categories (복수) 산출 ─────────────────────────
     router_result = run_router(customer_payload, api_key=api_key)
 
     customer_type = feature_mart_json.get("customer_segment", {}).get("customer_type", "개인")
     applicable_labels = [
         cat["label"] for cat in router_result.get("applicable_categories", [])
     ]
-    candidate_products = get_candidate_products(
+
+    # ── 2) 카테고리별 후보 상품 그룹 조회 ─────────────────────────────────────
+    candidates_by_category = get_candidates_by_category(
         applicable_labels=applicable_labels,
         customer_type=customer_type,
         db_path=settings.db_path,
     )
-    if not candidate_products:
+    if not candidates_by_category:
         raise HTTPException(status_code=404, detail="해당 카테고리에 적합한 후보 상품이 없습니다.")
 
+    # ── 3) Specialist : 카테고리별 top_products 산출 ──────────────────────────
     specialist_result = run_specialist(
         router_result=router_result,
         customer_payload=customer_payload,
-        candidate_products=candidate_products,
+        candidates_by_category=candidates_by_category,
         api_key=api_key,
     )
 
-    top_products = specialist_result.get("top_products", [])
+    # 카테고리 단위 결과를 평탄화한 top_products_flat 사용 (acceptance_probability 내림차순)
+    top_products_flat: List[Dict[str, Any]] = specialist_result.get("top_products_flat", [])
+
     base_date = feature_mart_json.get("base_date", "")
     customer_context = {
         "customer_segment": feature_mart_json.get("customer_segment", {}),
+        "behavior_signals": feature_mart_json.get("rfm_pc", {}).get("behavior_signals", {}),
+        "explainable_signals": feature_mart_json.get("rfm_pc", {}).get("explainable_signals", []),
     }
 
+    # ── 4) Policy/RAG : 카테고리별 상위 1~2개 상품에 대해 문서 요약 ───────────
     policy_support_list: List[Dict[str, Any]] = []
-    for product in top_products:
+    for product in top_products_flat:
         retrieved_docs = retrieve_policy_docs(
             product_id=product["product_id"],
             data_dir=settings.data_dir,
@@ -630,10 +738,13 @@ async def _run_full_pipeline(
                 retrieved_docs=retrieved_docs,
                 api_key=api_key,
             )
+            # 카테고리 정보 함께 보관 (프론트 그룹핑 편의)
+            policy["category"] = product.get("category", "")
         except Exception:
             policy = {
                 "product_id": product["product_id"],
                 "product_name": product["product_name"],
+                "category": product.get("category", ""),
                 "related_docs": [],
                 "required_documents": [],
                 "eligibility_summary": [],
@@ -642,7 +753,8 @@ async def _run_full_pipeline(
             }
         policy_support_list.append(policy)
 
-    kpi_badge_map = map_kpi_badges_for_products(top_products, base_date, settings.data_dir)
+    # ── 5) KPI 매핑 + 사후관리 지침 ───────────────────────────────────────────
+    kpi_badge_map = map_kpi_badges_for_products(top_products_flat, base_date, settings.data_dir)
 
     return customer_payload, router_result, specialist_result, policy_support_list, kpi_badge_map
 
@@ -651,7 +763,14 @@ async def _run_full_pipeline(
 async def bridge_consulting_package(req: BridgeAnalyzeRequest) -> ConsultingPackageResponse:
     """
     iM BRIDGE Agent 최종 상담패키지 엔드포인트.
-    Router → Specialist → RAG/Policy → KPI → Draft → Critic → Rewrite
+    Router → Specialist(카테고리별) → RAG/Policy → KPI → Draft → Critic → Rewrite
+
+    프론트엔드는 응답의 다음 필드를 그대로 사용해 4영역을 시각화합니다:
+      - feature_mart_summary : 피처마트 + 행동신호 (영역 1)
+      - router_result        : 카테고리 분류 (영역 2)
+      - specialist_result    : 카테고리별 상품 영업확률 + 근거 (영역 3)
+      - policy_support / kpi_badges : RAG 텍스트 + KPI 사후관리 (영역 4)
+      - consulting_package   : 위 4영역을 통합한 직원용 상담 보고서 + 컨설팅 멘트
     """
     settings = get_settings()
     api_key = os.environ.get("OPENAI_API_KEY", "")
@@ -679,10 +798,15 @@ async def bridge_consulting_package(req: BridgeAnalyzeRequest) -> ConsultingPack
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Consulting Package Agent 오류: {exc}")
 
+    feature_mart_summary = _build_feature_mart_summary(customer_payload)
+
     return ConsultingPackageResponse(
         cust_id=req.cust_id,
         router_result=router_result,
         specialist_result=specialist_result,
+        feature_mart_summary=feature_mart_summary,
+        policy_support=policy_support_list,
+        kpi_badges=kpi_badge_map,
         consulting_package=result.get("consulting_package", {}),
         reflection=result.get("reflection", {}),
     )

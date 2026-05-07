@@ -12,6 +12,7 @@ _DEFAULT_BADGE = {
     "badge_text":    "KPI 해당 없음",
     "display_color": "gray",
     "branch_campaign": None,
+    "post_management": [],
 }
 
 
@@ -40,6 +41,7 @@ def map_kpi_badge(product_id: str, base_date: str, data_dir: Path) -> dict:
                 "badge_text":    row["badge_text"],
                 "display_color": row["display_color"],
                 "branch_campaign": row.get("branch_campaign"),
+                "post_management": row.get("post_management", []),
             }
     return _DEFAULT_BADGE.copy()
 
