@@ -88,7 +88,8 @@ function toCustomerForAnalysis(c: MockCustomer, demo: DemoCustomer): CustomerFor
 // ── AI 결과 기반 페이지 라우팅 ────────────────────────────
 function getShortcutRoute(title: string): string {
   if (/카드|가맹|결제|비즈|소호/.test(title)) return '/banking/0310'
-  return '/banking'
+  if (/수신|예금|적금|청약/.test(title)) return '/banking/0151'
+  return '/banking/0310'
 }
 
 // ── 데모 분석 버튼 + 팝업 트리거 ────────────────────────
@@ -113,6 +114,8 @@ function DemoAnalysisButton({
 
   const hasCache = cachedResult !== null
   const topOpp = cachedResult?.opportunities?.[0] ?? null
+  const shortcutRoute = topOpp ? getShortcutRoute(topOpp.title) : '/banking/0310'
+  const shortcutLabel = shortcutRoute === '/banking/0151' ? '수신 기장 화면으로' : '카드 발급 화면으로'
 
   function handleResult(result: AiAnalysisResult) {
     AI_RESULT_CACHE.set(cacheKey, result)
@@ -183,7 +186,7 @@ function DemoAnalysisButton({
 
             {/* 바로가기 버튼 */}
             <button
-              onClick={() => navigate(getShortcutRoute(topOpp.title))}
+              onClick={() => navigate(shortcutRoute)}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                 width: '100%', padding: '7px 0',
@@ -197,7 +200,7 @@ function DemoAnalysisButton({
               onMouseLeave={e => { e.currentTarget.style.transform = '' }}
             >
               <ExternalLink size={12} />
-              바로가기 — 카드 발급
+              바로가기 — {shortcutLabel}
             </button>
           </div>
         )}
@@ -871,12 +874,14 @@ export function CrmPanel() {
                                   className={`opp-btn${mc ? ' opp-btn--mc' : ''}${cq ? ' opp-btn--cq' : ''}${!canComplete && !done ? ' opp-btn--locked' : ''}`}
                                   disabled={btnDisabled}
                                   title={!canComplete && !done ? '카드 발급 후 거래 완료 가능합니다' : undefined}
-                                  onClick={() => addKpi(
-                                    opp.kpi,
-                                    mc ? `MC ${opp.title}` : cq ? `청약 ${opp.title}` : `${opp.key} 신규`,
-                                    opp.key,
-                                    customer.고객번호,
-                                  )}
+                                  onClick={() => {
+                                    addKpi(
+                                      opp.kpi,
+                                      mc ? `MC ${opp.title}` : cq ? `청약 ${opp.title}` : `${opp.key} 신규`,
+                                      opp.key,
+                                      customer.고객번호,
+                                    )
+                                  }}
                                 >
                                   {done ? '완료됨' : !canComplete ? '🔒 거래 완료' : '거래 완료'}
                                 </button>

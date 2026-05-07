@@ -85,7 +85,7 @@ function RingProgress({
 }
 
 function KpiEventPicker() {
-  const { mode, setMode, cardIssuedFor, clearCardIssuanceSignal } = useKpi()
+  const { mode, setMode, cardIssuedFor } = useKpi()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -138,7 +138,6 @@ function KpiEventPicker() {
                   onClick={() => {
                     if (opt.disabled || !isSelectableTrack(opt.id)) return
                     setMode(opt.id)
-                    if (opt.id === 'mastercard') clearCardIssuanceSignal()
                     setOpen(false)
                   }}
                 >
