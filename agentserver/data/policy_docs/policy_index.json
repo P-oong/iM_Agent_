@@ -187,5 +187,104 @@
     "file_path": "policy_docs/P015_policy.txt",
     "summary": "법인 기업 대상 시설자금·운전자금 대출 심사 기준, 한도, 필요서류 안내 문서입니다.",
     "keywords": ["기업대출", "시설자금", "법인", "담보", "보증서"]
+  },
+  {
+    "doc_id": "P016_POLICY",
+    "doc_title": "iM i 카드 발급 안내 및 필요서류",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P016"],
+    "file_path": "policy_docs/P016_policy.txt",
+    "summary": "iM i 카드 발급 조건, 캐시백 혜택, 연회비, 필요서류 안내 문서입니다.",
+    "keywords": ["iM i카드", "라이프스타일", "캐시백", "OTT", "연회비"]
+  },
+  {
+    "doc_id": "P017_POLICY",
+    "doc_title": "BIZ 소호 카드 발급 및 매입처 자동 분류 안내",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P017"],
+    "file_path": "policy_docs/P017_policy.txt",
+    "summary": "BIZ 소호 카드 발급 조건, 매입처 자동 분류, 부가세 신고 연동, 필요서류 안내 문서입니다.",
+    "keywords": ["BIZ소호", "사업자카드", "매입처", "부가세", "외식업", "정산통장"]
+  },
+  {
+    "doc_id": "P017_EVENT",
+    "doc_title": "2026 봄 BIZ 소호 카드 신규 발급 캠페인",
+    "doc_type": "EVENT",
+    "linked_product_ids": ["P017", "P022"],
+    "file_path": "policy_docs/P017_event.txt",
+    "summary": "BIZ 소호 카드 신규 발급 시 첫 해 연회비 면제 + 매입처 0.5%p 추가 캐시백 이벤트 안내입니다.",
+    "keywords": ["BIZ소호", "캠페인", "연회비면제", "캐시백", "패키지"]
+  },
+  {
+    "doc_id": "P018_POLICY",
+    "doc_title": "BIZ 플러스 카드 발급 안내 (프리미엄 사업자카드)",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P018"],
+    "file_path": "policy_docs/P018_policy.txt",
+    "summary": "BIZ 플러스 카드 발급 조건, 한도, 해외 적립, 공항 라운지, 필요서류 안내 문서입니다.",
+    "keywords": ["BIZ플러스", "프리미엄", "한도", "해외적립", "라운지"]
+  },
+  {
+    "doc_id": "P019_POLICY",
+    "doc_title": "iM 소상공인 보증서 대출 심사 기준 및 필요서류",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P019"],
+    "file_path": "policy_docs/P019_policy.txt",
+    "summary": "지역신보 보증서 연계 소상공인 대출 한도, 보증료, 신청 절차, 필요서류 안내 문서입니다.",
+    "keywords": ["보증서대출", "지역신보", "소상공인", "정책자금", "운전자금"]
+  },
+  {
+    "doc_id": "P020_POLICY",
+    "doc_title": "iM 개인사업자 특판 대출 심사 기준 및 필요서류",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P020"],
+    "file_path": "policy_docs/P020_policy.txt",
+    "summary": "기존 사업자대출 만기 90일 이내 고객 대상 특판 우대 상품, 패키지 우대 조건, 필요서류 안내입니다.",
+    "keywords": ["특판대출", "만기연장", "운전자금", "우대금리", "대환"]
+  },
+  {
+    "doc_id": "P020_EVENT",
+    "doc_title": "개인사업자 특판 대출 만기연장 우대 캠페인",
+    "doc_type": "EVENT",
+    "linked_product_ids": ["P020", "P006", "P017", "P022"],
+    "file_path": "policy_docs/P020_event.txt",
+    "summary": "기존 사업자대출 만기 90일 이내 고객 대상 0.4%p 우대 + 패키지 가입 시 최대 1.0%p 우대 캠페인입니다.",
+    "keywords": ["특판", "만기연장", "패키지우대", "캠페인"]
+  },
+  {
+    "doc_id": "P020_MATURITY",
+    "doc_title": "사업자대출 만기 90일 이내 고객 사후관리 가이드",
+    "doc_type": "NOTICE",
+    "linked_product_ids": ["P006", "P019", "P020", "P021"],
+    "file_path": "policy_docs/P020_maturity.txt",
+    "summary": "사업자대출 만기 임박 고객 단계별 사후관리 액션, KPI 가산 기준, 상담 멘트 가이드 문서입니다.",
+    "keywords": ["만기관리", "사후관리", "사업자대출", "연장", "대환", "KPI"]
+  },
+  {
+    "doc_id": "P021_POLICY",
+    "doc_title": "iM 온누리 가맹점주 대출 심사 기준 및 필요서류",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P021"],
+    "file_path": "policy_docs/P021_policy.txt",
+    "summary": "전통시장·온누리 가맹점주 대상 저금리 정책자금 연계 대출, 거치 옵션, 필요서류 안내입니다.",
+    "keywords": ["온누리", "전통시장", "가맹점주", "저금리", "정책자금"]
+  },
+  {
+    "doc_id": "P022_POLICY",
+    "doc_title": "iM 사업자 정산 통장 (가맹점 결제계좌) 안내",
+    "doc_type": "POLICY",
+    "linked_product_ids": ["P022"],
+    "file_path": "policy_docs/P022_policy.txt",
+    "summary": "카드매출·PG 매출 통합 정산 사업자 수신 통장. 정산 주기 D+1, 결제수수료 우대, 패키지 연동 안내입니다.",
+    "keywords": ["사업자정산", "가맹점결제", "정산통장", "수수료우대", "PG", "VAN"]
+  },
+  {
+    "doc_id": "P022_EVENT",
+    "doc_title": "사업자 정산 통장 결제수수료 우대 이벤트",
+    "doc_type": "EVENT",
+    "linked_product_ids": ["P022", "P017"],
+    "file_path": "policy_docs/P022_event.txt",
+    "summary": "정산 계좌 신규 이전 시 결제수수료 0.05%p 감면 + 첫 3개월 정산 수수료 면제 캠페인 안내입니다.",
+    "keywords": ["정산통장", "수수료우대", "캠페인", "패키지", "이벤트"]
   }
 ]
