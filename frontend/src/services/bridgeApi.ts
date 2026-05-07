@@ -12,6 +12,16 @@ const LABEL_KO: Record<string, string> = {
   INVESTMENT_TAX:   '투자/절세',
 }
 
+// ── 스트리밍 진행 이벤트 타입 ─────────────────────────────────────────────
+export type BridgeStepEvent =
+  | { step: 'router';     status: 'running'; label: string }
+  | { step: 'router';     status: 'done';    detail: string; confidence: number }
+  | { step: 'specialist'; status: 'running'; label: string }
+  | { step: 'specialist'; status: 'done';    detail: string }
+  | { step: 'assembler';  status: 'running'; label: string }
+  | { step: 'assembler';  status: 'done';    final: true;   data: BridgeSalesCardResponse }
+  | { step: 'error';      message: string }
+
 // ── bridge 응답 타입 ──────────────────────────────────────────────────────
 interface KpiBadge {
   badge_text: string
@@ -37,7 +47,7 @@ interface SalesCard {
   kpi_badge: KpiBadge
 }
 
-interface BridgeSalesCardResponse {
+export interface BridgeSalesCardResponse {
   cust_id: string
   router_result: Record<string, unknown>
   specialist_result: Record<string, unknown>
@@ -45,7 +55,7 @@ interface BridgeSalesCardResponse {
 }
 
 // ── bridge 응답 → AiAnalysisResult 변환 ──────────────────────────────────
-function bridgeToAiResult(data: BridgeSalesCardResponse): AiAnalysisResult {
+export function bridgeToAiResult(data: BridgeSalesCardResponse): AiAnalysisResult {
   const router = data.router_result as {
     primary_label?: string
     routing_reason?: string[]
@@ -92,6 +102,45 @@ function bridgeToAiResult(data: BridgeSalesCardResponse): AiAnalysisResult {
   const coreMessage = `${labelKo} 카테고리 중심으로 영업기회를 포착합니다.`
 
   return { summary, keyMetrics, opportunities, coreMessage }
+}
+
+// ── SSE 스트리밍 함수 ─────────────────────────────────────────────────────
+export async function* streamBridgeAnalysis(custId: string): AsyncGenerator<BridgeStepEvent> {
+  const res = await fetch('/api/agent/api/bridge/sales-card/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      cust_id: custId,
+      live_context: { visit_reason_code: '', counter_task: '', staff_note: '' },
+    }),
+  })
+
+  if (!res.ok) {
+    const detail = await res.text()
+    throw new Error(`서버 오류 (${res.status}): ${detail}`)
+  }
+
+  const reader = res.body!.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? ''
+
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          const event = JSON.parse(line.slice(6)) as BridgeStepEvent
+          yield event
+        } catch { /* ignore parse errors */ }
+      }
+    }
+  }
 }
 
 // ── 외부 호출 함수 ────────────────────────────────────────────────────────

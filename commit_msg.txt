@@ -1,0 +1,9 @@
+feat: 영업분석 패널 및 DB 기반 고객조회 연동
+
+- SalesAnalysisPanel 신규 추가: AI 분석 결과(카테고리바, 영업기회, 추천상품) 표시
+- CrmPanel: MOCK_DB 제거, /api/customers/{resident_id_front} API 연동
+- CustomerContext: activeCustId 상태 추가
+- api.py: GET /api/customers/{resident_id_front} 엔드포인트 추가
+- KpiBar: 카드 KPI 상품 거래완료 버튼 발급 조건 개선
+- mockCustomers.ts: MOCK_DB 제거, 유틸 함수만 유지
+- bridgeApi.ts: secondary_labels 필드 추가

@@ -85,7 +85,7 @@ function RingProgress({
 }
 
 function KpiEventPicker() {
-  const { mode, setMode, cardIssuedFor } = useKpi()
+  const { mode, setMode, cardIssuedFor, clearCardIssuanceSignal } = useKpi()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
@@ -137,6 +137,10 @@ function KpiEventPicker() {
                   className={`kpi-event-opt${opt.id === mode ? ' kpi-event-opt--on' : ''}${opt.disabled ? ' kpi-event-opt--disabled' : ''}${showAlert ? ' kpi-event-opt--mc-alert' : ''}`}
                   onClick={() => {
                     if (opt.disabled || !isSelectableTrack(opt.id)) return
+                    // 마스터카드 모드에서 다른 모드로 전환 시 카드 발급 신호 클리어
+                    if (mode === 'mastercard' && opt.id !== 'mastercard') {
+                      clearCardIssuanceSignal()
+                    }
                     setMode(opt.id)
                     setOpen(false)
                   }}

@@ -1,24 +1,26 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { TrendingUp, User, Wallet } from 'lucide-react'
+import { BarChart3, TrendingUp, User, Wallet } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { KpiBar } from '@/components/kpi/KpiBar'
 import '@/styles/sidebar.css'
 import { CrmPanel } from './CrmPanel'
 import { ExchangePanel } from './ExchangePanel'
+import { SalesAnalysisPanel } from './SalesAnalysisPanel'
 import { TellerPanel } from './TellerPanel'
 
-type Panel = 'teller' | 'exchange' | 'crm' | null
+type Panel = 'teller' | 'exchange' | 'crm' | 'salesanalysis' | null
 
 const BUTTONS: { key: Exclude<Panel, null>; label: string; sub: string; Icon: React.ElementType }[] = [
-  { key: 'teller',   label: '시재', sub: '간편조회', Icon: Wallet     },
-  { key: 'exchange', label: '환율', sub: '',         Icon: TrendingUp },
-  { key: 'crm',      label: 'CRM', sub: '고객정보',  Icon: User       },
+  { key: 'teller',        label: '시재', sub: '간편조회', Icon: Wallet     },
+  { key: 'exchange',      label: '환율', sub: '',         Icon: TrendingUp },
+  { key: 'crm',           label: 'CRM',  sub: '고객정보', Icon: User       },
+  { key: 'salesanalysis', label: '영업', sub: '분석결과', Icon: BarChart3  },
 ]
 
 const PANEL_TITLE: Record<Exclude<Panel, null>, string> = {
-  teller:   '시재 간편조회',
-  exchange: '환율',
-  crm:      '고객정보 (CRM)',
+  teller:        '시재 간편조회',
+  exchange:      '환율',
+  crm:           '고객정보 (CRM)',
+  salesanalysis: '영업분석 결과',
 }
 
 const drawerVariants = {
@@ -77,13 +79,11 @@ export function RightSidebar() {
               <button className="rs-close" onClick={() => setOpen(null)} aria-label="닫기">✕</button>
             </div>
             <div ref={bodyRef} className="rs-drawer-body">
-              {open === 'teller'   && <TellerPanel />}
-              {open === 'exchange' && <ExchangePanel />}
-              {open === 'crm'      && <CrmPanel />}
+              {open === 'teller'        && <TellerPanel />}
+              {open === 'exchange'      && <ExchangePanel />}
+              {open === 'crm'           && <CrmPanel />}
+              {open === 'salesanalysis' && <SalesAnalysisPanel />}
             </div>
-            {open === 'crm' && (
-              <div className="rs-drawer-footer"><KpiBar inline /></div>
-            )}
           </motion.aside>
         )}
       </AnimatePresence>
