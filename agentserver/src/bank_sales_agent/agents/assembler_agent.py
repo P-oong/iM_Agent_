@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 
 from bank_sales_agent.agents.prompts import ASSEMBLER_SYSTEM_PROMPT, build_assembler_prompt
 
@@ -57,9 +58,17 @@ def _validate_assembler_result(
     result.setdefault("cust_id", cust_id)
     result.setdefault("sales_cards", [])
 
-    # Specialist top_products 순서에 맞게 카드 보정
+    # Specialist 결과에서 평탄화된 상위 상품 목록을 가져옴
+    # 신규 구조(top_products_flat) 우선, 구버전(top_products) 폴백
+    products = (
+        specialist_result.get("top_products_flat")
+        or specialist_result.get("top_products")
+        or []
+    )
+
+    # Specialist 상품 순서에 맞게 카드 보정
     validated_cards = []
-    for product in specialist_result.get("top_products", []):
+    for product in products:
         pid = product.get("product_id", "")
         kpi_badge = kpi_badge_map.get(pid, {})
         # Assembler가 생성한 카드 중 같은 product_id를 찾음
@@ -67,7 +76,15 @@ def _validate_assembler_result(
             (c for c in result.get("sales_cards", []) if c.get("product_id") == pid),
             {},
         )
-        validated_cards.append(_validate_sales_card(matched, product, kpi_badge))
+        card = _validate_sales_card(matched, product, kpi_badge)
+        # 카테고리 정보 보존 (top_products_flat에 포함되어 있음)
+        if "category" not in card and product.get("category"):
+            card["category"] = product["category"]
+        validated_cards.append(card)
+
+    # rank 재정렬 (acceptance_probability 내림차순으로 이미 정렬됨)
+    for i, card in enumerate(validated_cards):
+        card["rank"] = i + 1
 
     result["sales_cards"] = validated_cards
     return result
@@ -102,22 +119,35 @@ def run_assembler(
     cust_id = customer_payload.get("cust_id", "")
 
     client = OpenAI(api_key=key)
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": ASSEMBLER_SYSTEM_PROMPT},
-            {"role": "user",   "content": build_assembler_prompt(
-                customer_payload=customer_payload,
-                router_result=router_result,
-                specialist_result=specialist_result,
-                policy_support_list=policy_support_list,
-                kpi_badge_map=kpi_badge_map,
-            )},
-        ],
-        temperature=0.3,
-        max_tokens=2500,
-        response_format={"type": "json_object"},
-    )
+    messages = [
+        {"role": "system", "content": ASSEMBLER_SYSTEM_PROMPT},
+        {"role": "user",   "content": build_assembler_prompt(
+            customer_payload=customer_payload,
+            router_result=router_result,
+            specialist_result=specialist_result,
+            policy_support_list=policy_support_list,
+            kpi_badge_map=kpi_badge_map,
+        )},
+    ]
+
+    # 429 Rate Limit 발생 시 최대 3회 재시도 (지수 백오프)
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model=MODEL,
+                messages=messages,
+                temperature=0.3,
+                max_tokens=2500,
+                response_format={"type": "json_object"},
+            )
+            break
+        except RateLimitError as e:
+            if attempt == max_retries - 1:
+                raise
+            wait = 20 * (attempt + 1)  # 20s → 40s → 60s
+            print(f"[Assembler] Rate limit 도달, {wait}초 후 재시도 ({attempt + 1}/{max_retries}): {e}")
+            time.sleep(wait)
 
     raw = response.choices[0].message.content or "{}"
     try:

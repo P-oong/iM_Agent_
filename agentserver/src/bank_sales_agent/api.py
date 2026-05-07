@@ -438,8 +438,15 @@ async def analyze_opportunities(req: OppAnalysisRequest) -> Dict[str, Any]:
 
 # ── iM BRIDGE Agent 엔드포인트 ────────────────────────────────────────────────
 
+class LiveContext(BaseModel):
+    visit_reason_code: str = ""
+    counter_task: str = ""
+    staff_note: str = ""
+
+
 class BridgeAnalyzeRequest(BaseModel):
     cust_id: str
+    live_context: LiveContext = Field(default_factory=LiveContext)
 
 
 class BridgeAnalyzeResponse(BaseModel):
@@ -806,11 +813,9 @@ async def bridge_sales_card_stream(req: BridgeAnalyzeRequest):
                 return
 
             basic_info = await asyncio.to_thread(get_customer_basic_info, req.cust_id, settings.db_path)
-            customer_payload = build_customer_payload(
-                feature_mart_json, req.live_context.model_dump(), basic_info
-            )
+            customer_payload = build_customer_payload(feature_mart_json, basic_info)
 
-            # ── Step 1: Router ──────────────────────────────────────────
+            # ── Step 1: Router (applicable_categories 복수) ─────────────
             yield _sse({"step": "router", "status": "running", "label": "카테고리 분류"})
             try:
                 router_result = await asyncio.to_thread(run_router, customer_payload, api_key)
@@ -818,53 +823,63 @@ async def bridge_sales_card_stream(req: BridgeAnalyzeRequest):
                 yield _sse({"step": "error", "message": f"Router Agent 오류: {exc}"})
                 return
 
-            label_ko = _LABEL_KO.get(router_result.get("primary_label", ""), router_result.get("primary_label", ""))
+            applicable_cats = router_result.get("applicable_categories", []) or []
+            top_cat = applicable_cats[0] if applicable_cats else {}
+            primary_label = top_cat.get("label", "")
+            label_ko = _LABEL_KO.get(primary_label, primary_label or "카테고리 분류 완료")
+            cat_summary = ", ".join(c.get("label", "") for c in applicable_cats[:3])
             yield _sse({
                 "step": "router", "status": "done",
-                "detail": label_ko,
-                "confidence": round(float(router_result.get("confidence", 0)), 2),
+                "detail": cat_summary or label_ko,
+                "confidence": round(float(top_cat.get("confidence", 0)), 2),
             })
 
-            # 후보 상품 조회
+            # ── 후보 상품 조회 (카테고리별 그룹) ────────────────────────
             customer_type = feature_mart_json.get("customer_segment", {}).get("customer_type", "개인")
-            candidate_products = await asyncio.to_thread(
-                get_candidate_products,
-                router_result["primary_label"],
-                router_result.get("secondary_labels", []),
+            applicable_labels = [cat["label"] for cat in applicable_cats]
+            candidates_by_category = await asyncio.to_thread(
+                get_candidates_by_category,
+                applicable_labels,
                 customer_type,
                 settings.db_path,
             )
-            if not candidate_products:
+            if not candidates_by_category:
                 yield _sse({"step": "error", "message": "해당 카테고리에 적합한 후보 상품이 없습니다."})
                 return
 
-            # ── Step 2: Specialist ──────────────────────────────────────
+            # ── Step 2: Specialist (카테고리별 top_products) ────────────
             yield _sse({"step": "specialist", "status": "running", "label": "상품 추천"})
             try:
                 specialist_result = await asyncio.to_thread(
-                    run_specialist, router_result, customer_payload, candidate_products, api_key
+                    run_specialist,
+                    router_result,
+                    customer_payload,
+                    candidates_by_category,
+                    api_key,
                 )
             except Exception as exc:
                 yield _sse({"step": "error", "message": f"Specialist Agent 오류: {exc}"})
                 return
 
-            top_products: list[dict[str, Any]] = specialist_result.get("top_products", [])
+            top_products_flat: list[dict[str, Any]] = specialist_result.get("top_products_flat", [])
             yield _sse({
                 "step": "specialist", "status": "done",
-                "detail": f"{len(top_products)}개 상품 추천",
+                "detail": f"{len(top_products_flat)}개 상품 추천",
             })
 
             # ── Step 3: Policy RAG + KPI + Assembler ────────────────────
             yield _sse({"step": "assembler", "status": "running", "label": "정책 RAG · 영업카드 조합"})
 
             base_date = feature_mart_json.get("base_date", "")
+            rfm = feature_mart_json.get("rfm_pc", {})
             customer_context = {
                 "customer_segment": feature_mart_json.get("customer_segment", {}),
-                "live_context": req.live_context.model_dump(),
+                "behavior_signals": rfm.get("behavior_signals", {}),
+                "explainable_signals": rfm.get("explainable_signals", []),
             }
 
             policy_support_list: list[dict[str, Any]] = []
-            for product in top_products:
+            for product in top_products_flat:
                 retrieved_docs = await asyncio.to_thread(
                     retrieve_policy_docs,
                     product["product_id"],
@@ -875,10 +890,12 @@ async def bridge_sales_card_stream(req: BridgeAnalyzeRequest):
                     policy = await asyncio.to_thread(
                         run_policy_agent, product, customer_context, retrieved_docs, api_key
                     )
+                    policy["category"] = product.get("category", "")
                 except Exception:
                     policy = {
                         "product_id": product["product_id"],
                         "product_name": product["product_name"],
+                        "category": product.get("category", ""),
                         "related_docs": [],
                         "required_documents": [],
                         "eligibility_summary": [],
@@ -887,7 +904,9 @@ async def bridge_sales_card_stream(req: BridgeAnalyzeRequest):
                     }
                 policy_support_list.append(policy)
 
-            kpi_badge_map = map_kpi_badges_for_products(top_products, base_date, settings.data_dir)
+            kpi_badge_map = await asyncio.to_thread(
+                map_kpi_badges_for_products, top_products_flat, base_date, settings.data_dir
+            )
 
             try:
                 assembled = await asyncio.to_thread(

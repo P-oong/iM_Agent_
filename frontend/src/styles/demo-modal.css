@@ -630,3 +630,204 @@
   .dmo-header { flex-wrap: wrap; }
   .dmo-header-visit { align-items: flex-start; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   영역 공통
+══════════════════════════════════════════════════════════ */
+.dmo-card--area { padding: 0; overflow: hidden; }
+
+/* 접이식 헤더 */
+.dmo-collapse { border-bottom: 1px solid #f1f5f9; }
+.dmo-collapse:last-child { border-bottom: none; }
+.dmo-collapse-hd {
+  display: flex; align-items: center; gap: 7px;
+  width: 100%; padding: 11px 16px;
+  background: none; border: none; cursor: pointer; text-align: left;
+}
+.dmo-collapse-hd:hover { background: #f8fafc; }
+.dmo-collapse-title { font-size: 12px; font-weight: 700; color: #1e293b; letter-spacing: 0.01em; flex: 1; }
+.dmo-collapse-badge {
+  font-size: 9.5px; font-weight: 700; padding: 2px 7px;
+  border-radius: 99px; background: #e2e8f0; color: #475569;
+}
+.dmo-collapse-body { padding: 4px 16px 14px; }
+
+/* 공통 소제목 */
+.dmo-sub-label {
+  font-size: 10px; font-weight: 700; color: #94a3b8;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  margin: 10px 0 5px; padding: 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   영역 1 — 고객 상황
+══════════════════════════════════════════════════════════ */
+/* 세그먼트 4칸 그리드 */
+.dmo-a1-seg-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 6px; margin-bottom: 10px;
+}
+.dmo-a1-seg-cell {
+  display: flex; flex-direction: column; gap: 1px;
+  background: #f8fafc; border: 1px solid #e2e8f0;
+  border-radius: 8px; padding: 6px 9px;
+}
+.dmo-a1-seg-label { font-size: 9.5px; font-weight: 600; color: #94a3b8; }
+.dmo-a1-seg-val   { font-size: 12px;  font-weight: 700; color: #1e293b; }
+
+/* 라이프스타일 / 금융 니즈 칩 */
+.dmo-a1-extra { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.dmo-a1-extra-chip {
+  font-size: 10.5px; font-weight: 600; padding: 3px 10px; border-radius: 99px;
+  background: rgba(2,132,199,0.07); color: #0369a1; border: 1px solid rgba(2,132,199,0.2);
+}
+
+/* 추천 접근 톤 박스 */
+.dmo-a1-tone-box {
+  display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+  background: linear-gradient(90deg, rgba(2,132,199,0.07), transparent);
+  border-left: 3px solid #0284c7; border-radius: 0 6px 6px 0; margin-bottom: 10px;
+}
+.dmo-a1-tone-key  { font-size: 9.5px; font-weight: 800; color: #0284c7; letter-spacing: 0.06em; flex-shrink: 0; }
+.dmo-a1-tone-desc { font-size: 11px; color: #334155; }
+
+/* 행동신호 리스트 */
+.dmo-a1-signals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.dmo-a1-signals li { display: flex; align-items: flex-start; gap: 7px; font-size: 11.5px; color: #334155; line-height: 1.55; }
+.dmo-a1-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+
+/* ══════════════════════════════════════════════════════════
+   영역 2 — 분류결과 & 근거
+══════════════════════════════════════════════════════════ */
+.dmo-cat-bar { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.dmo-cat-chip { font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
+.dmo-cat-chip--primary   { background: rgba(0,168,107,0.12); color: #007a64; border: 1px solid rgba(0,168,107,0.35); }
+.dmo-cat-chip--secondary { background: rgba(59,130,246,0.1);  color: #1d4ed8; border: 1px solid rgba(59,130,246,0.28); }
+.dmo-cat-chip--inactive  { background: #f1f5f9; color: #b0bec5; border: 1px solid #e2e8f0; }
+
+/* 카테고리 블록 (신뢰도 바 + 근거) */
+.dmo-a2-cat-block { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed #f1f5f9; }
+.dmo-a2-cat-block:last-of-type { border-bottom: none; }
+.dmo-a2-cat-hd { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.dmo-a2-rank { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #64748b; flex-shrink: 0; }
+.dmo-a2-rank--primary { background: rgba(0,168,107,0.12); color: #007a64; }
+.dmo-a2-cat-name { font-size: 12px; font-weight: 700; color: #1e293b; flex-shrink: 0; min-width: 28px; }
+.dmo-a2-bar-wrap { flex: 1; height: 6px; background: #e2e8f0; border-radius: 99px; overflow: hidden; }
+.dmo-a2-bar { height: 100%; border-radius: 99px; transition: width 0.7s ease; }
+.dmo-a2-conf { font-size: 11px; font-weight: 800; width: 34px; text-align: right; flex-shrink: 0; }
+
+/* 분류 근거 리스트 */
+.dmo-a2-reasons { list-style: none; margin: 0; padding: 0 0 0 6px; display: flex; flex-direction: column; gap: 4px; }
+.dmo-a2-reasons li {
+  font-size: 11px; color: #475569; line-height: 1.5;
+  padding-left: 10px; position: relative;
+}
+.dmo-a2-reasons li::before {
+  content: ''; position: absolute; left: 0; top: 7px;
+  width: 4px; height: 4px; border-radius: 50%; background: #7c3aed;
+}
+
+/* 제외 카테고리 */
+.dmo-a2-excluded-block { margin-top: 8px; padding-top: 8px; border-top: 1px solid #f1f5f9; }
+.dmo-a2-excluded-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+.dmo-a2-excluded-chip {
+  font-size: 9.5px; padding: 1px 7px; border-radius: 99px; flex-shrink: 0;
+  background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; text-decoration: line-through;
+}
+.dmo-a2-excluded-reason { font-size: 10.5px; color: #94a3b8; }
+
+/* ══════════════════════════════════════════════════════════
+   영역 3 — 영업기회 상세
+══════════════════════════════════════════════════════════ */
+.dmo-a3-card {
+  border: 1.5px solid #e8f0fe; border-radius: 10px; padding: 12px 13px;
+  margin-bottom: 10px; background: #fdfdff;
+}
+.dmo-a3-card:last-child { margin-bottom: 0; }
+
+/* 헤더 행 */
+.dmo-a3-hd { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+.dmo-a3-rank { font-size: 9.5px; font-weight: 800; color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
+.dmo-a3-name { flex: 1; font-size: 13px; font-weight: 700; color: #1e293b; }
+.dmo-a3-prob { font-size: 14px; font-weight: 800; flex-shrink: 0; }
+.dmo-a3-band { font-size: 10px; font-weight: 600; }
+
+/* 태그 행 */
+.dmo-a3-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.dmo-a3-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; border: 1px solid transparent; }
+.dmo-a3-tag--cat      { background: rgba(124,58,237,0.08); color: #7c3aed; border-color: rgba(124,58,237,0.2); }
+.dmo-a3-tag--kpi      { background: rgba(0,168,107,0.1);  color: #007a64; border-color: rgba(0,168,107,0.25); }
+.dmo-a3-tag--campaign { background: rgba(240,165,0,0.1); color: #b45309; border-color: rgba(240,165,0,0.25); }
+
+/* 섹션 래퍼 */
+.dmo-a3-section { margin-bottom: 8px; }
+
+/* 주요 근거 */
+.dmo-a3-main-reason { font-size: 12px; color: #1e293b; line-height: 1.6; margin: 0; font-weight: 500; }
+
+/* 공통 리스트 */
+.dmo-a3-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.dmo-a3-list li { font-size: 11px; line-height: 1.55; padding-left: 12px; position: relative; }
+.dmo-a3-list li::before { content: ''; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; }
+.dmo-a3-list--evidence li { color: #334155; }
+.dmo-a3-list--evidence li::before { background: #3b82f6; }
+.dmo-a3-list--event li { color: #475569; }
+.dmo-a3-list--event li::before { background: #f0a500; }
+.dmo-a3-list--caution li { color: #dc2626; }
+.dmo-a3-list--caution li::before { background: #dc2626; }
+.dmo-a3-list--docs li { color: #475569; font-weight: 500; }
+.dmo-a3-list--docs li::before { background: #64748b; }
+
+/* 영업 멘트 인용구 */
+.dmo-a3-talk {
+  margin: 0; font-size: 11.5px; color: #334155; line-height: 1.65;
+  background: linear-gradient(90deg, rgba(0,168,107,0.06), rgba(0,168,107,0.02));
+  border-left: 3px solid #00a86b; padding: 8px 11px;
+  border-radius: 0 8px 8px 0; font-style: italic;
+}
+
+/* 다음 액션 */
+.dmo-a3-next-action {
+  display: flex; align-items: flex-start; gap: 6px; font-size: 11px; color: #0284c7;
+  font-weight: 600; padding: 5px 9px; background: rgba(2,132,199,0.06);
+  border-radius: 6px; margin-bottom: 6px; line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════════════════════
+   영역 4 — 정책·KPI 사후관리
+══════════════════════════════════════════════════════════ */
+.dmo-a4-card {
+  border: 1.5px solid #f1f5f9; border-radius: 10px; padding: 12px 13px;
+  margin-bottom: 10px; background: #fafbff;
+}
+.dmo-a4-card:last-child { margin-bottom: 0; }
+.dmo-a4-hd { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+.dmo-a4-product { font-size: 12.5px; font-weight: 700; color: #1e293b; flex: 1; }
+.dmo-a4-cat {
+  font-size: 9.5px; font-weight: 700; padding: 2px 8px; border-radius: 99px;
+  background: rgba(124,58,237,0.08); color: #7c3aed; border: 1px solid rgba(124,58,237,0.18);
+}
+
+/* KPI 블록 */
+.dmo-a4-kpi-block { border: 1px solid; border-radius: 8px; padding: 9px 11px; margin-bottom: 8px; }
+.dmo-a4-kpi-hd { display: flex; align-items: center; gap: 7px; font-size: 11.5px; margin-bottom: 4px; flex-wrap: wrap; }
+.dmo-a4-priority {
+  font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 4px; letter-spacing: 0.04em;
+}
+.dmo-a4-campaign { font-size: 10.5px; color: #64748b; margin: 2px 0 6px; padding: 0; }
+.dmo-a4-section { margin-bottom: 8px; }
+
+/* 공통 리스트 */
+.dmo-a4-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.dmo-a4-list li { font-size: 11px; line-height: 1.55; padding-left: 12px; position: relative; }
+.dmo-a4-list li::before { content: ''; position: absolute; left: 0; top: 7px; width: 5px; height: 5px; border-radius: 50%; }
+.dmo-a4-list--post li { color: #475569; }
+.dmo-a4-list--post li::before { background: #dc2626; }
+.dmo-a4-list--eligibility li { color: #334155; }
+.dmo-a4-list--eligibility li::before { background: #7c3aed; }
+.dmo-a4-list--event li { color: #475569; }
+.dmo-a4-list--event li::before { background: #f0a500; }
+.dmo-a4-list--docs li { color: #475569; font-weight: 500; }
+.dmo-a4-list--docs li::before { background: #64748b; }
+.dmo-a4-list--caution li { color: #dc2626; }
+.dmo-a4-list--caution li::before { background: #dc2626; }

@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 
 from bank_sales_agent.agents.prompts import SPECIALIST_SYSTEM_PROMPT, build_specialist_prompt
 
@@ -139,19 +140,30 @@ def run_specialist(
         return {"category_results": [], "top_products_flat": [], "do_not_use_kpi": True}
 
     client = OpenAI(api_key=key)
+    messages = [
+        {"role": "system", "content": SPECIALIST_SYSTEM_PROMPT},
+        {"role": "user",   "content": build_specialist_prompt(
+            router_result, customer_payload, filtered_candidates
+        )},
+    ]
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": SPECIALIST_SYSTEM_PROMPT},
-            {"role": "user",   "content": build_specialist_prompt(
-                router_result, customer_payload, filtered_candidates
-            )},
-        ],
-        temperature=0.3,
-        max_tokens=3000,
-        response_format={"type": "json_object"},
-    )
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model=MODEL,
+                messages=messages,
+                temperature=0.3,
+                max_tokens=3000,
+                response_format={"type": "json_object"},
+            )
+            break
+        except RateLimitError as e:
+            if attempt == max_retries - 1:
+                raise
+            wait = 20 * (attempt + 1)
+            print(f"[Specialist] Rate limit 도달, {wait}초 후 재시도 ({attempt + 1}/{max_retries}): {e}")
+            time.sleep(wait)
 
     raw = response.choices[0].message.content or "{}"
     try:

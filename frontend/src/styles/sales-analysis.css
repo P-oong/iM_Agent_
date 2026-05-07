@@ -464,3 +464,274 @@
   border-top: 1px solid rgba(0,0,0,0.06);
   background: #fff;
 }
+
+/* ══════════════════════════════════════════════════════════
+   접이식 섹션 (영역 공통)
+══════════════════════════════════════════════════════════ */
+.sa-collapse {
+  border-bottom: 1px solid #f1f5f9;
+}
+.sa-collapse-hd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 9px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+.sa-collapse-hd:hover { background: #f8fafc; }
+.sa-collapse-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+  letter-spacing: 0.01em;
+}
+.sa-collapse-badge {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: #e2e8f0;
+  color: #475569;
+}
+.sa-collapse-body {
+  padding: 0 12px 10px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   영역 1 — 고객 행동신호
+══════════════════════════════════════════════════════════ */
+.sa-area1-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 7px;
+}
+.sa-area1-seg-chip {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(2,132,199,0.09);
+  color: #0369a1;
+  border: 1px solid rgba(2,132,199,0.22);
+}
+.sa-area1-tone {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 7px;
+  padding: 4px 8px;
+  background: #f8fafc;
+  border-radius: 6px;
+}
+.sa-area1-tone-label {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+.sa-area1-tone-val {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #475569;
+}
+.sa-area1-signals {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sa-area1-signal-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  color: #334155;
+  line-height: 1.5;
+}
+.sa-area1-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #0284c7;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   영역 2 — Router confidence 바
+══════════════════════════════════════════════════════════ */
+.sa-area2-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+}
+.sa-area2-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  width: 28px;
+  flex-shrink: 0;
+}
+.sa-area2-bar-wrap {
+  flex: 1;
+  height: 5px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.sa-area2-bar {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s ease;
+}
+.sa-area2-conf {
+  font-size: 10.5px;
+  font-weight: 700;
+  width: 30px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.sa-area2-excluded {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.sa-area2-excluded-label {
+  font-size: 9.5px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+.sa-area2-excluded-chip {
+  font-size: 9.5px;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 1px solid #e2e8f0;
+  text-decoration: line-through;
+}
+
+/* ══════════════════════════════════════════════════════════
+   영역 4 — 정책·KPI 사후관리
+══════════════════════════════════════════════════════════ */
+.sa-area4-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 9px 10px;
+  margin-bottom: 8px;
+  background: #fafafa;
+}
+.sa-area4-hd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.sa-area4-product {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e293b;
+  flex: 1;
+}
+.sa-area4-cat {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: rgba(124,58,237,0.08);
+  color: #7c3aed;
+  border: 1px solid rgba(124,58,237,0.18);
+}
+.sa-area4-kpi {
+  border-radius: 6px;
+  border: 1px solid;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+}
+.sa-area4-kpi-badge {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.sa-area4-kpi-campaign {
+  display: block;
+  font-size: 10px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+.sa-area4-post {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sa-area4-post li {
+  font-size: 10px;
+  color: #475569;
+  padding-left: 8px;
+  position: relative;
+}
+.sa-area4-post li::before {
+  content: '①';
+  position: absolute;
+  left: 0;
+  font-size: 9px;
+  color: #94a3b8;
+}
+.sa-area4-post li:nth-child(2)::before { content: '②'; }
+.sa-area4-docs {
+  margin-bottom: 5px;
+}
+.sa-area4-docs-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  display: block;
+  margin-bottom: 3px;
+}
+.sa-area4-docs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sa-area4-docs-list li {
+  font-size: 10px;
+  color: #475569;
+  padding-left: 8px;
+  position: relative;
+}
+.sa-area4-docs-list li::before {
+  content: '·';
+  position: absolute;
+  left: 1px;
+  color: #94a3b8;
+}
+.sa-area4-docs-more {
+  color: #94a3b8 !important;
+  font-style: italic;
+}
+.sa-area4-caution {
+  font-size: 10px;
+  color: #dc2626;
+  background: rgba(220,38,38,0.05);
+  border-left: 2px solid rgba(220,38,38,0.3);
+  padding: 3px 6px;
+  border-radius: 0 4px 4px 0;
+  margin: 0;
+  line-height: 1.5;
+}

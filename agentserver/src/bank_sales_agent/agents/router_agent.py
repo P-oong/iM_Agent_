@@ -5,8 +5,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 
 from bank_sales_agent.agents.prompts import ROUTER_SYSTEM_PROMPT, build_router_prompt
 
@@ -85,17 +86,28 @@ def run_router(customer_payload: dict, api_key: str | None = None) -> dict:
         raise ValueError("OPENAI_API_KEY가 설정되지 않았습니다.")
 
     client = OpenAI(api_key=key)
+    messages = [
+        {"role": "system", "content": ROUTER_SYSTEM_PROMPT},
+        {"role": "user",   "content": build_router_prompt(customer_payload)},
+    ]
 
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": ROUTER_SYSTEM_PROMPT},
-            {"role": "user",   "content": build_router_prompt(customer_payload)},
-        ],
-        temperature=0.2,
-        max_tokens=1000,
-        response_format={"type": "json_object"},
-    )
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model=MODEL,
+                messages=messages,
+                temperature=0.2,
+                max_tokens=1000,
+                response_format={"type": "json_object"},
+            )
+            break
+        except RateLimitError as e:
+            if attempt == max_retries - 1:
+                raise
+            wait = 20 * (attempt + 1)
+            print(f"[Router] Rate limit 도달, {wait}초 후 재시도 ({attempt + 1}/{max_retries}): {e}")
+            time.sleep(wait)
 
     raw = response.choices[0].message.content or "{}"
     try:

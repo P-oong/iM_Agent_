@@ -2,9 +2,14 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   BarChart3,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   FileText,
+  Network,
+  ShieldCheck,
   Tag,
   TrendingUp,
+  User,
   Zap,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -17,16 +22,8 @@ import type { AiAnalysisResult } from '@/services/openaiApi'
 import '@/styles/sales-analysis.css'
 import '@/styles/kpi.css'
 
-// ── 라우터 카테고리 한글 변환 ─────────────────────────────────────────────
-const LABEL_KO: Record<string, string> = {
-  DEPOSIT_SAVINGS: '예적금',
-  PERSONAL_LOAN:   '개인대출',
-  BUSINESS_LOAN:   '사업자대출',
-  CARD:            '카드',
-  CASH_MANAGEMENT: '자금관리',
-  FX_REMITTANCE:   '외환/송금',
-  INVESTMENT_TAX:  '투자/절세',
-}
+// ── 카테고리 전체 목록 ────────────────────────────────────────────────────
+const ALL_CATEGORIES = ['여신', '수신', '카드', '방카', '신탁', '펀드', '외환'] as const
 
 // ── 성공확률 색상 ─────────────────────────────────────────────────────────
 const probColor = (p: number) =>
@@ -35,42 +32,134 @@ const probColor = (p: number) =>
 const probBand = (band: string) =>
   band === 'HIGH' ? '높음' : band === 'MEDIUM' ? '보통' : '낮음'
 
-// ── 카테고리 활성화 바 ────────────────────────────────────────────────────
-const ALL_CATEGORIES = Object.keys(LABEL_KO) as (keyof typeof LABEL_KO)[]
-
-function CategoryBar({ primary, secondary }: { primary: string; secondary: string[] }) {
-  const secSet = new Set(secondary)
-
-  // 정렬: 주 카테고리 → 보조 카테고리 → 비활성
-  const sorted = [...ALL_CATEGORIES].sort((a, b) => {
-    const rank = (k: string) => k === primary ? 0 : secSet.has(k) ? 1 : 2
-    return rank(a) - rank(b)
-  })
-
+// ── 접이식 섹션 ───────────────────────────────────────────────────────────
+function CollapseSection({
+  title, icon: Icon, badge, accent, children, defaultOpen = true,
+}: {
+  title: string
+  icon: React.ElementType
+  badge?: string
+  accent?: string
+  children: React.ReactNode
+  defaultOpen?: boolean
+}) {
+  const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className="sa-cat-bar">
-      {sorted.map(key => {
-        const isPrimary   = key === primary
-        const isSecondary = secSet.has(key)
-        const cls = isPrimary
-          ? 'sa-cat-chip sa-cat-chip--primary'
-          : isSecondary
-            ? 'sa-cat-chip sa-cat-chip--secondary'
-            : 'sa-cat-chip sa-cat-chip--inactive'
-        return (
-          <span key={key} className={cls}>
-            {LABEL_KO[key]}
-          </span>
-        )
-      })}
+    <div className="sa-collapse">
+      <button className="sa-collapse-hd" onClick={() => setOpen(v => !v)}>
+        <Icon size={12} style={{ color: accent ?? '#64748b', flexShrink: 0 }} />
+        <span className="sa-collapse-title" style={{ color: accent ? '#1e293b' : undefined }}>{title}</span>
+        {badge && <span className="sa-collapse-badge">{badge}</span>}
+        <span style={{ marginLeft: 'auto', color: '#94a3b8' }}>
+          {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        </span>
+      </button>
+      {open && <div className="sa-collapse-body">{children}</div>}
     </div>
   )
 }
 
-// ── AI 분석 기반 영업기회 카드 ───────────────────────────────────────────
-function BridgeCardSection({
-  bridgeData,
-  custNo,
+// ── 영역 1: 고객 행동신호 ────────────────────────────────────────────────
+function Area1Signals({ payload }: { payload: Record<string, unknown> }) {
+  const seg = (payload.customer_segment ?? {}) as Record<string, string>
+  const rfm = (payload.rfm_pc ?? {}) as Record<string, unknown>
+  const signals = (rfm.explainable_signals ?? []) as string[]
+  const tone    = (payload.recommendation_tone as string) ?? ''
+
+  const segParts = [seg.age_band, seg.customer_type, seg.risk_grade, seg.branch].filter(Boolean)
+
+  return (
+    <CollapseSection title="고객 행동신호" icon={User} accent="#0284c7" badge={`${signals.length}건`}>
+      {segParts.length > 0 && (
+        <div className="sa-area1-seg">
+          {segParts.map(s => (
+            <span key={s} className="sa-area1-seg-chip">{s}</span>
+          ))}
+        </div>
+      )}
+      {tone && (
+        <div className="sa-area1-tone">
+          <span className="sa-area1-tone-label">추천 톤</span>
+          <span className="sa-area1-tone-val">{tone.replace('_', ' ')}</span>
+        </div>
+      )}
+      <ul className="sa-area1-signals">
+        {signals.map((s, i) => (
+          <li key={i} className="sa-area1-signal-item">
+            <span className="sa-area1-dot" />
+            {s}
+          </li>
+        ))}
+      </ul>
+    </CollapseSection>
+  )
+}
+
+// ── 영역 2: Router 카테고리 분류 ─────────────────────────────────────────
+function Area2Router({ router }: { router: Record<string, unknown> }) {
+  const applicable = (router.applicable_categories ?? []) as Array<{
+    label?: string; confidence?: number; reasons?: string[]
+  }>
+  const excluded = (router.excluded_categories ?? []) as Array<{
+    label?: string; reason?: string
+  }>
+
+  const primaryLabel    = applicable[0]?.label ?? ''
+  const secondaryLabels = applicable.slice(1).map(c => c.label ?? '').filter(Boolean)
+  const secSet = new Set(secondaryLabels)
+
+  const sorted = [...ALL_CATEGORIES].sort((a, b) => {
+    const rank = (k: string) => k === primaryLabel ? 0 : secSet.has(k) ? 1 : 2
+    return rank(a) - rank(b)
+  })
+
+  return (
+    <CollapseSection title="카테고리 분류" icon={Network} accent="#7c3aed" badge={`${applicable.length}개`}>
+      {/* 칩 바 */}
+      <div className="sa-cat-bar" style={{ marginBottom: 8 }}>
+        {sorted.map(key => {
+          const isPrimary   = key === primaryLabel
+          const isSecondary = secSet.has(key)
+          return (
+            <span key={key} className={
+              isPrimary ? 'sa-cat-chip sa-cat-chip--primary'
+              : isSecondary ? 'sa-cat-chip sa-cat-chip--secondary'
+              : 'sa-cat-chip sa-cat-chip--inactive'
+            }>{key}</span>
+          )
+        })}
+      </div>
+
+      {/* confidence 바 */}
+      {applicable.map(cat => {
+        const conf = cat.confidence ?? 0
+        const color = conf >= 0.75 ? '#00a86b' : conf >= 0.5 ? '#3b82f6' : '#f0a500'
+        return (
+          <div key={cat.label} className="sa-area2-row">
+            <span className="sa-area2-label">{cat.label}</span>
+            <div className="sa-area2-bar-wrap">
+              <div className="sa-area2-bar" style={{ width: `${conf * 100}%`, background: color }} />
+            </div>
+            <span className="sa-area2-conf" style={{ color }}>{Math.round(conf * 100)}%</span>
+          </div>
+        )
+      })}
+
+      {excluded.length > 0 && (
+        <div className="sa-area2-excluded">
+          <span className="sa-area2-excluded-label">제외</span>
+          {excluded.map(e => (
+            <span key={e.label} className="sa-area2-excluded-chip">{e.label}</span>
+          ))}
+        </div>
+      )}
+    </CollapseSection>
+  )
+}
+
+// ── 영역 3: 추천 영업기회 카드 ───────────────────────────────────────────
+function Area3Cards({
+  bridgeData, custNo,
 }: {
   bridgeData: BridgeSalesCardResponse
   custNo: string
@@ -78,45 +167,30 @@ function BridgeCardSection({
   const { isOppCompleted, addKpi, mode, cardIssuedFor } = useKpi()
   const { activeResidentId } = useCustomer()
 
-  const router = bridgeData.router_result as {
-    primary_label?: string
-    secondary_labels?: string[]
-    confidence?: number
-  }
-  const cards           = bridgeData.sales_cards ?? []
-  const primaryLabel    = router.primary_label ?? ''
-  const secondaryLabels = router.secondary_labels ?? []
-  const categoryLabel   = LABEL_KO[primaryLabel] ?? primaryLabel ?? '영업기회'
+  const cards = bridgeData.sales_cards ?? []
+  const router = bridgeData.router_result
+  const applicable = (router.applicable_categories ?? []) as Array<{ label?: string }>
+  const primaryLabel = applicable[0]?.label ?? ''
 
   const currentResidentFront = activeResidentId?.slice(0, 6) ?? ''
-  // 카드 KPI 상품은 모드 무관 항상 발급 필요 / mastercard 모드면 모든 상품 발급 필요
   const needsIssuance = (badge: { badge_text?: string } | undefined) =>
     mode === 'mastercard' || badge?.badge_text === '카드 중점 KPI'
 
   if (cards.length === 0) return null
 
   return (
-    <div className="sa-section">
-      {/* 카테고리 활성화 바 */}
-      <CategoryBar primary={primaryLabel} secondary={secondaryLabels} />
-
-      <div className="sa-section-hd">
-        <Zap size={13} />
-        <span>영업기회</span>
-        <span className="sa-opp-count">{cards.length}건</span>
-        <span className="sa-ai-category-tag">{categoryLabel}</span>
-      </div>
-
+    <CollapseSection title="추천 영업기회" icon={Zap} accent="#00a86b" badge={`${cards.length}건`}>
       <div className="sa-ai-opp-list">
         {cards.map((card, idx) => {
-          const done   = isOppCompleted(custNo, card.product_id)
-          const kpiPt  = card.kpi_badge?.kpi_score ?? 0
-          const hasKpi = kpiPt > 0 && card.kpi_badge?.badge_text !== 'KPI 해당 없음'
-          const pColor = probColor(card.acceptance_probability)
-          const pct    = Math.round(card.acceptance_probability * 100)
-          const hasRag = (card.policy_cautions?.length ?? 0) > 0 || (card.required_documents?.length ?? 0) > 0
+          const done        = isOppCompleted(custNo, card.product_id)
+          const kpiPt       = card.kpi_badge?.kpi_score ?? 0
+          const hasKpi      = kpiPt > 0 && card.kpi_badge?.badge_text !== 'KPI 해당 없음'
+          const pColor      = probColor(card.acceptance_probability)
+          const pct         = Math.round(card.acceptance_probability * 100)
+          const hasRag      = (card.policy_cautions?.length ?? 0) > 0 || (card.required_documents?.length ?? 0) > 0
           const canComplete = !needsIssuance(card.kpi_badge) || cardIssuedFor === currentResidentFront
           const btnDisabled = done || !canComplete
+          const catLabel    = (card as Record<string, unknown>).category as string || primaryLabel
 
           return (
             <motion.div
@@ -126,7 +200,6 @@ function BridgeCardSection({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.06 }}
             >
-              {/* 줄 1: 순위 + 상품명 + 성공확률 */}
               <div className="sa-ai-row sa-ai-row--top">
                 <span className="sa-ai-rank">#{idx + 1}</span>
                 <span className="sa-ai-name">{card.product_name}</span>
@@ -136,14 +209,14 @@ function BridgeCardSection({
                 }
               </div>
 
-              {/* 줄 2: 근거 텍스트 */}
               <p className="sa-ai-reason">{card.main_reason}</p>
 
-              {/* 줄 3: 태그 (라우터·확률·RAG) */}
               <div className="sa-ai-tags">
-                <span className="sa-ai-tag sa-ai-tag--router">
-                  <Tag size={9} />{categoryLabel}
-                </span>
+                {catLabel && (
+                  <span className="sa-ai-tag sa-ai-tag--router">
+                    <Tag size={9} />{catLabel}
+                  </span>
+                )}
                 <span className="sa-ai-tag sa-ai-tag--prob" style={{ color: pColor, borderColor: pColor + '44', background: pColor + '11' }}>
                   <TrendingUp size={9} />{pct}% · {probBand(card.probability_band)}
                 </span>
@@ -154,17 +227,13 @@ function BridgeCardSection({
                 )}
               </div>
 
-              {/* 줄 4: RAG 정책 한 줄 */}
               {card.policy_cautions?.[0] && (
                 <p className="sa-ai-policy">{card.policy_cautions[0]}</p>
               )}
-
-              {/* 줄 5: 이벤트 혜택 한 줄 */}
               {card.event_summary?.[0] && (
                 <p className="sa-ai-event">{card.event_summary[0]}</p>
               )}
 
-              {/* 줄 6: KPI 라벨 + 버튼 */}
               <div className="sa-ai-footer">
                 <span className="sa-ai-kpi-label">
                   {hasKpi ? `KPI +${kpiPt}pt` : ''}
@@ -182,7 +251,76 @@ function BridgeCardSection({
           )
         })}
       </div>
-    </div>
+    </CollapseSection>
+  )
+}
+
+// ── 영역 4: 정책·KPI 사후관리 ────────────────────────────────────────────
+function Area4Policy({ bridgeData }: { bridgeData: BridgeSalesCardResponse }) {
+  const kpiMap    = bridgeData.kpi_badges ?? {}
+  const policies  = bridgeData.policy_support ?? []
+
+  if (policies.length === 0 && Object.keys(kpiMap).length === 0) return null
+
+  return (
+    <CollapseSection title="정책·KPI 사후관리" icon={ShieldCheck} accent="#dc2626" badge={`${policies.length}건`} defaultOpen={false}>
+      {policies.map(p => {
+        const kpi = kpiMap[p.product_id]
+        const kpiColor = kpi?.priority_level === 'HIGH' ? '#dc2626'
+          : kpi?.priority_level === 'MEDIUM' ? '#f0a500' : '#64748b'
+
+        return (
+          <div key={p.product_id} className="sa-area4-card">
+            {/* 상품명 + 카테고리 */}
+            <div className="sa-area4-hd">
+              <span className="sa-area4-product">{p.product_name}</span>
+              {p.category && (
+                <span className="sa-area4-cat">{p.category}</span>
+              )}
+            </div>
+
+            {/* KPI 뱃지 */}
+            {kpi && kpi.badge_text !== 'KPI 해당 없음' && (
+              <div className="sa-area4-kpi" style={{ borderColor: kpiColor + '44', background: kpiColor + '0d' }}>
+                <span className="sa-area4-kpi-badge" style={{ color: kpiColor }}>
+                  KPI {kpi.kpi_score}pt · {kpi.badge_text}
+                </span>
+                {kpi.branch_campaign && (
+                  <span className="sa-area4-kpi-campaign">{kpi.branch_campaign}</span>
+                )}
+                {kpi.post_management?.length > 0 && (
+                  <ul className="sa-area4-post">
+                    {kpi.post_management.slice(0, 2).map((pm, i) => (
+                      <li key={i}>{pm}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {/* 필요서류 */}
+            {p.required_documents?.length > 0 && (
+              <div className="sa-area4-docs">
+                <span className="sa-area4-docs-label">필요서류 {p.required_documents.length}건</span>
+                <ul className="sa-area4-docs-list">
+                  {p.required_documents.slice(0, 3).map((d, i) => (
+                    <li key={i}>{d}</li>
+                  ))}
+                  {p.required_documents.length > 3 && (
+                    <li className="sa-area4-docs-more">+{p.required_documents.length - 3}건 더</li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {/* 주의사항 첫 줄 */}
+            {p.caution_points?.[0] && (
+              <p className="sa-area4-caution">{p.caution_points[0]}</p>
+            )}
+          </div>
+        )
+      })}
+    </CollapseSection>
   )
 }
 
@@ -192,17 +330,14 @@ export function SalesAnalysisPanel() {
   const [result, setResult]         = useState<AiAnalysisResult | null>(null)
   const [bridgeData, setBridgeData] = useState<BridgeSalesCardResponse | null>(null)
 
-  // DB customer_id를 cacheKey로 사용
   const cacheKey = activeCustId ?? null
 
-  // 캐시 읽기
   useEffect(() => {
     if (!cacheKey) { setResult(null); setBridgeData(null); return }
     setResult(AI_RESULT_CACHE.get(cacheKey) ?? null)
     setBridgeData(BRIDGE_CACHE.get(cacheKey) ?? null)
   }, [cacheKey])
 
-  // 캐시 폴링 (CRM 분석 완료 감지)
   useEffect(() => {
     if (!cacheKey) return
     if (AI_RESULT_CACHE.has(cacheKey)) return
@@ -216,7 +351,6 @@ export function SalesAnalysisPanel() {
     return () => clearInterval(id)
   }, [cacheKey])
 
-  // ── 고객 미선택 ──
   if (!activeResidentId || !activeCustId) {
     return (
       <div className="sa-empty">
@@ -241,12 +375,7 @@ export function SalesAnalysisPanel() {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.22 }}
         >
-
-          {result ? (
-            <>
-
-            </>
-          ) : (
+          {!result && !bridgeData && (
             <div className="sa-empty sa-empty--inline">
               <Zap size={24} className="sa-empty-icon sa-empty-icon--zap" />
               <p className="sa-empty-title">분석 결과 없음</p>
@@ -257,15 +386,26 @@ export function SalesAnalysisPanel() {
             </div>
           )}
 
-          {/* ── AI 분석 기반 영업기회·추천 상품 (bridge 데이터 있을 때) ── */}
-          {bridgeData && activeCustId && (
-            <BridgeCardSection bridgeData={bridgeData} custNo={activeCustId} />
-          )}
+          {bridgeData && (
+            <>
+              {/* 영역 1: 고객 행동신호 */}
+              {Object.keys(bridgeData.customer_payload ?? {}).length > 0 && (
+                <Area1Signals payload={bridgeData.customer_payload} />
+              )}
 
+              {/* 영역 2: Router 카테고리 분류 */}
+              <Area2Router router={bridgeData.router_result} />
+
+              {/* 영역 3: 추천 영업기회 */}
+              <Area3Cards bridgeData={bridgeData} custNo={activeCustId} />
+
+              {/* 영역 4: 정책·KPI 사후관리 */}
+              <Area4Policy bridgeData={bridgeData} />
+            </>
+          )}
         </motion.div>
       </AnimatePresence>
 
-      {/* ── 경험치 바 (KpiBar) ── */}
       <div className="sa-kpibar-footer">
         <KpiBar inline />
       </div>

@@ -47,27 +47,67 @@ interface SalesCard {
   kpi_badge: KpiBadge
 }
 
+export interface PolicySupport {
+  product_id: string
+  product_name: string
+  category: string
+  related_docs: Array<{ title?: string; doc_type?: string }>
+  required_documents: string[]
+  eligibility_summary: string[]
+  event_summary: string[]
+  caution_points: string[]
+}
+
+export interface KpiBadgeDetail {
+  badge_text: string
+  kpi_score: number
+  priority_level: string
+  display_color: string
+  branch_campaign: string | null
+  post_management: string[]
+}
+
 export interface BridgeSalesCardResponse {
   cust_id: string
   router_result: Record<string, unknown>
   specialist_result: Record<string, unknown>
+  customer_payload: Record<string, unknown>
+  policy_support: PolicySupport[]
+  kpi_badges: Record<string, KpiBadgeDetail>
   sales_cards: SalesCard[]
+}
+
+// ── router_result에서 1순위 카테고리/근거 추출 (신·구 응답 구조 모두 지원) ─
+function extractRouterPrimary(router: Record<string, unknown>): {
+  label: string
+  reasons: string[]
+} {
+  // 신규 구조: applicable_categories: [{ label, confidence, reasons, ... }]
+  const applicable = (router.applicable_categories ?? []) as Array<{
+    label?: string
+    reasons?: string[]
+  }>
+  if (applicable.length > 0) {
+    return {
+      label: applicable[0].label ?? '',
+      reasons: applicable[0].reasons ?? [],
+    }
+  }
+  // 구버전 구조: primary_label / routing_reason
+  return {
+    label: (router.primary_label as string) ?? '',
+    reasons: (router.routing_reason as string[]) ?? [],
+  }
 }
 
 // ── bridge 응답 → AiAnalysisResult 변환 ──────────────────────────────────
 export function bridgeToAiResult(data: BridgeSalesCardResponse): AiAnalysisResult {
-  const router = data.router_result as {
-    primary_label?: string
-    routing_reason?: string[]
-    confidence?: number
-  }
+  const { label: primaryLabel, reasons: routingReasons } = extractRouterPrimary(data.router_result)
 
-  // summary: router 분류 이유 → 한 문장 요약
-  const labelKo = LABEL_KO[router.primary_label ?? ''] ?? router.primary_label ?? '영업기회'
-  const routingReasons = router.routing_reason ?? []
+  const labelKo = LABEL_KO[primaryLabel] ?? primaryLabel ?? '영업기회'
   const summary =
     routingReasons.length > 0
-      ? routingReasons.join(' ') 
+      ? routingReasons.join(' ')
       : `${data.cust_id} 고객의 멀티에이전트 분석이 완료되었습니다.`
 
   // keyMetrics: 각 상품의 수락확률 + KPI 뱃지
@@ -109,10 +149,7 @@ export async function* streamBridgeAnalysis(custId: string): AsyncGenerator<Brid
   const res = await fetch('/api/agent/api/bridge/sales-card/stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      cust_id: custId,
-      live_context: { visit_reason_code: '', counter_task: '', staff_note: '' },
-    }),
+    body: JSON.stringify({ cust_id: custId }),
   })
 
   if (!res.ok) {
@@ -148,10 +185,7 @@ export async function analyzeBridge(custId: string): Promise<AiAnalysisResult> {
   const res = await fetch('/api/agent/api/bridge/sales-card', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      cust_id: custId,
-      live_context: { visit_reason_code: '', counter_task: '', staff_note: '' },
-    }),
+    body: JSON.stringify({ cust_id: custId }),
   })
 
   if (!res.ok) {

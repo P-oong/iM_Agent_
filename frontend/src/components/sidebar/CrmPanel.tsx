@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  ChevronDown, ChevronUp, CreditCard, ExternalLink,
-  Monitor, TrendingDown, User,
+  CalendarClock, ChevronDown, ChevronUp, CreditCard, ExternalLink,
+  Mail, MapPin, Monitor, Phone, ShieldAlert, TrendingDown, User,
   Zap,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -105,7 +105,17 @@ function DemoAnalysisButton({
   const cacheKey = customer.customerId
   const [, forceUpdate] = useState(0)
   const customerForAi = toCustomerForAnalysis(customer, demo)
-  const cachedResult = AI_RESULT_CACHE.get(cacheKey) ?? null
+
+  // 캐시는 영업기회가 1개 이상 있을 때만 유효한 것으로 간주.
+  // (백엔드/프론트 상호 호환 작업 중 잠시 비어 있던 응답이 남아 있던 경우 자동 무효화)
+  const rawCached = AI_RESULT_CACHE.get(cacheKey) ?? null
+  const cachedResult =
+    rawCached && rawCached.opportunities && rawCached.opportunities.length > 0
+      ? rawCached
+      : null
+  if (rawCached && !cachedResult) {
+    AI_RESULT_CACHE.delete(cacheKey)
+  }
 
   const hasCache = cachedResult !== null
   const topOpp = cachedResult?.opportunities?.[0] ?? null
@@ -215,6 +225,55 @@ function DemoAnalysisButton({
   )
 }
 
+
+// ── 고객 ID 기반 결정론적 데이터 생성 ────────────────
+function hashId(id: string): number {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0
+  return h
+}
+
+function getContactInfo(c: CustomerInfo) {
+  const h = hashId(c.customerId)
+  const mid1 = 1000 + (h % 9000)
+  const mid2 = 1000 + ((h >> 4) % 9000)
+  const phone = `010-${mid1}-${mid2}`
+  const domains = ['naver.com', 'kakao.com', 'gmail.com', 'daum.net']
+  const domain = domains[h % domains.length]
+  const emailPrefix = c.name.replace(/\s/g, '').toLowerCase() + (h % 100)
+  const email = `${emailPrefix}@${domain}`
+  const cities = ['대구', '서울', '부산', '인천', '광주']
+  const gus = ['중구', '달서구', '수성구', '동구', '북구']
+  const city = cities[h % cities.length]
+  const gu = gus[(h >> 2) % gus.length]
+  const address = `${city} ${gu}`
+  return { phone, email, address }
+}
+
+function getKycInfo(c: CustomerInfo) {
+  const h = hashId(c.customerId)
+  // KYC 도래일자: 오늘 기준 -180일 ~ +365일 사이로 분산
+  const offsetDays = (h % 545) - 180
+  const due = new Date()
+  due.setDate(due.getDate() + offsetDays)
+  const dueStr = due.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\. /g, '-').replace('.', '')
+  const today = new Date()
+  const diffDays = Math.round((due.getTime() - today.getTime()) / 86400000)
+
+  let urgency: 'overdue' | 'soon' | 'normal'
+  let urgencyLabel: string
+  if (diffDays < 0) {
+    urgency = 'overdue'
+    urgencyLabel = `${Math.abs(diffDays)}일 경과`
+  } else if (diffDays <= 30) {
+    urgency = 'soon'
+    urgencyLabel = `D-${diffDays}`
+  } else {
+    urgency = 'normal'
+    urgencyLabel = `D-${diffDays}`
+  }
+  return { dueStr, urgency, urgencyLabel, diffDays }
+}
 
 // ── 접이식 섹션 컴포넌트 ─────────────────────────────
 function CollapseSection({ title, icon: Icon, badge, children, defaultOpen = true }: {
@@ -344,6 +403,56 @@ export function CrmPanel() {
                 </tbody>
               </table>
             </CollapseSection>
+
+            {/* ── KYC 도래일자 + 접촉정보 ── */}
+            {(() => {
+              const kyc = getKycInfo(customer)
+              const contact = getContactInfo(customer)
+              const kycColor = kyc.urgency === 'overdue' ? '#ef4444' : kyc.urgency === 'soon' ? '#f0a500' : '#00a86b'
+              const kycBg   = kyc.urgency === 'overdue' ? 'rgba(239,68,68,0.08)' : kyc.urgency === 'soon' ? 'rgba(240,165,0,0.08)' : 'rgba(0,168,107,0.08)'
+              return (
+                <CollapseSection title="KYC · 접촉정보" icon={ShieldAlert} defaultOpen={true}>
+                  {/* KYC 도래일자 */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    background: kycBg, border: `1px solid ${kycColor}33`,
+                    borderRadius: 8, padding: '8px 10px', marginBottom: 8,
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <CalendarClock size={13} style={{ color: kycColor }} />
+                      <span style={{ fontSize: 11.5, color: '#475569', fontWeight: 600 }}>KYC 도래일자</span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: kycColor }}>{kyc.dueStr}</div>
+                      <div style={{ fontSize: 10.5, color: kycColor, fontWeight: 700 }}>{kyc.urgencyLabel}</div>
+                    </div>
+                  </div>
+                  {/* 연락처 */}
+                  <table className="crm-table">
+                    <tbody>
+                      <tr>
+                        <td className="crm-td-label" style={{ whiteSpace: 'nowrap' }}>
+                          <Phone size={11} style={{ display: 'inline', marginRight: 3, verticalAlign: 'middle' }} />휴대폰
+                        </td>
+                        <td style={{ fontSize: 12, letterSpacing: '0.04em' }}>{contact.phone}</td>
+                      </tr>
+                      <tr>
+                        <td className="crm-td-label">
+                          <Mail size={11} style={{ display: 'inline', marginRight: 3, verticalAlign: 'middle' }} />이메일
+                        </td>
+                        <td style={{ fontSize: 11.5, color: '#475569' }}>{contact.email}</td>
+                      </tr>
+                      <tr>
+                        <td className="crm-td-label">
+                          <MapPin size={11} style={{ display: 'inline', marginRight: 3, verticalAlign: 'middle' }} />주소
+                        </td>
+                        <td style={{ fontSize: 12 }}>{contact.address}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </CollapseSection>
+              )
+            })()}
 
             {/* ── 보유 상품 ── */}
             <CollapseSection title="보유상품" icon={CreditCard}>
