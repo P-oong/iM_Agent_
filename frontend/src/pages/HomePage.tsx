@@ -32,9 +32,9 @@ const FEATURES = [
   {
     Icon: BotMessageSquare,
     title: 'AI 고객 분석',
-    desc: 'Upstage Solar Pro 3가 재무 건강·리스크·상담 멘트를 실시간 스트리밍합니다.',
+    desc: 'AI가 고객 재무 건강·영업기회·상담 멘트를 실시간 분석합니다.',
     href: '/ai',
-    badge: 'Solar Pro 3',
+    badge: 'AI 분석',
     color: '#0ea5e9',
   },
   {

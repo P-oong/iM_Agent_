@@ -200,14 +200,14 @@ export function Screen0151() {
               <div className="sc-input-group">
                 <input
                   className={`sc-input${!accountNo ? ' sc-input--empty' : ''}`}
-                  style={{ flex: 1 }}
+                  style={{ width: 200 }}
                   placeholder="000-00-000000-0"
                   value={accountNo}
                   onChange={e => setAccountNo(e.target.value)}
                 />
                 <input
                   className="sc-input sc-input--readonly"
-                  style={{ width: 100 }}
+                  style={{ width: 120, minWidth: 80 }}
                   placeholder="예금주"
                   readOnly
                   value={linkedName ?? ''}

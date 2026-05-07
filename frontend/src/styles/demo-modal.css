@@ -155,57 +155,111 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
-  gap: 16px;
-  min-height: 300px;
+  padding: 44px 24px 48px;
+  gap: 14px;
+  min-height: 320px;
 }
-.dmo-loading-icon {
+
+/* 동심원 스피너 */
+.dmo-loading-visual {
   position: relative;
+  width: 100px;
+  height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
-.dmo-loading-icon > svg:first-child {
-  color: var(--im-mint);
+.dmo-ring {
   position: absolute;
+  border-radius: 50%;
+  border: 2px solid transparent;
 }
-.dmo-loading-ring {
-  color: rgba(0,199,169,0.25);
+.dmo-ring--outer {
+  width: 100px;
+  height: 100px;
+  border-top-color: var(--im-mint);
+  border-right-color: rgba(0,199,169,0.3);
+  animation: dmo-spin 1.6s linear infinite;
 }
+.dmo-ring--middle {
+  width: 74px;
+  height: 74px;
+  border-top-color: transparent;
+  border-bottom-color: var(--im-mint);
+  border-left-color: rgba(0,199,169,0.25);
+  animation: dmo-spin 2.2s linear infinite reverse;
+}
+.dmo-ring--inner {
+  width: 50px;
+  height: 50px;
+  border-right-color: var(--im-mint);
+  border-top-color: rgba(0,199,169,0.2);
+  animation: dmo-spin 1s linear infinite;
+}
+.dmo-loading-center-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(0,199,169,0.1);
+  color: var(--im-mint);
+  z-index: 1;
+}
+@keyframes dmo-spin {
+  to { transform: rotate(360deg); }
+}
+
 .dmo-loading-title {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 800;
   color: #1a2332;
   margin: 0;
   letter-spacing: -0.02em;
 }
 .dmo-loading-sub {
-  font-size: 13px;
+  font-size: 12px;
   color: #8a9aaa;
   margin: 0;
+  text-align: center;
+  max-width: 340px;
+  line-height: 1.6;
 }
 .dmo-loading-steps {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 9px;
+  margin-top: 6px;
   align-items: flex-start;
+  background: #f7f9fc;
+  border: 1.5px solid #edf1f4;
+  border-radius: 12px;
+  padding: 14px 18px;
+  min-width: 280px;
 }
 .dmo-loading-step {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 13px;
-  color: #4a5a68;
+  color: #3a4a5a;
   font-weight: 500;
 }
 .dmo-step-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--im-mint);
   flex-shrink: 0;
+}
+.dmo-step-dots-anim {
+  font-size: 13px;
+  color: var(--im-mint);
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-left: 2px;
 }
 
 /* ── 카드 ── */

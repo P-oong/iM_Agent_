@@ -18,14 +18,14 @@ const TECH_STACK = [
   { label: 'TypeScript',     icon: Code2,          color: '#3178c6' },
   { label: 'Vite',           icon: Zap,            color: '#646cff' },
   { label: 'Framer Motion',  icon: Sparkles,       color: '#ff0055' },
-  { label: 'Upstage Solar',  icon: BotMessageSquare, color: '#f59e0b' },
+  { label: 'OpenAI',         icon: BotMessageSquare, color: '#f59e0b' },
   { label: 'Lucide React',   icon: Sparkles,       color: '#00c7a9' },
 ]
 
 const FEATURES = [
   // { Icon: Monitor,          title: '[0156] 전산화면',     desc: '실명번호 입력 한 번으로 CRM과 AI 분석이 자동 연동' },
   { Icon: User,             title: 'CRM 패널',            desc: '보유 상품 분석 → 맞춤 영업기회 + KPI 점수 산출' },
-  { Icon: BotMessageSquare, title: 'Solar Pro 3 AI',      desc: '재무 건강 점수 · 리스크 · 추천 멘트 실시간 스트리밍' },
+  { Icon: BotMessageSquare, title: 'AI 영업 분석',         desc: '재무 건강 점수 · 리스크 · 추천 멘트 실시간 분석' },
   { Icon: Trophy,           title: 'KPI 게이미피케이션',  desc: '거래 완료 시 경험치 적립 · 레벨업으로 목표 관리' },
   { Icon: Brain,            title: '화면번호 네비게이션', desc: '* + 코드 + - 단축키로 전산화면 즉시 이동' },
   { Icon: CreditCard,       title: '더미 데이터 연동',    desc: '5명의 실전형 고객 프로필로 전 기능 데모 가능' },
@@ -57,7 +57,7 @@ export function AboutPage() {
         </p>
         <div className="about-tags">
           <span className="about-tag">공모전 프로젝트</span>
-          <span className="about-tag">Upstage AI</span>
+          <span className="about-tag">AI 분석</span>
           <span className="about-tag">React 19</span>
         </div>
       </motion.div>

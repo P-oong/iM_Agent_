@@ -810,6 +810,42 @@
   font-size: 11.5px;
   color: #92400e;
 }
+.cd-done-kpi--done {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #166534;
+  font-weight: 700;
+}
+.cd-done-kpi-mc {
+  font-size: 10.5px;
+  color: #065f46;
+  font-weight: 600;
+}
+
+/* KPI 적립 버튼 (완료 단계) */
+.cd-done-kpi-btn {
+  width: 100%;
+  padding: 11px 14px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: none;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 3px 10px rgba(245,158,11,0.35);
+  transition: transform 0.12s, box-shadow 0.12s;
+  letter-spacing: 0.01em;
+}
+.cd-done-kpi-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(245,158,11,0.45);
+}
+.cd-done-kpi-btn:active {
+  transform: translateY(0);
+}
+
 .cd-done-actions {
   display: flex;
   gap: 8px;

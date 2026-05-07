@@ -85,11 +85,13 @@ function RingProgress({
 }
 
 function KpiEventPicker() {
-  const { mode, setMode } = useKpi()
+  const { mode, setMode, cardIssuedFor } = useKpi()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
 
   const current = KPI_TRACK_LIST.find(o => o.id === mode) ?? KPI_TRACK_LIST[0]
+  // 카드 발급 완료 신호 — 마스터카드 탭 알림 표시 여부
+  const showMcAlert = cardIssuedFor !== null && mode !== 'mastercard'
 
   useEffect(() => {
     if (!open) return
@@ -106,40 +108,48 @@ function KpiEventPicker() {
   }, [open])
 
   return (
-    <div className="kpi-event-pick" ref={rootRef}>
+    <div className="kpi-event-pick" ref={rootRef} style={{ position: 'relative' }}>
       <button
         type="button"
-        className="kpi-event-pick-btn"
+        className={`kpi-event-pick-btn${showMcAlert ? ' kpi-event-pick-btn--alert' : ''}`}
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={`실적 구분: ${current.label}`}
-        title={current.label}
+        title={showMcAlert ? '카드 발급 완료! 마스터카드 이벤트로 전환하세요' : current.label}
         onClick={() => setOpen(v => !v)}
       >
         <span className="kpi-event-pick-lbl">{current.compactLabel ?? current.label}</span>
         <ChevronDown size={11} strokeWidth={2.5} className={open ? 'kpi-event-pick-chev--open' : ''} />
+        {showMcAlert && <span className="kpi-mc-alert-dot" />}
       </button>
       {open && (
         <ul className="kpi-event-dropdown" role="listbox">
-          {KPI_TRACK_LIST.map(opt => (
-            <li key={opt.id} role="presentation">
-              <button
-                type="button"
-                role="option"
-                aria-selected={opt.id === mode}
-                disabled={opt.disabled}
-                className={`kpi-event-opt${opt.id === mode ? ' kpi-event-opt--on' : ''}${opt.disabled ? ' kpi-event-opt--disabled' : ''}`}
-                onClick={() => {
-                  if (opt.disabled || !isSelectableTrack(opt.id)) return
-                  setMode(opt.id)
-                  setOpen(false)
-                }}
-              >
-                {opt.label}
-                {opt.disabled && <span className="kpi-event-opt-sub">준비중</span>}
-              </button>
-            </li>
-          ))}
+          {KPI_TRACK_LIST.map(opt => {
+            const isMcOpt = opt.id === 'mastercard'
+            const showAlert = isMcOpt && showMcAlert
+            return (
+              <li key={opt.id} role="presentation" style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={opt.id === mode}
+                  disabled={opt.disabled}
+                  className={`kpi-event-opt${opt.id === mode ? ' kpi-event-opt--on' : ''}${opt.disabled ? ' kpi-event-opt--disabled' : ''}${showAlert ? ' kpi-event-opt--mc-alert' : ''}`}
+                  onClick={() => {
+                    if (opt.disabled || !isSelectableTrack(opt.id)) return
+                    setMode(opt.id)
+                    setOpen(false)
+                  }}
+                >
+                  {opt.label}
+                  {opt.disabled && <span className="kpi-event-opt-sub">준비중</span>}
+                  {showAlert && (
+                    <span className="kpi-mc-opt-badge">카드 발급 완료!</span>
+                  )}
+                </button>
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>
