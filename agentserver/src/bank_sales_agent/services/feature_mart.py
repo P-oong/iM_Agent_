@@ -48,8 +48,8 @@ def get_customer_basic_info(cust_id: str, db_path: Path) -> dict | None:
         conn.close()
 
 
-def build_customer_payload(feature_mart_json: dict, live_context: dict, basic_info: dict | None = None) -> dict:
-    """Feature Mart JSON + Live Context를 에이전트 입력 형태로 결합합니다."""
+def build_customer_payload(feature_mart_json: dict, basic_info: dict | None = None) -> dict:
+    """Feature Mart JSON을 에이전트 입력 형태로 변환합니다."""
     payload: dict = {
         "cust_id": feature_mart_json.get("cust_id"),
         "base_date": feature_mart_json.get("base_date"),
@@ -57,7 +57,6 @@ def build_customer_payload(feature_mart_json: dict, live_context: dict, basic_in
             "customer_segment": feature_mart_json.get("customer_segment", {}),
             "rfm_pc": feature_mart_json.get("rfm_pc", {}),
         },
-        "live_context": live_context,
     }
     if basic_info:
         payload["customer_info"] = {

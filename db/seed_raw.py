@@ -71,7 +71,12 @@ CONTACT_PROFILES = {
     "C009": [("정기예금 만기 상담", "DEPOSIT", "관심"), ("ISA 개설 문의", "ISA", "가입"), ("IRP 세액공제 문의", "INVESTMENT", "관심")],
     "C010": [("결제계좌 당행 이전 안내", "MERCHANT_ACCOUNT", "관심"), ("노란우산 공제 안내", "INVESTMENT", "보류")],
     "DEMO-1": [("이체한도 상향 요청", "DEPOSIT", "가입"), ("급여이체 안내", "DEPOSIT", "관심")],
-    "DEMO-2": [("카드매출 정산 이전 안내", "MERCHANT_ACCOUNT", "관심"), ("거래내역 발급", "DEPOSIT", "가입")],
+    "DEMO-2": [
+        ("사업자대출 금리 문의",     "LOAN",              "관심"),
+        ("운전자금 한도 상담",        "LOAN",              "관심"),
+        ("가맹점 정산 이전 문의",     "MERCHANT_ACCOUNT",  "관심"),
+        ("거래내역 발급",            "DEPOSIT",            "가입"),
+    ],
     "DEMO-3": [("법인 OTP 재발급", "DEPOSIT", "가입"), ("이체한도 변경", "DEPOSIT", "가입"), ("법인카드 안내", "CARD", "관심")],
 }
 
@@ -198,6 +203,24 @@ def seed_raw_product_holdings(conn: sqlite3.Connection) -> None:
                VALUES (?,?,?,?,?,?,?)""",
             (cid, "신용대출(만기임박)", "LOAN", open_date, mat_date, random.randint(10_000_000, 50_000_000), "ACTIVE"),
         )
+
+    # ── 시연 고객 DEMO-2 (박성호, 개인사업자) 시나리오 강제 ─────────────────────
+    # 1) 사업자대출 만기 D-58 (개업 후 운전자금 대출)
+    demo2_open = _days_ago(540)
+    demo2_loan_mat = (TODAY + timedelta(days=58)).isoformat()
+    conn.execute(
+        """INSERT INTO raw_product_holdings
+           (cust_id, product_code, product_category, open_date, maturity_date, balance, status)
+           VALUES (?,?,?,?,?,?,?)""",
+        ("DEMO-2", "사업자운전자금대출", "LOAN", demo2_open, demo2_loan_mat, 35_000_000, "ACTIVE"),
+    )
+    # 2) 사업자통장 (BUSINESS_ACCOUNT) - 마스터에 이미 있지만 RAW에 없을 경우 보강
+    conn.execute(
+        """INSERT INTO raw_product_holdings
+           (cust_id, product_code, product_category, open_date, maturity_date, balance, status)
+           VALUES (?,?,?,?,?,?,?)""",
+        ("DEMO-2", "사업자통장(추가)", "BUSINESS_ACCOUNT", _days_ago(800), None, 8_200_000, "ACTIVE"),
+    )
     print(f"raw_product_holdings 적재 완료")
 
 
@@ -403,6 +426,11 @@ PAGE_VIEWS = {
     "C004": [("PRODUCT_PAGE_VIEW", "ISA", "ISA 가입 안내"), ("CALCULATOR", "SAVINGS", "적금 계산기")],
     "C005": [("PRODUCT_PAGE_VIEW", "FUND", "펀드 상품 조회"), ("RATE_INQUIRY", "DEPOSIT", "정기예금 금리 조회")],
     "C009": [("PRODUCT_PAGE_VIEW", "ISA", "ISA 개설 안내"), ("RATE_INQUIRY", "DEPOSIT", "예금 금리 조회")],
+    "DEMO-2": [
+        ("PRODUCT_PAGE_VIEW", "LOAN", "사업자대출 상품 페이지"),
+        ("RATE_INQUIRY",      "LOAN", "사업자대출 금리 조회"),
+        ("CALCULATOR",        "LOAN", "대출 한도 계산기"),
+    ],
 }
 
 
@@ -426,6 +454,22 @@ def seed_raw_digital_logs(conn: sqlite3.Connection, customers: list[dict]) -> No
                     etype, pcat, pname = random.choice(extra)
                     rows.append((cid, f"{d.isoformat()} {random.randint(8,22):02d}:{random.randint(0,59):02d}:30",
                                  etype, pcat, pname))
+
+    # ── 시연 고객 DEMO-2: 대출 페이지 조회를 최근 30일 내 강제 5회 보장 ──────────
+    demo2_loan_views = [
+        ("PRODUCT_PAGE_VIEW", "LOAN", "사업자대출 상품 페이지"),
+        ("RATE_INQUIRY",      "LOAN", "사업자대출 금리 조회"),
+        ("CALCULATOR",        "LOAN", "대출 한도 계산기"),
+        ("RATE_INQUIRY",      "LOAN", "운전자금 대출 금리 조회"),
+        ("PRODUCT_PAGE_VIEW", "LOAN", "사업자 운전자금 안내"),
+    ]
+    for i, (etype, pcat, pname) in enumerate(demo2_loan_views):
+        d = TODAY - timedelta(days=random.randint(2, 28))
+        rows.append((
+            "DEMO-2",
+            f"{d.isoformat()} {random.randint(9,21):02d}:{random.randint(0,59):02d}:{random.randint(0,59):02d}",
+            etype, pcat, pname,
+        ))
 
     conn.executemany(
         "INSERT INTO raw_digital_logs (cust_id, event_time, event_type, product_category, page_name) VALUES (?,?,?,?,?)",

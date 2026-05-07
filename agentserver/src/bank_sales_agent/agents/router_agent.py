@@ -12,41 +12,60 @@ from bank_sales_agent.agents.prompts import ROUTER_SYSTEM_PROMPT, build_router_p
 
 MODEL = "gpt-4o"
 
-VALID_LABELS = {
-    "DEPOSIT_SAVINGS",
-    "PERSONAL_LOAN",
-    "BUSINESS_LOAN",
-    "CARD",
-    "CASH_MANAGEMENT",
-    "FX_REMITTANCE",
-    "INVESTMENT_TAX",
-}
+VALID_LABELS = {"여신", "수신", "카드", "방카", "신탁", "펀드", "외환"}
+
+# confidence 임계값: 이 값 미만이면 excluded_categories로 분류
+CONFIDENCE_THRESHOLD = 0.40
 
 
 def _parse_json(text: str) -> dict:
     """LLM 응답에서 JSON을 추출합니다."""
     text = text.strip()
-    # 코드 블록 제거
     text = re.sub(r"```(?:json)?", "", text).replace("```", "").strip()
-    # 첫 { } 블록 추출
     match = re.search(r"\{.*\}", text, re.DOTALL)
     if match:
         return json.loads(match.group())
     return json.loads(text)
 
 
+def _validate_category(cat: dict) -> dict:
+    """개별 카테고리 항목 보정"""
+    label = cat.get("label", "")
+    if label not in VALID_LABELS:
+        cat["label"] = "수신"
+    cat["confidence"] = round(max(0.0, min(1.0, float(cat.get("confidence", 0.5)))), 2)
+    cat.setdefault("reasons", [])
+    cat.setdefault("negative_signals", [])
+    return cat
+
+
 def _validate_router_result(result: dict) -> dict:
     """Router 결과 유효성 검증 및 기본값 보정"""
-    if result.get("primary_label") not in VALID_LABELS:
-        result["primary_label"] = "DEPOSIT_SAVINGS"
-    result.setdefault("secondary_labels", [])
-    result.setdefault("confidence", 0.5)
-    result.setdefault("routing_reason", [])
-    result.setdefault("negative_signals", [])
-    result.setdefault("recommended_specialist", f"{result['primary_label'].lower()}_specialist")
-    result["do_not_use_kpi"] = True
-    # confidence 범위 보정
-    result["confidence"] = max(0.0, min(1.0, float(result["confidence"])))
+    result.setdefault("applicable_categories", [])
+    result.setdefault("excluded_categories", [])
+
+    # applicable_categories 보정 및 confidence 임계값 필터
+    valid_cats = []
+    for cat in result["applicable_categories"]:
+        cat = _validate_category(cat)
+        if cat["confidence"] >= CONFIDENCE_THRESHOLD:
+            valid_cats.append(cat)
+        else:
+            result["excluded_categories"].append({
+                "label": cat["label"],
+                "reason": f"confidence {cat['confidence']:.2f}이 임계값({CONFIDENCE_THRESHOLD}) 미만",
+            })
+
+    # confidence 내림차순 정렬
+    valid_cats.sort(key=lambda x: x["confidence"], reverse=True)
+    result["applicable_categories"] = valid_cats
+
+    # applicable_categories가 비어 있으면 기본값
+    if not result["applicable_categories"]:
+        result["applicable_categories"] = [
+            {"label": "수신", "confidence": 0.40, "reasons": ["기본값 적용"], "negative_signals": []}
+        ]
+
     return result
 
 

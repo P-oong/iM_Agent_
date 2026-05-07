@@ -435,15 +435,8 @@ async def analyze_opportunities(req: OppAnalysisRequest) -> Dict[str, Any]:
 
 # ── iM BRIDGE Agent 엔드포인트 ────────────────────────────────────────────────
 
-class LiveContext(BaseModel):
-    visit_reason_code: str = ""
-    counter_task: str = ""
-    staff_note: str = ""
-
-
 class BridgeAnalyzeRequest(BaseModel):
     cust_id: str
-    live_context: LiveContext = Field(default_factory=LiveContext)
 
 
 class BridgeAnalyzeResponse(BaseModel):
@@ -478,12 +471,8 @@ async def bridge_analyze(req: BridgeAnalyzeRequest) -> BridgeAnalyzeResponse:
     # 2. 고객 기본 정보 조회
     basic_info = get_customer_basic_info(req.cust_id, settings.db_path)
 
-    # 3. Feature Mart + Live Context 결합
-    customer_payload = build_customer_payload(
-        feature_mart_json,
-        req.live_context.model_dump(),
-        basic_info,
-    )
+    # 3. Feature Mart → customer_payload 변환
+    customer_payload = build_customer_payload(feature_mart_json, basic_info)
 
     # 4. Router Agent
     try:
@@ -491,11 +480,13 @@ async def bridge_analyze(req: BridgeAnalyzeRequest) -> BridgeAnalyzeResponse:
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Router Agent 오류: {exc}")
 
-    # 5. 후보 상품 조회
+    # 5. 후보 상품 조회 (applicable_categories 전체 레이블 기반)
     customer_type = feature_mart_json.get("customer_segment", {}).get("customer_type", "개인")
+    applicable_labels = [
+        cat["label"] for cat in router_result.get("applicable_categories", [])
+    ]
     candidate_products = get_candidate_products(
-        primary_label=router_result["primary_label"],
-        secondary_labels=router_result.get("secondary_labels", []),
+        applicable_labels=applicable_labels,
         customer_type=customer_type,
         db_path=settings.db_path,
     )
@@ -541,7 +532,7 @@ async def bridge_sales_card(req: BridgeAnalyzeRequest) -> SalesCardResponse:
 
     try:
         customer_payload, router_result, specialist_result, policy_support_list, kpi_badge_map = (
-            await _run_full_pipeline(req.cust_id, req.live_context.model_dump(), settings, api_key)
+            await _run_full_pipeline(req.cust_id, settings, api_key)
         )
     except HTTPException:
         raise
@@ -580,7 +571,6 @@ class ConsultingPackageResponse(BaseModel):
 
 async def _run_full_pipeline(
     cust_id: str,
-    live_context_dict: dict,
     settings: Any,
     api_key: str,
 ) -> tuple[dict, dict, dict, list, dict]:
@@ -597,14 +587,16 @@ async def _run_full_pipeline(
         )
 
     basic_info = get_customer_basic_info(cust_id, settings.db_path)
-    customer_payload = build_customer_payload(feature_mart_json, live_context_dict, basic_info)
+    customer_payload = build_customer_payload(feature_mart_json, basic_info)
 
     router_result = run_router(customer_payload, api_key=api_key)
 
     customer_type = feature_mart_json.get("customer_segment", {}).get("customer_type", "개인")
+    applicable_labels = [
+        cat["label"] for cat in router_result.get("applicable_categories", [])
+    ]
     candidate_products = get_candidate_products(
-        primary_label=router_result["primary_label"],
-        secondary_labels=router_result.get("secondary_labels", []),
+        applicable_labels=applicable_labels,
         customer_type=customer_type,
         db_path=settings.db_path,
     )
@@ -622,7 +614,6 @@ async def _run_full_pipeline(
     base_date = feature_mart_json.get("base_date", "")
     customer_context = {
         "customer_segment": feature_mart_json.get("customer_segment", {}),
-        "live_context": live_context_dict,
     }
 
     policy_support_list: List[Dict[str, Any]] = []
@@ -667,11 +658,9 @@ async def bridge_consulting_package(req: BridgeAnalyzeRequest) -> ConsultingPack
     if not api_key:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY 환경변수가 설정되지 않았습니다.")
 
-    live_context_dict = req.live_context.model_dump()
-
     try:
         customer_payload, router_result, specialist_result, policy_support_list, kpi_badge_map = (
-            await _run_full_pipeline(req.cust_id, live_context_dict, settings, api_key)
+            await _run_full_pipeline(req.cust_id, settings, api_key)
         )
     except HTTPException:
         raise

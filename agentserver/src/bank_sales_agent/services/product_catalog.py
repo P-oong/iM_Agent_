@@ -6,22 +6,22 @@ import json
 import sqlite3
 from pathlib import Path
 
-# Router 레이블 → DB 상품 ID 매핑
+# Router 레이블 (7개 한국어 카테고리) → DB 상품 ID 매핑
 LABEL_TO_PRODUCT_IDS: dict[str, list[str]] = {
-    "DEPOSIT_SAVINGS": ["P001", "P002", "P003"],
-    "PERSONAL_LOAN":   ["P004", "P005"],
-    "BUSINESS_LOAN":   ["P006", "P015"],
-    "CARD":            ["P007", "P008"],
-    "CASH_MANAGEMENT": ["P008", "P006"],
-    "FX_REMITTANCE":   ["P013", "P014"],
-    "INVESTMENT_TAX":  ["P009", "P010", "P011", "P012"],
+    "여신": ["P004", "P005", "P006", "P015"],
+    "수신": ["P001", "P002", "P003"],
+    "카드": ["P007", "P008"],
+    "방카": ["P011"],
+    "신탁": ["P012"],
+    "펀드": ["P009", "P010"],
+    "외환": ["P013", "P014"],
 }
 
 # 고객 유형별 제외 상품 (개인 고객에게 기업 상품 노출 방지)
 CUSTOMER_TYPE_EXCLUDE: dict[str, set[str]] = {
-    "개인": {"P006", "P008", "P012", "P014", "P015"},
-    "개인사업자": {"P004", "P014", "P015"},
-    "법인": {"P003", "P004", "P005", "P007", "P009", "P010", "P011"},
+    "개인":     {"P006", "P008", "P014", "P015"},   # 사업자 대출·법인카드·무역금융 제외
+    "개인사업자": {"P004", "P005", "P014", "P015"},  # 순수 개인 대출·무역금융 제외
+    "법인":     {"P003", "P004", "P005", "P007", "P009", "P010", "P011"},  # 개인 전용 상품 제외
 }
 
 
@@ -50,15 +50,13 @@ def _product_row_to_candidate(row: sqlite3.Row) -> dict:
 
 
 def get_candidate_products(
-    primary_label: str,
-    secondary_labels: list[str],
+    applicable_labels: list[str],
     customer_type: str,
     db_path: Path,
 ) -> list[dict]:
-    """Router 레이블에 맞는 후보 상품 목록을 반환합니다."""
-    # Primary + Secondary에서 상품 ID 수집 (최대 6개)
+    """Router applicable_categories 레이블 목록에 맞는 후보 상품 목록을 반환합니다."""
     product_ids: list[str] = []
-    for label in [primary_label] + (secondary_labels or []):
+    for label in applicable_labels:
         for pid in LABEL_TO_PRODUCT_IDS.get(label, []):
             if pid not in product_ids:
                 product_ids.append(pid)
