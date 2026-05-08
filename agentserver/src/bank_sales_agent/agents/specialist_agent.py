@@ -5,14 +5,19 @@ from __future__ import annotations
 import json
 import os
 import re
+from pathlib import Path
 
 from openai import OpenAI
 
 from bank_sales_agent.agents.prompts import SPECIALIST_SYSTEM_PROMPT, build_specialist_prompt
+from bank_sales_agent.services.expert_cases import load_specialist_outcome_patterns
 
 MODEL = "gpt-4o"
 
 VALID_CATEGORIES = {"여신", "수신", "카드", "방카", "신탁", "펀드", "외환"}
+
+# 우수 직원 성공/실패 패턴 데이터 위치 (agentserver/data)
+_DEFAULT_DATA_DIR = Path(__file__).resolve().parents[3] / "data"
 
 PROBABILITY_BANDS = {
     "HIGH": (0.80, 1.00),
@@ -53,6 +58,14 @@ def _validate_top_product(product: dict) -> dict:
     product.setdefault("evidence", [])
     product.setdefault("risk_or_caution", [])
     product.setdefault("recommended_talk_direction", "")
+    # 우수 직원 사례 매칭 결과 (확률 산출 근거)
+    product.setdefault("success_pattern_matches", [])
+    product.setdefault("failure_pattern_matches", [])
+    # 리스트 타입 보정
+    if not isinstance(product["success_pattern_matches"], list):
+        product["success_pattern_matches"] = []
+    if not isinstance(product["failure_pattern_matches"], list):
+        product["failure_pattern_matches"] = []
     return product
 
 
@@ -112,6 +125,7 @@ def run_specialist(
     customer_payload: dict,
     candidates_by_category: dict[str, list[dict]],
     api_key: str | None = None,
+    data_dir: Path | None = None,
 ) -> dict:
     """
     Router의 applicable_categories 각각에 대해 카테고리별 상위 상품 1~2개를 산출합니다.
@@ -121,6 +135,7 @@ def run_specialist(
         customer_payload: Feature Mart + behavior_signals 결합 데이터
         candidates_by_category: {"여신": [상품...], "수신": [상품...]} 형태의 후보
         api_key: OpenAI API 키
+        data_dir: agentserver/data 경로 (None이면 기본 위치 사용)
 
     Returns:
         {
@@ -138,18 +153,30 @@ def run_specialist(
     if not filtered_candidates:
         return {"category_results": [], "top_products_flat": [], "do_not_use_kpi": True}
 
+    # 현재 처리할 카테고리에 해당하는 우수 직원 성공/실패 패턴만 로드 (토큰 절약)
+    outcome_patterns = load_specialist_outcome_patterns(
+        data_dir or _DEFAULT_DATA_DIR,
+        categories=list(filtered_candidates.keys()),
+    )
+
     client = OpenAI(api_key=key)
 
     response = client.chat.completions.create(
         model=MODEL,
         messages=[
             {"role": "system", "content": SPECIALIST_SYSTEM_PROMPT},
-            {"role": "user",   "content": build_specialist_prompt(
-                router_result, customer_payload, filtered_candidates
-            )},
+            {
+                "role": "user",
+                "content": build_specialist_prompt(
+                    router_result,
+                    customer_payload,
+                    filtered_candidates,
+                    outcome_patterns=outcome_patterns,
+                ),
+            },
         ],
         temperature=0.3,
-        max_tokens=3000,
+        max_tokens=3500,
         response_format={"type": "json_object"},
     )
 

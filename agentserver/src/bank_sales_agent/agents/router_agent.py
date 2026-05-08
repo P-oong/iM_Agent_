@@ -5,10 +5,12 @@ from __future__ import annotations
 import json
 import os
 import re
+from pathlib import Path
 
 from openai import OpenAI
 
 from bank_sales_agent.agents.prompts import ROUTER_SYSTEM_PROMPT, build_router_prompt
+from bank_sales_agent.services.expert_cases import load_router_expert_cases
 
 MODEL = "gpt-4o"
 
@@ -16,6 +18,9 @@ VALID_LABELS = {"여신", "수신", "카드", "방카", "신탁", "펀드", "외
 
 # confidence 임계값: 이 값 미만이면 excluded_categories로 분류
 CONFIDENCE_THRESHOLD = 0.40
+
+# 우수 직원 분류 사례 데이터 위치 (agentserver/data)
+_DEFAULT_DATA_DIR = Path(__file__).resolve().parents[3] / "data"
 
 
 def _parse_json(text: str) -> dict:
@@ -69,13 +74,18 @@ def _validate_router_result(result: dict) -> dict:
     return result
 
 
-def run_router(customer_payload: dict, api_key: str | None = None) -> dict:
+def run_router(
+    customer_payload: dict,
+    api_key: str | None = None,
+    data_dir: Path | None = None,
+) -> dict:
     """
     고객 페이로드를 받아 영업 카테고리를 분류합니다.
 
     Args:
-        customer_payload: Feature Mart + Live Context 결합 데이터
+        customer_payload: Feature Mart 결합 데이터
         api_key: OpenAI API 키 (None이면 환경변수에서 로드)
+        data_dir: agentserver/data 경로 (None이면 기본 위치 사용)
 
     Returns:
         Router 분류 결과 dict
@@ -86,14 +96,20 @@ def run_router(customer_payload: dict, api_key: str | None = None) -> dict:
 
     client = OpenAI(api_key=key)
 
+    # 우수 직원 분류 노하우 사례 로드 (Few-shot 주입)
+    expert_cases = load_router_expert_cases(data_dir or _DEFAULT_DATA_DIR)
+
     response = client.chat.completions.create(
         model=MODEL,
         messages=[
             {"role": "system", "content": ROUTER_SYSTEM_PROMPT},
-            {"role": "user",   "content": build_router_prompt(customer_payload)},
+            {
+                "role": "user",
+                "content": build_router_prompt(customer_payload, expert_cases=expert_cases),
+            },
         ],
         temperature=0.2,
-        max_tokens=1000,
+        max_tokens=1200,
         response_format={"type": "json_object"},
     )
 

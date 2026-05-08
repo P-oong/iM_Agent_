@@ -1,0 +1,122 @@
+[
+  {
+    "case_id": "router_expert_001",
+    "case_name": "개인사업자 정산 흐름 + 만기 임박",
+    "input_signals": [
+      "사업자성 입금 반복(타행 정산)",
+      "가맹점 결제계좌 미보유",
+      "가맹점 정산 이전 문의 이력",
+      "사업자 대출 만기 D-90 이내",
+      "최근 사업자대출 금리 문의 이력"
+    ],
+    "expert_judgment": {
+      "applicable_categories": [
+        {"label": "여신", "confidence_band": "HIGH", "weight": 1},
+        {"label": "수신", "confidence_band": "HIGH", "weight": 2},
+        {"label": "카드", "confidence_band": "MEDIUM", "weight": 3}
+      ]
+    },
+    "expert_reason": "개인사업자가 정산을 타행으로 받고 있고 결제계좌가 비어 있다면 자금 흐름을 당행으로 끌어오는 수신을 가장 우선적으로 본다. 만기 임박은 여신 1순위 트리거이고, 사업비 지출 패턴이 반복되면 카드를 보조 후보로 둔다."
+  },
+  {
+    "case_id": "router_expert_002",
+    "case_name": "직장인 예금 만기 + ISA 관심",
+    "input_signals": [
+      "예금 만기 D-60 이내",
+      "유휴자금 1천만원 이상",
+      "ISA 페이지 조회 이력",
+      "민원/거절 없음"
+    ],
+    "expert_judgment": {
+      "applicable_categories": [
+        {"label": "수신", "confidence_band": "HIGH", "weight": 1},
+        {"label": "펀드", "confidence_band": "HIGH", "weight": 2},
+        {"label": "카드", "confidence_band": "MEDIUM", "weight": 3}
+      ]
+    },
+    "expert_reason": "예금 만기에 유휴자금이 잡혀 있다면 재예치(수신)와 절세형 투자상품(ISA·펀드)을 동시에 안내하는 것이 직장인 고객에게 가장 자연스럽다. 자사 카드가 없으면 카드는 보조 후보."
+  },
+  {
+    "case_id": "router_expert_003",
+    "case_name": "급여 신규 고객",
+    "input_signals": [
+      "최근 6개월 급여 입금 안정",
+      "자사 신용카드 미보유",
+      "주거래 은행 이전 가능성"
+    ],
+    "expert_judgment": {
+      "applicable_categories": [
+        {"label": "카드", "confidence_band": "HIGH", "weight": 1},
+        {"label": "수신", "confidence_band": "MEDIUM", "weight": 2},
+        {"label": "여신", "confidence_band": "MEDIUM", "weight": 3}
+      ]
+    },
+    "expert_reason": "급여가 안정되고 자사 카드가 없으면 카드 실적 충족이 쉬워 카드를 1순위로 본다. 주거래 이전을 유도하면 자연스럽게 적금/예금이 따라온다."
+  },
+  {
+    "case_id": "router_expert_004",
+    "case_name": "50대 자산가 - 노후/절세",
+    "input_signals": [
+      "총 자산 1억원 이상",
+      "정기예금 비중 60% 이상",
+      "퇴직연금 이전 문의 이력",
+      "IRP 미보유"
+    ],
+    "expert_judgment": {
+      "applicable_categories": [
+        {"label": "신탁", "confidence_band": "HIGH", "weight": 1},
+        {"label": "펀드", "confidence_band": "HIGH", "weight": 2},
+        {"label": "방카", "confidence_band": "MEDIUM", "weight": 3}
+      ]
+    },
+    "expert_reason": "50대 자산가가 노후/절세 관심을 보이면 IRP·신탁·ISA·연금보험을 패키지로 본다. 예금 비중이 높을수록 분산 전환 여지가 크다."
+  },
+  {
+    "case_id": "router_expert_005",
+    "case_name": "수출기업 외환 + 운전자금",
+    "input_signals": [
+      "외화 입금 이력",
+      "외환 헤지 문의",
+      "기업 운전자금 대출 보유",
+      "원자재 결제 출금 패턴"
+    ],
+    "expert_judgment": {
+      "applicable_categories": [
+        {"label": "외환", "confidence_band": "HIGH", "weight": 1},
+        {"label": "여신", "confidence_band": "HIGH", "weight": 2}
+      ]
+    },
+    "expert_reason": "외환 거래가 활발한 수출기업은 환헤지 + 운전자금 한도 확장이 항상 함께 가는 페어다. 카드/수신은 후순위."
+  },
+  {
+    "case_id": "router_expert_006",
+    "case_name": "민원/반복 거절 고객",
+    "input_signals": [
+      "최근 90일 권유 거절 2회 이상",
+      "민원 이력",
+      "영업 피로도 0.7 이상"
+    ],
+    "expert_judgment": {
+      "applicable_categories": [
+        {"label": "수신", "confidence_band": "LOW", "weight": 1}
+      ]
+    },
+    "expert_reason": "민원이 있거나 거절이 반복된 고객에게는 적극 권유를 자제하고 기본 수신 관리만 안내한다. 카드/방카/펀드 권유는 confidence를 0.40 미만으로 내려 excluded_categories로 보낸다."
+  },
+  {
+    "case_id": "router_expert_007",
+    "case_name": "카드 거절 이력 + 정산 통장 니즈",
+    "input_signals": [
+      "최근 카드 권유 거절 1회",
+      "사업자성 입금 반복",
+      "가맹점 결제계좌 미보유"
+    ],
+    "expert_judgment": {
+      "applicable_categories": [
+        {"label": "수신", "confidence_band": "HIGH", "weight": 1},
+        {"label": "여신", "confidence_band": "MEDIUM", "weight": 2}
+      ]
+    },
+    "expert_reason": "카드 거절 이력이 최근에 있으면 카드는 카테고리 자체에서 제외하고, 정산 흐름이 보이는 수신을 1순위로 끌어올린다."
+  }
+]

@@ -130,6 +130,10 @@ def main() -> None:
                 print(f"    [O] {e}")
             for r in p.get("risk_or_caution", [])[:2]:
                 print(f"    [!] {r}")
+            for s in p.get("success_pattern_matches", [])[:3]:
+                print(f"    [+] 성공패턴: {s}")
+            for f in p.get("failure_pattern_matches", [])[:3]:
+                print(f"    [-] 실패패턴: {f}")
             print(f"    상담 방향: {p.get('recommended_talk_direction', '')}")
         for ep in cat.get("excluded_products", [])[:2]:
             print(f"  [X] {ep.get('product_name', '')}: {ep.get('reason', '')}")
