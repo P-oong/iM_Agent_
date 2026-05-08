@@ -5,10 +5,12 @@
   POST /analyze-opportunities — GPT 직접 호출 영업기회 분석
 
 [신규] iM BRIDGE 멀티에이전트 파이프라인
-  POST /api/bridge/analyze           — Router + Specialist
+  POST /api/bridge/analyze           — Router + Specialist (+ customer_payload)
   POST /api/bridge/sales-card        — + RAG/Policy + KPI + Assembler
-  POST /api/bridge/consulting-package — + 상담패키지 Reflection 보고서
-"""
+  POST /api/bridge/consulting-package — + 상담패키지 Reflection (+ feature_mart_summary)
+
+Router/Specialist 는 `agentserver/data/prompt_examples/` 의 우수 직원 JSON을
+`services.expert_cases` 로 로드해 프롬프트에 주입합니다 (KPI는 판단에 사용하지 않음).
 
 from __future__ import annotations
 

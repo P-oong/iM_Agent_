@@ -1,4 +1,9 @@
-"""Specialist Agent - 카테고리별 상품 수락 확률 산출"""
+"""Specialist Agent — Router가 고른 카테고리별로 후보 상품 1~2개와 수락 확률 산출 (GPT-4o).
+
+출력: category_results, top_products_flat, 각 상품에 success_pattern_matches / failure_pattern_matches.
+우수 직원 패턴: data/prompt_examples/specialist_outcome_patterns.json (카테고리 필터 로드).
+KPI는 확률 산정에 사용하지 않음 (do_not_use_kpi).
+"""
 
 from __future__ import annotations
 

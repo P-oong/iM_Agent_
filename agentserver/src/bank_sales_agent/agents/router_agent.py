@@ -1,4 +1,8 @@
-"""Router Agent - 영업 카테고리 분류"""
+"""Router Agent — Feature Mart 기반 영업 카테고리 복수 분류 (GPT-4o).
+
+출력: applicable_categories / excluded_categories (7개 한글 라벨).
+우수 직원 사례: data/prompt_examples/router_expert_cases.json → load_router_expert_cases.
+"""
 
 from __future__ import annotations
 

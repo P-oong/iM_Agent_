@@ -1,51 +1,59 @@
 # iM Bank Demo DB
 
-에이전트 서버와 프론트엔드가 공통으로 사용하는 SQLite 데이터베이스입니다.
+에이전트 서버(`agentserver`)와 프론트엔드가 공통으로 사용하는 **SQLite** 데이터베이스입니다.  
+실제 운영 스키마가 아니라 **시연·개발용** 더미 데이터입니다.
 
-## 파일 구조
+## 디렉터리 구성
 
 ```
 db/
-├── im_bank.db      # SQLite DB 본체 (seed.py 실행 후 생성)
-├── schema.sql      # 테이블 정의
-├── seed.py         # 초기 데이터 적재 스크립트
+├── im_bank.db           # SQLite 본체 (seed 후 생성·갱신)
+├── schema.sql           # 테이블 정의
+├── seed.py              # 마스터 적재 (고객 메타, products, KPI 마스터 등)
+├── seed_raw.py          # raw_* 테이블용 합성 데이터 (약 180일 분량 트랜잭션 등)
+├── build_feature_mart.py
+│                        # raw → customer_rfmpc_feature_mart (llm_input_json 생성)
 └── README.md
 ```
 
-## DB 초기화 방법
+## 초기화 절차 (저장소 루트에서)
 
-```bash
-# 프로젝트 루트에서 실행
+```powershell
 python db/seed.py
+python db/seed_raw.py
+python db/build_feature_mart.py
 ```
 
-## 테이블 구성
+Feature Mart 가 없으면 iM BRIDGE API/CLI 가 고객 분석 단계에서 실패합니다.  
+`build_feature_mart.py` 는 **오늘 날짜(`base_date`)** 행을 생성합니다.
 
-| 테이블 | 설명 | 초기 데이터 |
-|--------|------|------------|
-| `customers` | 고객 기본 정보 (에이전트 분류 필드 포함) | 13명 (C001~C010, DEMO-1~3) |
-| `accounts` | 고객 보유 계좌 | 27건 |
-| `transactions` | 최근 거래 내역 | 62건 |
-| `products` | 은행 상품 마스터 (15종) | 15개 |
-| `kpi_metrics` | 상품별 KPI 지표 | 15건 |
-| `product_documents` | 캠페인·이벤트 문서 | 8건 |
-| `sales_opportunities` | 에이전트 분석 결과 저장 | 0건 (런타임 생성) |
+## 에이전트 서버와의 경로 연결
 
-## 상품 카테고리
+`agentserver/src/bank_sales_agent/config/settings.py` 에서 기본 DB 경로는 다음과 같습니다.
 
-- **수신**: iM 자유적금, iM 정기예금, iM 주택청약종합저축
-- **여신**: iM 주택담보대출, iM 신용대출, iM 사업자대출, iM 기업대출
-- **카드**: iM 라이프스타일 신용카드, iM 사업자카드
-- **투자**: iM ISA, iM 펀드
-- **퇴직연금**: iM 퇴직연금(IRP)
-- **보험**: 노란우산공제
-- **외환**: iM 외화예금
-- **기업**: iM 무역금융
+- 저장소 루트: `{repo}/db/im_bank.db`
 
-## 경로 참조 방법
+Python에서 직접 열 때:
 
 ```python
-# agentserver (Python)
 from pathlib import Path
-DB_PATH = Path(__file__).resolve().parents[N] / "db" / "im_bank.db"
+
+REPO_ROOT = Path(__file__).resolve().parents[N]  # N은 파일 위치에 맞게
+DB_PATH = REPO_ROOT / "db" / "im_bank.db"
 ```
+
+## 주요 테이블 (요약)
+
+| 구분 | 테이블 예시 | 설명 |
+|------|-------------|------|
+| 마스터 | `customers`, `products`, `kpi_metrics`, … | 시연용 고객·상품·KPI 정의 |
+| RAW | `raw_transactions`, `raw_crm_contacts`, `raw_product_holdings`, … | 합성 원천 이력 |
+| 마트 | `customer_rfmpc_feature_mart` | 고객별 `llm_input_json` (RFM-PC, behavior/explainable signals) |
+
+`products` / 문서 건수는 시연 상품 추가에 따라 늘어날 수 있습니다.  
+시연 시나리오 고객: **`DEMO-2`** 등 (`seed.py` / `seed_raw.py` 참고).
+
+## 상품 카테고리 (개략)
+
+마스터 데이터는 **수신·여신·카드·투자(ISA/펀드)·퇴직연금·보험(노란우산 등)·외환** 등 복수 카테고리를 포함합니다.  
+iM BRIDGE Router 의 7개 라벨(여신·수신·카드·방카·신탁·펀드·외환)은 LLM 분류 결과이며, DB `products.category` 문자열과 1:1이 아닐 수 있습니다.

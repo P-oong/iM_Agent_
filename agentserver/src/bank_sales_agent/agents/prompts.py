@@ -1,4 +1,8 @@
-"""Router Agent / Specialist Agent 프롬프트 정의"""
+"""Router / Specialist / Policy / Assembler / Consulting 에이전트 프롬프트와 빌더.
+
+`build_router_prompt` · `build_specialist_prompt` 는 `services.expert_cases` 가 넘긴
+JSON 블록(우수 직원 사례)을 user 메시지에 삽입합니다.
+"""
 
 from __future__ import annotations
 

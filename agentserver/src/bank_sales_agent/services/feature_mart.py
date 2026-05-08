@@ -1,4 +1,12 @@
-"""Feature Mart DB 조회 및 Live Context 결합 서비스"""
+"""Feature Mart DB 조회 및 에이전트용 customer_payload 빌드.
+
+iM BRIDGE 파이프라인은 DB의 `llm_input_json`(RFM-PC 등)을 읽어
+`build_customer_payload` 로 `feature_mart` 블록을 구성합니다.
+`behavior_signals` / `explainable_signals` 는 JSON 최상위에 있을 수 있으며,
+payload 안으로 끌어올려 Router·Specialist·Consulting 이 동일 구조로 접근합니다.
+
+참고: 과거 설계에서 논의된 Live Context는 현재 BRIDGE 경로에 포함하지 않습니다.
+"""
 
 from __future__ import annotations
 

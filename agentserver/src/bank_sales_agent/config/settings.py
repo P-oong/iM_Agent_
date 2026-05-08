@@ -1,4 +1,13 @@
-"""Role: Load application settings for graph execution, providers, and checkpointing."""
+"""애플리케이션 설정 — 데이터 경로, LLM 프로바이더, DB 위치.
+
+경로 해상도( `config/settings.py` 기준 ):
+- `PROJECT_ROOT` = 이 파일의 parents[3] → `agentserver/`
+- `REPO_ROOT` = parents[4] → 저장소 루트 (`iM_Agent_-2/`)
+- `DATA_DIR` = `agentserver/data/` (policy_docs, kpi, prompt_examples)
+- `DB_PATH` = `{REPO_ROOT}/db/im_bank.db`
+
+`load_dotenv(REPO_ROOT / ".env")` 로 루트 `.env` 를 읽습니다.
+"""
 
 from __future__ import annotations
 

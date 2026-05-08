@@ -41,24 +41,27 @@ iM뱅크(대구은행) 창구에는 고객 거래이력, 보유상품, 상담이
 창구 직원이 **10초 안에 핵심을 파악하고 30초 안에 고객에게 말할 수 있는 형태**로 압축하는 영업지원 시스템이다.
 
 ```
-고객 데이터 (DB)
+고객 RAW (SQLite)
     ↓
-RFM-PC 고객 피처 마트 생성
+RFM-PC Feature Mart 배치 (llm_input_json: 수치 + behavior_signals + explainable_signals)
     ↓
-실시간 창구 맥락 결합 (내점 사유, 담당자 메모)
+Router Agent (복수 카테고리 분류) → Specialist Agent (카테고리별 상품·수락확률)
     ↓
-Router Agent → Specialist Agent → Policy/RAG Agent → KPI Mapper
+Policy/RAG Agent (상품별 문서) → KPI Mapper (뱃지·사후관리)
     ↓
-Consulting Package Agent (Reflection 품질 개선)
+Sales Card Assembler → Consulting Package Agent (Draft → Critic → Rewrite)
     ↓
-창구직원용 1페이지 상담 카드
+FastAPI JSON → 프론트 대시보드
 ```
+
+**창구 맥락(live_context)** 은 이 저장소의 iM BRIDGE 경로에서는 사용하지 않으며, 판단 입력은 Feature Mart(JSON)와 우수 직원 사례 JSON만 사용합니다.
 
 ### 핵심 설계 원칙
 
 - **Human-in-the-loop**: AI는 분석·제안, 최종 판단은 반드시 직원이 수행
-- **KPI 분리 원칙**: 상품 수락 확률은 순수 고객 데이터 기반으로 산출, KPI는 별도 뱃지로만 표시
-- **안전성 우선**: 과장 표현·무리한 권유 문구 자동 필터링, 금지 표현 룰 기반 검증
+- **KPI 분리 원칙**: Router·Specialist는 KPI·지점실적을 **판단 근거로 사용하지 않음**. KPI는 `kpi_mapper` 단계에서 뱃지·사후관리(`post_management`)로만 부착
+- **우수 직원 노하우 분리**: 분류 감각은 `data/prompt_examples/router_expert_cases.json` → Router, 성공·실패 패턴은 `specialist_outcome_patterns.json` → Specialist (`success_pattern_matches` / `failure_pattern_matches`)
+- **안전성 우선**: 과장 표현·무리한 권유 문구 완화, Consulting 단계에서 Reflection·룰 검증
 
 ---
 
@@ -77,7 +80,7 @@ Consulting Package Agent (Reflection 품질 개선)
 │  │  Legacy     │  │       iM BRIDGE 멀티에이전트          │  │
 │  │  LangGraph  │  │                                      │  │
 │  │  /api/analyze│  │  Router → Specialist → Policy/RAG   │  │
-│  └─────────────┘  │  → KPI Mapper → Consulting Package  │  │
+│  └─────────────┘  │  → KPI → Assembler → Consulting      │  │
 │                   └──────────────────────────────────────┘  │
 └──────────────────────┬──────────────────────────────────────┘
                        │ SQLite
@@ -102,16 +105,12 @@ Consulting Package Agent (Reflection 품질 개선)
 | **R (Recency)** | 최근 영업점 방문·앱 로그인·거액 입출금 경과일, 만기까지 남은 일수 |
 | **F (Frequency)** | 최근 30/90일 거래 횟수, 앱 로그인 횟수, 상담 횟수 |
 | **M (Monetary)** | 평균 잔액, 카드 지출액, 대출 잔액, 만기 예적금 금액 |
-| **P (Product Gap)** | 미보유 상품 목록 (`missing_product_labels`) — LLM이 가장 잘 읽는 핵심 신호 |
-| **C (Contact Signal)** | 최근 상담 주제, 거절 이력, 민원 여부, 영업 피로도 점수 |
+| **P (Product Gap)** | 보유 여부·상품 공백 플래그(`has_*`) 등 |
+| **C (Contact Signal)** | 최근 상담 주제, 문의 플래그, **recommendation_tone**, 영업 피로도 등 |
 
-```
-영업 피로도 점수 = min(1.0,
-    캠페인거절횟수×0.15 + 카드거절여부×0.25 + 민원여부×0.35 + 최근접촉횟수×0.05
-)
-```
+Feature Mart JSON 최상위(또는 `rfm_pc` 내부)에는 AI 설명용 **`behavior_signals`**(카테고리별 자연어 신호)·**`explainable_signals`**(요약 리스트)가 포함될 수 있으며, 에이전트 입력 시 `customer_payload.feature_mart`로 합쳐집니다.
 
-> ⚠️ **KPI·지점 실적·캠페인 목표는 피처 마트에 절대 포함하지 않는다.** KPI는 Stage 3에서 뱃지로만 붙인다.
+> KPI·지점 실적·캠페인 목표는 피처 마트와 Router/Specialist 프롬프트에 **넣지 않습니다**. KPI는 RAG 이후 매퍼에서만 반영합니다.
 
 ---
 
@@ -119,33 +118,37 @@ Consulting Package Agent (Reflection 품질 개선)
 
 ```
 customer_rfmpc_feature_mart.llm_input_json
-    + 실시간 창구 맥락 (내점사유, 담당자 메모)
          ↓
-    [Router Agent]  — GPT-4o
-    영업 카테고리 분류 (예금/대출/카드/외환/투자/사업자...)
+    [Router Agent]  — GPT-4o (+ 우수 직원 분류 사례 Few-shot)
+    영업 카테고리 **복수** 선별 → applicable_categories[] (label, confidence, reasons, negative_signals)
+    confidence < 0.40 은 excluded_categories로 이동
          ↓
-    [Specialist Agent]  — GPT-4o
-    상품 Top 1~2 선정 + 수락 확률 (0.0~1.0) + 추천 근거
+    [Specialist Agent]  — GPT-4o (+ 카테고리별 성공/실패 패턴)
+    카테고리마다 후보 상품 중 top 1~2 + 수락 확률 + score_breakdown
+    + success_pattern_matches / failure_pattern_matches (우수 직원 패턴 정렬)
 ```
 
-- **Self-check / Self-refine** 내장: 출력 직후 자체 검증 후 기준 미달 시 재생성
-- 확률은 **고객 행동 신호 기반**으로만 산출, KPI 반영 금지
+**Router 라벨 집합 (7개, 한글 고정):** 여신 · 수신 · 카드 · 방카 · 신탁 · 펀드 · 외환
+
+- **Self-check / Self-refine** 룰은 각 에이전트 프롬프트에 내장
+- 수락 확률·카테고리 판단은 **고객 행동·Product Gap·상담 신호** 기반; KPI는 사용 금지
+- 우수 직원 사례 파일: `agentserver/data/prompt_examples/router_expert_cases.json`, `specialist_outcome_patterns.json` (로더: `services/expert_cases.py`)
 
 ---
 
 ### Stage 3 — RAG/Policy Agent + KPI Mapper
 
 ```
-추천 상품 Top 1~2
+Specialist → top_products_flat (카테고리·확률 순)
     ↓
-[Policy/RAG Agent]  — 파일 기반 검색 (MVP)
-공문·이벤트·필요서류·자격조건·유의사항 요약
+[Policy/RAG Agent]  — 파일·인덱스 기반 검색 (데모 MVP, 벡터 검색 아님)
+공문·이벤트·필요서류·유의사항 요약
     ↓
-[KPI Mapper]  — 결정론적 Python 함수 (LLM 없음)
-상품별 KPI 뱃지 매핑 (점수·우선순위·표시색)
+[KPI Mapper]  — 결정론적 Python (LLM 없음)
+상품별 KPI 뱃지 + post_management(사후관리 가이드)
 ```
 
-- Policy 문서: `agentserver/data/policy_docs/` (P001~P015 상품별 .txt)
+- Policy 문서: `agentserver/data/policy_docs/` (`P001`~ 시연용 `P022` 등, `policy_index.json`)
 - KPI 매핑: `agentserver/data/kpi/kpi_mapping.json`
 
 ---
@@ -154,19 +157,16 @@ customer_rfmpc_feature_mart.llm_input_json
 
 ```
 [Sales Card Assembler]  — GPT-4o
-Router + Specialist + Policy + KPI → 상품별 영업 카드 생성
+Router + Specialist + Policy + KPI → 상품별 영업 카드 (rank, category, staff_sales_talk 등)
 
     ↓
 
 [Consulting Package Agent]  — Reflection 루프
-Draft 생성
-    ↓
-룰 기반 검증 (금지표현·글자수·next_action 유무)
-    ↓
-Critic LLM 평가 (간결성·핵심표현력·정보성·실행성·안전성)
-    ↓
-기준 미달 시 Rewrite → 최종 상담패키지 JSON 출력
+Draft 생성 → Critic 평가 → 필요 시 Rewrite → 최종 상담패키지 JSON
 ```
+
+**Consulting 응답(최상위):** `feature_mart_summary`, `router_result`, `specialist_result`, `policy_support`, `kpi_badges`, `consulting_package`, `reflection`  
+프론트는 **피처 요약·분류·카테고리별 확률·문서·KPI·통합 패키지**를 한 번에 받을 수 있습니다.
 
 **품질 평가 지표:**
 
@@ -236,46 +236,42 @@ iM_Agent_-2/
 │   └── README.md
 │
 ├── agentserver/                 # FastAPI + 멀티에이전트 서버
-│   ├── pyproject.toml           # Poetry 의존성 관리
-│   ├── start_server.ps1         # 서버 시작 스크립트 (Windows)
+│   ├── pyproject.toml           # Poetry 의존성
+│   ├── start_server.ps1         # Windows 서버 시작
 │   │
 │   ├── data/
-│   │   ├── policy_docs/         # 상품별 공문·이벤트 txt (P001~P015)
-│   │   │   └── policy_index.json
-│   │   └── kpi/
-│   │       └── kpi_mapping.json # KPI 뱃지 매핑 테이블
+│   │   ├── policy_docs/         # 상품별 공문·이벤트·가이드 txt + policy_index.json
+│   │   ├── kpi/
+│   │   │   └── kpi_mapping.json # KPI 뱃지·사후관리 매핑
+│   │   └── prompt_examples/     # 우수 직원 노하우 (Router / Specialist Few-shot)
+│   │       ├── router_expert_cases.json
+│   │       └── specialist_outcome_patterns.json
 │   │
 │   └── src/bank_sales_agent/
-│       ├── api.py               # FastAPI 앱 (모든 엔드포인트)
-│       ├── main_bridge.py       # CLI 테스트 스크립트
+│       ├── api.py               # FastAPI 앱 (레거시 + iM BRIDGE)
+│       ├── main_bridge.py       # BRIDGE CLI 테스트
 │       │
 │       ├── agents/              # LLM 에이전트
-│       │   ├── prompts.py       # 모든 에이전트 프롬프트 정의
-│       │   ├── router_agent.py  # 영업 카테고리 분류
-│       │   ├── specialist_agent.py  # 상품 확률 산출
-│       │   ├── policy_agent.py  # 공문·규정 요약
-│       │   ├── assembler_agent.py   # 영업 카드 조립
-│       │   └── consulting_agent.py  # 상담패키지 + Reflection
+│       │   ├── prompts.py
+│       │   ├── router_agent.py
+│       │   ├── specialist_agent.py
+│       │   ├── policy_agent.py
+│       │   ├── assembler_agent.py
+│       │   └── consulting_agent.py
 │       │
-│       ├── services/            # 데이터 서비스
-│       │   ├── feature_mart.py  # RFM-PC 조회·페이로드 빌드
-│       │   ├── product_catalog.py   # 후보 상품 조회
-│       │   ├── policy_rag.py    # 파일 기반 문서 검색
-│       │   └── kpi_mapper.py    # 결정론적 KPI 뱃지 매핑
+│       ├── services/
+│       │   ├── feature_mart.py
+│       │   ├── product_catalog.py  # get_candidates_by_category
+│       │   ├── expert_cases.py       # 우수 직원 JSON 로더
+│       │   ├── policy_rag.py
+│       │   └── kpi_mapper.py
 │       │
-│       ├── config/
-│       │   └── settings.py      # 환경변수·경로 설정
-│       │
-│       └── graph/               # 레거시 LangGraph (호환 유지)
-│           └── build_graph.py
+│       ├── config/settings.py
+│       └── graph/               # 레거시 LangGraph (/api/analyze)
 │
-└── frontend/                    # React + Vite 창구 대시보드
-    ├── vite.config.ts           # Vite 프록시 설정
-    └── src/
-        ├── services/
-        │   ├── agentApi.ts      # /api/analyze 호출
-        │   └── openaiApi.ts     # /analyze-opportunities 호출
-        └── data/                # 더미 고객·상품 데이터
+└── frontend/                    # React + Vite (자세한 실행은 frontend/README.md)
+    ├── vite.config.ts           # API 프록시 등
+    └── src/                     # agentApi.ts, 화면 컴포넌트
 ```
 
 ---
@@ -305,7 +301,7 @@ iM_Agent_-2/
 
 ### 1단계 — 환경변수 설정
 
-프로젝트 루트(`iM_Agent_-2/`)에 `.env` 파일 생성:
+프로젝트 루트(`iM_Agent_-2/`)에 `.env` 파일 생성 ( `config/settings.py` 가 루트 기준으로 로드):
 
 ```env
 OPENAI_API_KEY=sk-proj-...
@@ -342,17 +338,18 @@ poetry run uvicorn bank_sales_agent.api:app --host 0.0.0.0 --port 8000 --reload
 ```powershell
 cd agentserver
 
-# Router + Specialist만 (빠름, ~15초)
-poetry run python src/bank_sales_agent/main_bridge.py --cust-id C003
+# Router + Specialist (기본)
+poetry run python src/bank_sales_agent/main_bridge.py --cust-id DEMO-2
 
 # + RAG/Policy + KPI + Sales Card
-poetry run python src/bank_sales_agent/main_bridge.py --cust-id C003 --full
+poetry run python src/bank_sales_agent/main_bridge.py --cust-id DEMO-2 --full
 
-# 전체 파이프라인 + 상담패키지 Reflection 보고서
-poetry run python src/bank_sales_agent/main_bridge.py --cust-id C003 --package
+# + 상담패키지 Reflection
+poetry run python src/bank_sales_agent/main_bridge.py --cust-id DEMO-2 --package
 ```
 
-사용 가능한 고객 ID: `C001`~`C010`, `DEMO-1`~`DEMO-3` (기본값: `C001`)
+시연 추천 고객: **`DEMO-2`** (박성호, 개인사업자). 일반 더미: `C001`~`C010`, `DEMO-1`, `DEMO-3`.  
+`--cust-id` 생략 시 기본값은 `DEMO-2` 입니다.
 
 ### 5단계 — 프론트엔드 실행
 
@@ -378,59 +375,29 @@ npm run dev    # http://localhost:5173
 
 | 메서드 | 경로 | 설명 |
 |---|---|---|
-| `POST` | `/api/bridge/analyze` | Router + Specialist (카테고리 분류 + 상품 확률) |
-| `POST` | `/api/bridge/sales-card` | 전체 파이프라인 → 영업 카드 |
-| `POST` | `/api/bridge/consulting-package` | 전체 파이프라인 → 상담패키지 + Reflection |
+| `POST` | `/api/bridge/analyze` | Feature Mart → Router → Specialist → `customer_payload` 포함 |
+| `POST` | `/api/bridge/sales-card` | + Policy/RAG, KPI, Assembler → `sales_cards` |
+| `POST` | `/api/bridge/consulting-package` | + Consulting Reflection → `feature_mart_summary`, `consulting_package` 등 |
+
+요청 본문은 공통으로 **`cust_id`만** 받습니다 (iM BRIDGE 경로).
 
 #### 요청 예시 (`/api/bridge/consulting-package`)
 
 ```json
 {
-  "cust_id": "C003",
-  "live_context": {
-    "visit_reason_code": "LOAN_INQUIRY",
-    "counter_task": "대출 상담",
-    "staff_note": "사업자 통장 관련 추가 문의"
-  }
+  "cust_id": "DEMO-2"
 }
 ```
 
-#### 응답 구조
+#### 응답 구조(요약)
 
-```json
-{
-  "cust_id": "C003",
-  "router_result": { "primary_label": "대출상담", ... },
-  "specialist_result": { "top_products": [...], ... },
-  "consulting_package": {
-    "customer_brief": "...",
-    "recommended_strategy": "...",
-    "top_cards": [
-      {
-        "rank": 1,
-        "product_name": "...",
-        "acceptance_probability": 0.84,
-        "probability_label": "수락 가능성 높음",
-        "main_reason": "...",
-        "staff_talk": "...",
-        "next_action": "...",
-        "kpi_badge": { "badge_text": "...", "kpi_score": 8 },
-        "required_documents": ["..."],
-        "caution_points": ["..."]
-      }
-    ],
-    "do_not_say": ["이번 달 KPI라서 추천드립니다.", "..."],
-    "quality_score": {
-      "conciseness": 0.91,
-      "clarity": 0.88,
-      "informativeness": 0.86,
-      "actionability": 0.90,
-      "compliance_safety": 0.94
-    }
-  },
-  "reflection": { "pass": true, "rewritten": false, ... }
-}
-```
+- **`feature_mart_summary`**: `headline_metrics`(R/F/M/P/C), `behavior_signals`, `explainable_signals` 등
+- **`router_result`**: `applicable_categories[]`, `excluded_categories[]`
+- **`specialist_result`**: `category_results[]` (카테고리별 `top_products`), `top_products_flat`
+- **`policy_support`**, **`kpi_badges`**: 상품별 RAG 요약·KPI·사후관리
+- **`consulting_package`**: 직원용 통합 상담 패키지 (Draft/Critic 결과는 `reflection` 참고)
+
+`specialist_result` 의 각 상품에는 **`success_pattern_matches`**, **`failure_pattern_matches`** 가 포함될 수 있습니다 (우수 직원 패턴 정렬).
 
 ---
 
